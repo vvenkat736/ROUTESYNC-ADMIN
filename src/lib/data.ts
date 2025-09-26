@@ -1,4 +1,5 @@
 
+
 export type Bus = {
   id: string; // Changed to string to match firestore doc id
   busNumber: string;
@@ -63,14 +64,54 @@ export const stops: Stop[] = [
 
 
 export const buses: Bus[] = [
-  { id: 'bus_1', busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R01', status: 'Active', lat: 10.79861, lng: 78.68041 },
-  { id: 'bus_2', busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R02', status: 'Active', lat: 10.83178, lng: 78.69323 },
-  { id: 'bus_3', busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R03', status: 'Delayed', lat: 10.82577, lng: 78.68337 },
-  { id: 'bus_4', busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R01', status: 'Active', lat: 10.824, lng: 78.6815 },
-  { id: 'bus_5', busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R04', status: 'Inactive', lat: 10.80009, lng: 78.68786 },
-  { id: 'bus_6', busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 'R02', status: 'Active', lat: 10.80783, lng: 78.69416 },
-  { id: 'bus_7', busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 'R05', status: 'Delayed', lat: 10.79, lng: 78.72 },
-  { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 'R03', status: 'Active', lat: 10.7855, lng: 78.7175 },
+  { id: 'bus_1', busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R-01', status: 'Active', lat: 10.79861, lng: 78.68041 },
+  { id: 'bus_2', busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R-02', status: 'Active', lat: 10.83178, lng: 78.69323 },
+  { id: 'bus_3', busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R-03', status: 'Delayed', lat: 10.82577, lng: 78.68337 },
+  { id: 'bus_4', busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R-01', status: 'Active', lat: 10.824, lng: 78.6815 },
+  { id: 'bus_5', busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R-04', status: 'Inactive', lat: 10.80009, lng: 78.68786 },
+  { id: 'bus_6', busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 'R-02', status: 'Active', lat: 10.80783, lng: 78.69416 },
+  { id: 'bus_7', busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 'R-05', status: 'Delayed', lat: 10.79, lng: 78.72 },
+  { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 'R-03', status: 'Active', lat: 10.7855, lng: 78.7175 },
+];
+
+export const routes: Partial<Route>[] = [
+    // Route 1: Central Bus Stand to Srirangam
+    { route_id: "R-01", route_name: "Central Bus Stand - Srirangam", bus_type: "Express", stop_sequence: 1, stop_name: "Central Bus Stand" },
+    { route_id: "R-01", stop_sequence: 2, stop_name: "Heber Road" },
+    { route_id: "R-01", stop_sequence: 3, stop_name: "Puthur" },
+    { route_id: "R-01", stop_sequence: 4, stop_name: "Thillai Nagar" },
+    { route_id: "R-01", stop_sequence: 5, stop_name: "Chathiram" },
+    { route_id: "R-01", stop_sequence: 6, stop_name: "Rockfort" },
+    { route_id: "R-01", stop_sequence: 7, stop_name: "Srirangam" },
+
+    // Route 2: Chathiram to Thiruverumbur
+    { route_id: "R-02", route_name: "Chathiram - Thiruverumbur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Chathiram" },
+    { route_id: "R-02", stop_sequence: 2, stop_name: "Palpannai" },
+    { route_id: "R-02", stop_sequence: 3, stop_name: "Melapudur" },
+    { route_id: "R-02", stop_sequence: 4, stop_name: "NN Road" },
+    { route_id: "R-02", stop_sequence: 5, stop_name: "Thiruverumbur" },
+    { route_id: "R-02", stop_sequence: 6, stop_name: "BHEL / Kailasapuram" },
+
+    // Route 3: Central Bus Stand to Samayapuram
+    { route_id: "R-03", route_name: "Central Bus Stand - Samayapuram", bus_type: "Standard", stop_sequence: 1, stop_name: "Central Bus Stand" },
+    { route_id: "R-03", stop_sequence: 2, stop_name: "Mannarpuram" },
+    { route_id: "R-03", stop_sequence: 3, stop_name: "Palpannai" },
+    { route_id: "R-03", stop_sequence: 4, stop_name: "No.1 Toll Gate" },
+    { route_id: "R-03", stop_sequence: 5, stop_name: "Samayapuram" },
+
+    // Route 4: Woraiyur to Airport
+    { route_id: "R-04", route_name: "Woraiyur - Trichy Airport", bus_type: "Express", stop_sequence: 1, stop_name: "Woraiyur" },
+    { route_id: "R-04", stop_sequence: 2, stop_name: "Thillai Nagar" },
+    { route_id: "R-04", stop_sequence: 3, stop_name: "Central Bus Stand" },
+    { route_id: "R-04", stop_sequence: 4, stop_name: "Mannarpuram" },
+    { route_id: "R-04", stop_sequence: 5, stop_name: "Trichy Airport" },
+
+    // Route 5: Panjapur to Mutharasanallur
+    { route_id: "R-05", route_name: "Panjapur - Mutharasanallur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Panjapur" },
+    { route_id: "R-05", stop_sequence: 2, stop_name: "KKBT terminus" },
+    { route_id: "R-05", stop_sequence: 3, stop_name: "Central Bus Stand" },
+    { route_id: "R-05", stop_sequence: 4, stop_name: "Woraiyur" },
+    { route_id: "R-05", stop_sequence: 5, stop_name: "Mutharasanallur" },
 ];
 
 

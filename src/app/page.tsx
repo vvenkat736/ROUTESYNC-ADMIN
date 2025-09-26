@@ -12,6 +12,7 @@ import { TripsChart } from "@/components/dashboard/TripsChart";
 import { DelaysChart } from "@/components/dashboard/DelaysChart";
 import { CarbonFootprintChart } from "@/components/dashboard/CarbonFootprintChart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BusList } from "@/components/dashboard/BusList";
 
 const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
   ssr: false,
@@ -35,8 +36,13 @@ export default function Home() {
           <Header />
           <main className="p-4 lg:p-6 space-y-6 bg-background">
             <FleetOverview />
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
                 {isClient && <InteractiveMap />}
+              </div>
+              <div className="lg:col-span-1">
+                <BusList />
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <BusStatusChart />
