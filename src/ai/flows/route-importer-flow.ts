@@ -72,6 +72,8 @@ export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<
     });
 
     await batch.commit();
+  } else {
+    throw new Error("AI failed to process the route data.");
   }
 }
 
@@ -104,6 +106,9 @@ const routeImporterFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+        throw new Error("The AI model failed to return a valid output.");
+    }
+    return output;
   }
 );
