@@ -24,12 +24,6 @@ import type { Bus } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
 import { ScrollArea } from "../ui/scroll-area";
 
-const statusVariantMap: { [key: string]: "default" | "secondary" | "destructive" } = {
-  Active: "default",
-  Delayed: "secondary",
-  Inactive: "destructive",
-};
-
 export function BusList() {
   const { t } = useLanguage();
   const [buses, setBuses] = useState<Bus[]>([]);
@@ -64,7 +58,7 @@ export function BusList() {
       <CardContent className="flex-grow p-0">
         <ScrollArea className="h-full">
             <Table>
-                <TableHeader className="sticky top-0 bg-card">
+                <TableHeader className="sticky top-0 bg-card z-10">
                     <TableRow>
                     <TableHead>{t('bus')}</TableHead>
                     <TableHead>{t('driver')}</TableHead>

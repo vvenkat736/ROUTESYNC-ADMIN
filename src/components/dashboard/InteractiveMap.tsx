@@ -17,15 +17,16 @@ const statusColors: { [key: string]: string } = {
   Inactive: '#6B7280', // gray-500
 };
 
-const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
+const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
 
 const createBusIcon = (status: Bus['status']) => {
     const color = statusColors[status] || '#000';
+    const busEmoji = status === 'Inactive' ? '⚫' : '🚍';
     return L.divIcon({
       html: `
         <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
           <div style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-bottom: 2px; border: 1px solid white;"></div>
-          <div style="font-size: 24px;">🚍</div>
+          <div style="font-size: 24px;">${busEmoji}</div>
         </div>
       `,
       className: 'bg-transparent border-0',
@@ -97,7 +98,6 @@ export default function InteractiveMap() {
     const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
     const routePaths: { [key: string]: [number, number][] } = {};
     
-    // Group stops by route
     const routesWithStops: { [key: string]: any[] } = {};
     routes.forEach(routeStop => {
         if (!routesWithStops[routeStop.route_id]) {
@@ -106,7 +106,6 @@ export default function InteractiveMap() {
         routesWithStops[routeStop.route_id].push(routeStop);
     });
 
-    // Sort stops and create paths
     Object.keys(routesWithStops).forEach(routeId => {
         const sortedStops = routesWithStops[routeId].sort((a, b) => a.stop_sequence - b.stop_sequence);
         const path: [number, number][] = [];
@@ -123,12 +122,29 @@ export default function InteractiveMap() {
   }, [routes, stops]);
 
   useEffect(() => {
+    // Initialize buses with route paths and random progress for a more dynamic start
     const busesWithRoutes = buses.map(bus => {
+        const routePath = generatedRoutePaths[bus.route] || [];
+        const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
+        const segmentProgress = Math.random();
+        
+        let initialLat = bus.lat;
+        let initialLng = bus.lng;
+
+        if (routePath.length > 1 && routePath[currentSegment] && routePath[currentSegment + 1]) {
+            const startPoint = routePath[currentSegment];
+            const endPoint = routePath[currentSegment + 1];
+            initialLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
+            initialLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
+        }
+
         return {
             ...bus,
-            routePath: generatedRoutePaths[bus.route] || [],
-            currentSegment: 0,
-            segmentProgress: 0,
+            lat: initialLat,
+            lng: initialLng,
+            routePath: routePath,
+            currentSegment: currentSegment,
+            segmentProgress: segmentProgress,
         };
     }).filter(b => b.routePath.length > 0);
 
@@ -137,8 +153,11 @@ export default function InteractiveMap() {
     if (busesWithRoutes.length > 0 && mapCenter[0] === 10.80) { // Only set initial center
       const avgLat = busesWithRoutes.reduce((sum, bus) => sum + bus.lat, 0) / busesWithRoutes.length;
       const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
-      setMapCenter([avgLat, avgLng]);
+      if (avgLat && avgLng) {
+        setMapCenter([avgLat, avgLng]);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buses, generatedRoutePaths]);
   
   useEffect(() => {
@@ -151,6 +170,11 @@ export default function InteractiveMap() {
           const speed = 0.05; // Adjust for faster/slower animation
           segmentProgress += speed;
 
+          if (segmentProgress >= 1.0) {
+            segmentProgress = 0;
+            currentSegment = (currentSegment + 1) % (bus.routePath.length - 1);
+          }
+
           const startPoint = bus.routePath[currentSegment];
           const endPoint = bus.routePath[currentSegment + 1];
 
@@ -158,11 +182,6 @@ export default function InteractiveMap() {
 
           const newLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
           const newLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
-
-          if (segmentProgress >= 1.0) {
-            currentSegment = (currentSegment + 1) % (bus.routePath.length - 1);
-            segmentProgress = 0;
-          }
 
           return {
             ...bus,
