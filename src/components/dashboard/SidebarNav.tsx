@@ -63,14 +63,12 @@ export function SidebarNav() {
         <SidebarMenu>
           {menuItems.map(item => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href} passHref>
-                <SidebarMenuButton asChild isActive={pathname === item.href}>
-                  <a>
-                    {item.icon}
-                    <span>{t(item.label as any)}</span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton asChild isActive={pathname === item.href}>
+                <Link href={item.href}>
+                  {item.icon}
+                  <span>{t(item.label as any)}</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
@@ -80,14 +78,12 @@ export function SidebarNav() {
         <SidebarMenu>
           {footerMenuItems.map(item => (
              <SidebarMenuItem key={item.label}>
-              <Link href={item.href} passHref>
                 <SidebarMenuButton asChild>
-                  <a>
+                  <Link href={item.href}>
                     {item.icon}
                     <span>{t(item.label as any)}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
-              </Link>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
