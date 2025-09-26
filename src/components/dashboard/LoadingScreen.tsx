@@ -26,24 +26,29 @@ export default function LoadingScreen() {
             clearTimeout(textTimer);
         };
     }, []);
-
-    const busPosition = progress;
-
+    
     return (
         <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
-            <div className="w-3/4 max-w-lg text-center">
+            <div className="w-3/4 max-w-sm text-center">
                 <div 
-                    className="relative w-full h-24 mb-4 flex items-center justify-center transition-opacity duration-500 ease-in-out"
+                    className="relative w-full h-24 mb-4 flex items-center justify-start transition-opacity duration-500 ease-in-out"
                     style={{ opacity: progress > 10 ? 1 : 0 }}
                 >
-                    <div className="w-full max-w-xs h-1 bg-gray-700 rounded-full"></div>
+                    <div className="absolute w-full top-1/2 left-0 -translate-y-1/2">
+                         <div className="w-full h-1 bg-gray-700 rounded-full"></div>
+                    </div>
+                   
                     <div 
-                        className="absolute text-6xl transition-transform duration-100 ease-linear"
-                        style={{ transform: `translateX(calc(-50% + ${busPosition}% - ${busPosition/2}px))` }}
+                        className="absolute text-5xl z-10"
+                        style={{ 
+                            left: `${progress}%`,
+                            transform: `translateX(-${progress}%)`,
+                            transition: 'left 0.1s linear'
+                        }}
                     >
                         🚍
                     </div>
-                    <MapPin className="absolute right-0 text-accent h-12 w-12" style={{ transform: 'translateX(20px)' }}/>
+                    <MapPin className="absolute right-0 text-accent h-12 w-12 transform -translate-y-1" />
                 </div>
                 
                 <div className="relative h-10 overflow-hidden">
