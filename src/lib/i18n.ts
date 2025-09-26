@@ -78,6 +78,7 @@ export const translations = {
     note: 'Note',
     total_distance_km: 'Total Distance (km)',
     total_time_min: 'Est. Time (min)',
+    frequency: 'Frequency',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -155,6 +156,7 @@ export const translations = {
     note: 'குறிப்பு',
     total_distance_km: 'மொத்த தூரம் (கிமீ)',
     total_time_min: 'மதி. நேரம் (நிமி)',
+    frequency: 'அதிர்வெண்',
   },
 };
 

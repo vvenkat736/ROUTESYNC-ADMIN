@@ -226,8 +226,9 @@ export default function RouteManagement() {
                     <TableRow>
                       <TableHead>{t('route_id')}</TableHead>
                       <TableHead>{t('route_name')}</TableHead>
-                      <TableHead>{t('bus_type')}</TableHead>
                       <TableHead>{t('stops')}</TableHead>
+                      <TableHead>{t('frequency')}</TableHead>
+                      <TableHead>{t('bus_type')}</TableHead>
                       <TableHead>{t('total_distance_km')}</TableHead>
                       <TableHead>{t('total_time_min')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
@@ -238,8 +239,9 @@ export default function RouteManagement() {
                       <TableRow key={route.id}>
                         <TableCell className="font-medium">{route.id}</TableCell>
                         <TableCell>{route.name}</TableCell>
-                        <TableCell>{route.type}</TableCell>
                         <TableCell>{route.stops}</TableCell>
+                        <TableCell>{route.frequency}</TableCell>
+                        <TableCell>{route.type}</TableCell>
                         <TableCell>{route.total_distance.toFixed(2)}</TableCell>
                         <TableCell>{route.estimated_mins}</TableCell>
                         <TableCell className="text-right">
