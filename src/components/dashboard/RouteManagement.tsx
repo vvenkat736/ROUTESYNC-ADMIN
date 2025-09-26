@@ -157,6 +157,8 @@ export default function RouteManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('route_id')}</TableHead>
+                      <TableHead>{t('route_name')}</TableHead>
+                      <TableHead>{t('bus_type')}</TableHead>
                       <TableHead>{t('stops')}</TableHead>
                       <TableHead>{t('start_end_stops')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
@@ -166,6 +168,8 @@ export default function RouteManagement() {
                     {routes.map((route) => (
                       <TableRow key={route.id}>
                         <TableCell className="font-medium">{route.id}</TableCell>
+                        <TableCell>{route.routeName}</TableCell>
+                        <TableCell>{route.busType}</TableCell>
                         <TableCell>{route.stops}</TableCell>
                         <TableCell>{route.startStop} / {route.endStop}</TableCell>
                         <TableCell className="text-right">

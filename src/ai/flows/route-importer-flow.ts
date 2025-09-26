@@ -27,10 +27,14 @@ const PointSchema = z.object({
 // Route schema for the output
 const RouteSchema = z.object({
     id: z.number().describe('The unique identifier for the route.'),
+    routeName: z.string().describe('The name of the route.'),
+    busType: z.string().describe('The type of bus for the route (e.g., Express, Deluxe).'),
     stops: z.number().describe('The number of stops in the route.'),
     path: z.array(PointSchema).describe('An array of coordinates representing the route path.'),
     startStop: z.string().describe('The name of the first stop in the route.'),
     endStop: z.string().describe('The name of the last stop in the route.'),
+    totalDistance: z.number().describe('The total distance of the route in kilometers.'),
+    totalTime: z.number().describe('The total estimated run time for the route in minutes.'),
 });
 
 // Output schema containing a list of routes
@@ -60,7 +64,6 @@ const getStops = ai.defineTool(
 
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
-    // Directly call the prompt and handle potential null output here
     const { output } = await prompt(input);
     
     if (output && output.routes) {
@@ -87,13 +90,20 @@ const prompt = ai.definePrompt({
   tools: [getStops],
   prompt: `You are a data processing expert for a bus fleet in India. You will be given the content of a CSV file containing bus route information.
 Your task is to parse this CSV content, and construct the route paths.
-The CSV file has columns: route_id, stop_sequence, stop_name.
+The CSV file has columns: route_id, route_name, stop_sequence, stop_name, distances_km, e_run_time, bus_type.
 
 You must group the stops by 'route_id' and order them by the 'stop_sequence' number.
+For each group, the 'route_name' and 'bus_type' will be the same.
+The 'distances_km' and 'e_run_time' columns represent the value for each segment of the route. You need to sum these up for each route to get the 'totalDistance' and 'totalTime'.
+
 For each 'stop_name' in the CSV, you MUST use the getStops tool to find its exact geographic coordinates (latitude and longitude). The tool provides a list of all known stops and their locations. Match the 'stop_name' from the CSV with the 'stop_name' from the tool's output to find the coordinates.
 
-After finding the coordinates for all stops in a route, construct a path for each route as an array of coordinates in the correct sequence. The 'stops' field in the output schema should be the count of stops for that route.
-The 'startStop' should be the name of the first stop in the sequence, and 'endStop' should be the name of the last stop.
+After finding the coordinates for all stops in a route, construct a path for each route as an array of coordinates in the correct sequence.
+- The 'id' field is the 'route_id'.
+- The 'stops' field in the output schema should be the count of stops for that route.
+- The 'routeName' is the 'route_name' from the CSV.
+- The 'busType' is the 'bus_type' from the CSV.
+- The 'startStop' should be the name of the first stop in the sequence, and 'endStop' should be the name of the last stop.
 
 The final output must be a JSON object containing a list of routes, conforming to the required schema.
 
@@ -101,18 +111,3 @@ CSV Content:
 {{{csvContent}}}
 `,
 });
-
-const routeImporterFlow = ai.defineFlow(
-  {
-    name: 'routeImporterFlow',
-    inputSchema: ProcessRoutesInputSchema,
-    outputSchema: ProcessRoutesOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    if (!output) {
-        throw new Error("The AI model failed to return a valid output.");
-    }
-    return output;
-  }
-);
