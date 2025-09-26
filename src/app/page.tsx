@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import dynamic from 'next/dynamic';
-import { SidebarProvider, Sidebar, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { FleetOverview } from "@/components/dashboard/FleetOverview";
@@ -11,7 +11,6 @@ import { TripsChart } from "@/components/dashboard/TripsChart";
 import { DelaysChart } from "@/components/dashboard/DelaysChart";
 import { CarbonFootprintChart } from "@/components/dashboard/CarbonFootprintChart";
 import { RouteManagement } from "@/components/dashboard/RouteManagement";
-import LoadingScreen from "@/components/dashboard/LoadingScreen";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
@@ -20,22 +19,11 @@ const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveM
 });
 
 export default function Home() {
-  const [loading, setLoading] = React.useState(true);
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 4000); // Simulate loading time for the splash screen
-    
     setIsClient(true);
-    
-    return () => clearTimeout(timer);
   }, []);
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
 
   return (
     <SidebarProvider>

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
@@ -111,34 +111,60 @@ export default function InteractiveMap() {
                 <h2 className="font-semibold text-primary">{t('live_fleet_map')}</h2>
             </div>
             <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {routes.map((route, index) => (
-                route.path && route.path.length > 0 &&
-                  <Polyline key={route.id} positions={route.path} color={routeColors[index % routeColors.length]} weight={3} />
-              ))}
-              {animatedBuses.map((bus) => (
-                <Marker
-                  key={bus.id}
-                  position={[bus.lat, bus.lng]}
-                  icon={createBusIcon(bus.status)}
-                >
-                  <Popup>
-                    <div className="p-1 font-sans">
-                      <h3 className="font-bold text-lg mb-2">{t('bus')} #{bus.busNumber}</h3>
-                      <p><span className="font-semibold">{t('route')}:</span> {bus.route}</p>
-                      <p><span className="font-semibold">{t('driver')}:</span> {bus.driver}</p>
-                      <p><span className="font-semibold">{t('status')}:</span> 
-                        <span style={{ color: statusColors[bus.status] }} className="ml-1 font-bold">
-                          {t(bus.status.toLowerCase() as any)}
-                        </span>
-                      </p>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+               <LayersControl position="topright">
+                <LayersControl.BaseLayer checked name="Streets">
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                </LayersControl.BaseLayer>
+                 <LayersControl.BaseLayer name="Satellite">
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
+                        url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                    />
+                </LayersControl.BaseLayer>
+                <LayersControl.BaseLayer name="Dark">
+                    <TileLayer
+                        attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    />
+                </LayersControl.BaseLayer>
+                
+                <LayersControl.Overlay checked name="Bus Routes">
+                  <LayerGroup>
+                    {routes.map((route, index) => (
+                      route.path && route.path.length > 0 &&
+                        <Polyline key={route.id} positions={route.path} color={routeColors[index % routeColors.length]} weight={3} />
+                    ))}
+                  </LayerGroup>
+                </LayersControl.Overlay>
+
+                <LayersControl.Overlay checked name="Buses">
+                  <LayerGroup>
+                    {animatedBuses.map((bus) => (
+                      <Marker
+                        key={bus.id}
+                        position={[bus.lat, bus.lng]}
+                        icon={createBusIcon(bus.status)}
+                      >
+                        <Popup>
+                          <div className="p-1 font-sans">
+                            <h3 className="font-bold text-lg mb-2">{t('bus')} #{bus.busNumber}</h3>
+                            <p><span className="font-semibold">{t('route')}:</span> {bus.route}</p>
+                            <p><span className="font-semibold">{t('driver')}:</span> {bus.driver}</p>
+                            <p><span className="font-semibold">{t('status')}:</span> 
+                              <span style={{ color: statusColors[bus.status] }} className="ml-1 font-bold">
+                                {t(bus.status.toLowerCase() as any)}
+                              </span>
+                            </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </LayerGroup>
+                </LayersControl.Overlay>
+              </LayersControl>
             </MapContainer>
           </div>
       </CardContent>
