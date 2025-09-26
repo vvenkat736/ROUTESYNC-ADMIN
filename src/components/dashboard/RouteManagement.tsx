@@ -161,6 +161,8 @@ export default function RouteManagement() {
                       <TableHead>{t('bus_type')}</TableHead>
                       <TableHead>{t('stops')}</TableHead>
                       <TableHead>{t('start_end_stops')}</TableHead>
+                      <TableHead>{t('total_distance_km')}</TableHead>
+                      <TableHead>{t('total_time_min')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -172,6 +174,8 @@ export default function RouteManagement() {
                         <TableCell>{route.busType}</TableCell>
                         <TableCell>{route.stops}</TableCell>
                         <TableCell>{route.startStop} / {route.endStop}</TableCell>
+                        <TableCell>{route.totalDistance?.toFixed(2)}</TableCell>
+                        <TableCell>{route.totalTime}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8">
