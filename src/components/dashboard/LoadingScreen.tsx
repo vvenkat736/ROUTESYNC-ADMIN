@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 const BusIcon = () => (
-    <div className="text-4xl">🚌</div>
+    <div className="text-4xl">🚍</div>
 );
 
 const GpsPointerIcon = () => (

@@ -9,13 +9,25 @@ import { buses as initialBuses } from '@/lib/data';
 import { useLanguage } from '@/hooks/use-language';
 import type { Bus } from '@/lib/data';
 
-const createBusIcon = () => {
+const statusColors: { [key: string]: string } = {
+  Active: '#22C55E', // green-500
+  Delayed: '#F97316', // orange-500
+  Inactive: '#6B7280', // gray-500
+};
+
+const createBusIcon = (status: Bus['status']) => {
+    const color = statusColors[status] || '#000';
     return L.divIcon({
-      html: `<div style="font-size: 24px;">🚌</div>`,
+      html: `
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-bottom: 2px; border: 1px solid white;"></div>
+          <div style="font-size: 24px;">🚍</div>
+        </div>
+      `,
       className: 'bg-transparent border-0',
-      iconSize: [24, 24],
-      iconAnchor: [12, 24],
-      popupAnchor: [0, -24],
+      iconSize: [30, 40],
+      iconAnchor: [15, 40],
+      popupAnchor: [0, -40],
     });
 };
 
@@ -45,12 +57,6 @@ export default function InteractiveMap() {
     return () => clearInterval(interval);
   }, []);
 
-  const statusColors: { [key: string]: string } = {
-    Active: '#22C55E', // green-500
-    Delayed: '#F97316', // orange-500
-    Inactive: '#6B7280', // gray-500
-  };
-
   return (
     <Card className="h-[600px] lg:h-full overflow-hidden">
       <CardContent className="p-0 h-full">
@@ -68,7 +74,7 @@ export default function InteractiveMap() {
                 <Marker
                   key={bus.id}
                   position={[bus.lat, bus.lng]}
-                  icon={createBusIcon()}
+                  icon={createBusIcon(bus.status)}
                 >
                   <Popup>
                     <div className="p-1 font-sans">
