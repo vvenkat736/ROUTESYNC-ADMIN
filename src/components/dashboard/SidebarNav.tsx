@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -20,7 +21,8 @@ import {
   FileUp,
   Settings,
   CircleUser,
-  Bot
+  Bot,
+  MapPin
 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 
@@ -41,6 +43,7 @@ export function SidebarNav() {
     { href: "/route-optimizer", icon: <Bot />, label: 'route_optimizer' },
     { href: "/alerts", icon: <Bell />, label: 'alerts' },
     { href: "/route-import", icon: <FileUp />, label: 'route_import' },
+    { href: "/stop-import", icon: <MapPin />, label: 'stop_import' },
   ];
 
   const footerMenuItems = [

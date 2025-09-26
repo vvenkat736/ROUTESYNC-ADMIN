@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'ta';
 
 export const translations = {
@@ -117,7 +118,7 @@ export const translations = {
     delays_per_route_desc: 'ஒவ்வொரு வழித்தடத்திலும் பதிவு செய்யப்பட்ட தாமதங்களின் எண்ணிக்கை.',
     carbon_footprint: 'கார்பன் தடம்',
     carbon_footprint_desc: 'கார் பயணங்களுடன் ஒப்பிடும்போது சேமிக்கப்பட்ட CO₂ உமிழ்வுகள்.',
-f eet_emissions: 'பேருந்து உமிழ்வுகள்',
+    fleet_emissions: 'பேருந்து உமிழ்வுகள்',
     car_emissions: 'சமமான கார் உமிழ்வுகள்',
     alerts_title: 'நிகழ்நேர எச்சரிக்கைகள்',
     alerts_description: 'SOS, தாமதங்கள் மற்றும் பிற முக்கிய அறிவிப்புகள்.',
@@ -134,7 +135,7 @@ f eet_emissions: 'பேருந்து உமிழ்வுகள்',
     destinations: 'சேருமிடங்கள்',
     optimize_route: 'வழியை மேம்படுத்து',
     optimized_route: 'மேம்படுத்தப்பட்ட வழி',
-eta: 'மதிப்பிடப்பட்ட வருகை நேரம்',
+    eta: 'மதிப்பிடப்பட்ட வருகை நேரம்',
     start_end_stops: 'தொடக்க / இறுதி நிறுத்தங்கள்',
     stop_import: 'நிறுத்த இறக்குமதி',
     stop_management: 'நிறுத்த மேலாண்மை',
