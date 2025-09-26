@@ -1,11 +1,12 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
-import { buses as initialBuses } from '@/lib/data';
+import { buses as initialBuses, routes } from '@/lib/data';
 import { useLanguage } from '@/hooks/use-language';
 import type { Bus } from '@/lib/data';
 
@@ -14,6 +15,8 @@ const statusColors: { [key: string]: string } = {
   Delayed: '#F97316', // orange-500
   Inactive: '#6B7280', // gray-500
 };
+
+const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
 
 const createBusIcon = (status: Bus['status']) => {
     const color = statusColors[status] || '#000';
@@ -31,36 +34,70 @@ const createBusIcon = (status: Bus['status']) => {
     });
 };
 
+interface AnimatedBus extends Bus {
+  routePath: [number, number][];
+  currentSegment: number;
+  segmentProgress: number;
+}
+
 export default function InteractiveMap() {
   const { t } = useLanguage();
-  const [buses, setBuses] = useState<Bus[]>(initialBuses);
+  const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
   useEffect(() => {
-    if (initialBuses.length > 0) {
-      const avgLat = initialBuses.reduce((sum, bus) => sum + bus.lat, 0) / initialBuses.length;
-      const avgLng = initialBuses.reduce((sum, bus) => sum + bus.lng, 0) / initialBuses.length;
+    const busesWithRoutes = initialBuses.map(bus => {
+        const routeData = routes.find(r => r.id === bus.route);
+        return {
+            ...bus,
+            routePath: routeData?.path || [],
+            currentSegment: 0,
+            segmentProgress: 0,
+        };
+    }).filter(b => b.routePath.length > 0);
+
+    setAnimatedBuses(busesWithRoutes);
+
+    if (busesWithRoutes.length > 0) {
+      const avgLat = busesWithRoutes.reduce((sum, bus) => sum + bus.lat, 0) / busesWithRoutes.length;
+      const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
       setMapCenter([avgLat, avgLng]);
     }
   }, []);
   
   useEffect(() => {
     const interval = setInterval(() => {
-      setBuses(currentBuses => 
+      setAnimatedBuses(currentBuses => 
         currentBuses.map(bus => {
-          if (bus.status === 'Active') {
-            const latChange = (Math.random() - 0.5) * 0.001;
-            const lngChange = (Math.random() - 0.5) * 0.001;
-            return {
-              ...bus,
-              lat: bus.lat + latChange,
-              lng: bus.lng + lngChange,
-            };
+          if (bus.status !== 'Active' || bus.routePath.length < 2) return bus;
+          
+          let { currentSegment, segmentProgress } = bus;
+          const speed = 0.05; // Adjust for faster/slower animation
+          segmentProgress += speed;
+
+          const startPoint = bus.routePath[currentSegment];
+          const endPoint = bus.routePath[currentSegment + 1];
+
+          if (!startPoint || !endPoint) return bus;
+
+          const newLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
+          const newLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
+
+          if (segmentProgress >= 1.0) {
+            currentSegment = (currentSegment + 1) % (bus.routePath.length - 1);
+            segmentProgress = 0;
           }
-          return bus;
+
+          return {
+            ...bus,
+            lat: newLat,
+            lng: newLng,
+            currentSegment,
+            segmentProgress,
+          };
         })
       );
-    }, 3000); // Update every 3 seconds
+    }, 1000); // Update every second
 
     return () => clearInterval(interval);
   }, []);
@@ -78,7 +115,10 @@ export default function InteractiveMap() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {buses.map((bus) => (
+              {routes.map((route, index) => (
+                  <Polyline key={route.id} positions={route.path} color={routeColors[index % routeColors.length]} weight={3} />
+              ))}
+              {animatedBuses.map((bus) => (
                 <Marker
                   key={bus.id}
                   position={[bus.lat, bus.lng]}
@@ -104,3 +144,4 @@ export default function InteractiveMap() {
     </Card>
   );
 }
+
