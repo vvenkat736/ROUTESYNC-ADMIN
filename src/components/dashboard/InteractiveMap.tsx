@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
-import { buses } from '@/lib/data';
+import { buses as initialBuses } from '@/lib/data';
 import { useLanguage } from '@/hooks/use-language';
 import type { Bus } from '@/lib/data';
 
@@ -23,8 +23,30 @@ const createBusIcon = (color: string) => {
 
 export default function InteractiveMap() {
   const { t } = useLanguage();
+  const [buses, setBuses] = useState<Bus[]>(initialBuses);
   const position: [number, number] = [11.0168, 76.9558];
   
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBuses(currentBuses => 
+        currentBuses.map(bus => {
+          if (bus.status === 'Active') {
+            const latChange = (Math.random() - 0.5) * 0.001;
+            const lngChange = (Math.random() - 0.5) * 0.001;
+            return {
+              ...bus,
+              lat: bus.lat + latChange,
+              lng: bus.lng + lngChange,
+            };
+          }
+          return bus;
+        })
+      );
+    }, 3000); // Update every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const statusColors: { [key: string]: string } = {
     Active: '#22C55E', // green-500
     Delayed: '#F97316', // orange-500
