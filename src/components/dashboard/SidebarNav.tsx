@@ -20,6 +20,7 @@ import {
   FileUp,
   Settings,
   CircleUser,
+  Bot
 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 
@@ -35,8 +36,9 @@ export function SidebarNav() {
 
   const menuItems = [
     { href: "/", icon: <LayoutDashboard />, label: 'dashboard' },
-    { href: "#", icon: <Map />, label: 'live_map' },
-    { href: "#", icon: <BarChart2 />, label: 'analytics' },
+    { href: "/map", icon: <Map />, label: 'live_map' },
+    { href: "/analytics", icon: <BarChart2 />, label: 'analytics' },
+    { href: "/route-optimizer", icon: <Bot />, label: 'route_optimizer' },
     { href: "#", icon: <Bell />, label: 'alerts' },
     { href: "#", icon: <FileUp />, label: 'route_import' },
   ];

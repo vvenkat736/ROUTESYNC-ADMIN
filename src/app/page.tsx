@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import dynamic from 'next/dynamic';
-import { SidebarProvider, Sidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarTrigger } from "@/components/ui/sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { FleetOverview } from "@/components/dashboard/FleetOverview";
@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <SidebarProvider>
       <div className="min-h-screen md:flex">
-        <Sidebar className="border-r" side="left">
+        <Sidebar className="border-r" side="left" collapsible="icon">
           <SidebarNav />
         </Sidebar>
         <div className="flex-1">
