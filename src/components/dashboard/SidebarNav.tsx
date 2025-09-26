@@ -39,8 +39,8 @@ export function SidebarNav() {
     { href: "/map", icon: <Map />, label: 'live_map' },
     { href: "/analytics", icon: <BarChart2 />, label: 'analytics' },
     { href: "/route-optimizer", icon: <Bot />, label: 'route_optimizer' },
-    { href: "#", icon: <Bell />, label: 'alerts' },
-    { href: "#", icon: <FileUp />, label: 'route_import' },
+    { href: "/", icon: <Bell />, label: 'alerts' },
+    { href: "/", icon: <FileUp />, label: 'route_import' },
   ];
 
   const footerMenuItems = [
@@ -65,7 +65,7 @@ export function SidebarNav() {
         <SidebarMenu>
           {menuItems.map(item => (
             <SidebarMenuItem key={item.label}>
-              <SidebarMenuButton asChild isActive={pathname === item.href}>
+              <SidebarMenuButton asChild isActive={pathname === item.href && item.href !== '/' || (pathname === '/' && item.href === '/')}>
                 <Link href={item.href}>
                   {item.icon}
                   <span>{t(item.label as any)}</span>
