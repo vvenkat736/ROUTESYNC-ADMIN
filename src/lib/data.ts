@@ -18,21 +18,21 @@ export type Route = {
 };
 
 
-export const buses: Omit<Bus, 'id'>[] = [
-  { busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
-  { busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 10.83178, lng: 78.69323 },
-  { busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 103, status: 'Delayed', lat: 10.82577, lng: 78.68337 },
-  { busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 101, status: 'Active', lat: 10.824, lng: 78.6815 },
-  { busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 104, status: 'Inactive', lat: 10.80009, lng: 78.68786 },
-  { busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 102, status: 'Active', lat: 10.80783, lng: 78.69416 },
-  { busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 105, status: 'Delayed', lat: 10.79, lng: 78.72 },
-  { busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
+export const buses: Bus[] = [
+  { id: 'bus_1', busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
+  { id: 'bus_2', busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 10.83178, lng: 78.69323 },
+  { id: 'bus_3', busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 103, status: 'Delayed', lat: 10.82577, lng: 78.68337 },
+  { id: 'bus_4', busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 101, status: 'Active', lat: 10.824, lng: 78.6815 },
+  { id: 'bus_5', busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 104, status: 'Inactive', lat: 10.80009, lng: 78.68786 },
+  { id: 'bus_6', busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 102, status: 'Active', lat: 10.80783, lng: 78.69416 },
+  { id: 'bus_7', busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 105, status: 'Delayed', lat: 10.79, lng: 78.72 },
+  { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
 ];
 
 export const routes: Route[] = [
-    { 
-      id: 101, 
-      stops: 15, 
+    {
+      id: 101,
+      stops: 15,
       frequency: '20 mins',
       path: [
         [10.850, 78.683], // Srirangam
@@ -42,9 +42,9 @@ export const routes: Route[] = [
         [10.798, 78.680], // Central Bus Stand
       ]
     },
-    { 
-      id: 102, 
-      stops: 22, 
+    {
+      id: 102,
+      stops: 22,
       frequency: '15 mins',
       path: [
         [10.798, 78.680], // Central Bus Stand
@@ -54,9 +54,9 @@ export const routes: Route[] = [
         [10.830, 78.710], // SIT
       ]
     },
-    { 
-      id: 103, 
-      stops: 18, 
+    {
+      id: 103,
+      stops: 18,
       frequency: '25 mins',
       path: [
         [10.825, 78.683], // Chatram Bus Stand
@@ -66,9 +66,9 @@ export const routes: Route[] = [
         [10.850, 78.683], // Srirangam
       ]
     },
-    { 
-      id: 104, 
-      stops: 12, 
+    {
+      id: 104,
+      stops: 12,
       frequency: '30 mins',
       path: [
         [10.798, 78.680], // Central Bus Stand
@@ -78,9 +78,9 @@ export const routes: Route[] = [
         [10.790, 78.720], // Airport
       ]
     },
-    { 
-      id: 105, 
-      stops: 25, 
+    {
+      id: 105,
+      stops: 25,
       frequency: '18 mins',
       path: [
         [10.825, 78.683], // Chatram Bus Stand
@@ -93,9 +93,9 @@ export const routes: Route[] = [
 ];
 
 export const alerts = [
-  { type: 'SOS', busNumber: 'TN 37 D 9012', message: 'Mechanical issue reported.' },
-  { type: 'Delayed', busNumber: 'TN 37 G 4567', message: 'Heavy traffic on Gandhipuram flyover.' },
-  { type: 'Inactive', busNumber: 'TN 37 E 7890', message: 'Bus offline for 30 minutes.' },
+  { id: 'alert_1', type: 'SOS', busNumber: 'TN 37 D 9012', message: 'Mechanical issue reported.' },
+  { id: 'alert_2', type: 'Delayed', busNumber: 'TN 37 G 4567', message: 'Heavy traffic on Gandhipuram flyover.' },
+  { id: 'alert_3', type: 'Inactive', busNumber: 'TN 37 E 7890', message: 'Bus offline for 30 minutes.' },
 ];
 
 export const tripsPerDayData = [

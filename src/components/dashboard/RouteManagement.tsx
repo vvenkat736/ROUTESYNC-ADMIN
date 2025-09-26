@@ -1,5 +1,7 @@
+
 "use client"
 
+import * as React from "react"
 import {
   Card,
   CardContent,
@@ -27,12 +29,28 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { UploadCloud, File, Pencil, Trash2 } from "lucide-react"
+import { UploadCloud, Pencil, Trash2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
-import { routes } from "@/lib/data"
+import { db } from "@/lib/firebase"
+import { collection, onSnapshot, query } from "firebase/firestore"
+import type { Route } from "@/lib/data"
 
 export function RouteManagement() {
   const { t } = useLanguage()
+  const [routes, setRoutes] = React.useState<Route[]>([]);
+
+  React.useEffect(() => {
+    const q = query(collection(db, "routes"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const routesData: Route[] = [];
+      querySnapshot.forEach((doc) => {
+        routesData.push({ id: parseInt(doc.id), ...doc.data() } as Route);
+      });
+      setRoutes(routesData);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <Card>

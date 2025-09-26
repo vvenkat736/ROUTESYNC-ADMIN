@@ -5,7 +5,7 @@
 // Then run: ts-node scripts/seed.ts
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, writeBatch, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, writeBatch, Timestamp, doc } from 'firebase/firestore';
 import { buses, alerts as staticAlerts, routes } from '../src/lib/data';
 
 // IMPORTANT: Replace with your actual Firebase project configuration
@@ -25,9 +25,9 @@ async function seedDatabase() {
   // Seed buses
   const busesCollection = collection(db, 'buses');
   console.log('Seeding buses...');
-  buses.forEach(bus => {
+  buses.forEach((bus, index) => {
     const { id, ...busData } = bus;
-    const docRef = collection(busesCollection).doc(String(id));
+    const docRef = doc(busesCollection, `bus_${index + 1}`);
     batch.set(docRef, busData);
   });
   console.log('Buses prepared.');
@@ -37,7 +37,7 @@ async function seedDatabase() {
   console.log('Seeding alerts...');
   staticAlerts.forEach(alert => {
     const { id, timestamp, ...alertData } = alert;
-    const docRef = collection(alertsCollection).doc();
+    const docRef = doc(alertsCollection);
     // Create a realistic timestamp
     const alertTimestamp = Timestamp.fromDate(new Date(Date.now() - Math.random() * 1000 * 60 * 15));
     batch.set(docRef, { ...alertData, timestamp: alertTimestamp });
@@ -49,7 +49,7 @@ async function seedDatabase() {
     console.log('Seeding routes...');
     routes.forEach(route => {
         const { id, ...routeData } = route;
-        const docRef = collection(routesCollection).doc(String(id));
+        const docRef = doc(routesCollection, String(id));
         batch.set(docRef, routeData);
     });
     console.log('Routes prepared.');
