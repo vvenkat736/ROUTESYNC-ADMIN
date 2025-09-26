@@ -4,7 +4,7 @@ export type Bus = {
   busNumber: string;
   driver: string;
   driverAvatar: string;
-  route: number;
+  route: string; // Changed to string to match new route_id format
   status: 'Active' | 'Delayed' | 'Inactive';
   lat: number;
   lng: number;
@@ -12,10 +12,10 @@ export type Bus = {
 
 export type Route = {
     id: string; // Firestore doc id
-    route_id: number;
+    route_id: string;
     route_name: string;
     stop_sequence: number;
-    stop_name: string;
+    stop_name: string; // This will be the stop_id like 'S14'
     distances_km: number;
     etas_min: number;
     total_distance: number;
@@ -23,6 +23,7 @@ export type Route = {
     frequency: number;
     bus_type: string;
 };
+
 
 export type Stop = {
   stop_id: string;
@@ -62,14 +63,14 @@ export const stops: Stop[] = [
 
 
 export const buses: Bus[] = [
-  { id: 'bus_1', busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
-  { id: 'bus_2', busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 10.83178, lng: 78.69323 },
-  { id: 'bus_3', busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 103, status: 'Delayed', lat: 10.82577, lng: 78.68337 },
-  { id: 'bus_4', busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 101, status: 'Active', lat: 10.824, lng: 78.6815 },
-  { id: 'bus_5', busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 104, status: 'Inactive', lat: 10.80009, lng: 78.68786 },
-  { id: 'bus_6', busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 102, status: 'Active', lat: 10.80783, lng: 78.69416 },
-  { id: 'bus_7', busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 105, status: 'Delayed', lat: 10.79, lng: 78.72 },
-  { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
+  { id: 'bus_1', busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R01', status: 'Active', lat: 10.79861, lng: 78.68041 },
+  { id: 'bus_2', busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R02', status: 'Active', lat: 10.83178, lng: 78.69323 },
+  { id: 'bus_3', busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R03', status: 'Delayed', lat: 10.82577, lng: 78.68337 },
+  { id: 'bus_4', busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R01', status: 'Active', lat: 10.824, lng: 78.6815 },
+  { id: 'bus_5', busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R04', status: 'Inactive', lat: 10.80009, lng: 78.68786 },
+  { id: 'bus_6', busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 'R02', status: 'Active', lat: 10.80783, lng: 78.69416 },
+  { id: 'bus_7', busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 'R05', status: 'Delayed', lat: 10.79, lng: 78.72 },
+  { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 'R03', status: 'Active', lat: 10.7855, lng: 78.7175 },
 ];
 
 
@@ -90,11 +91,11 @@ export const tripsPerDayData = [
 ];
 
 export const delaysPerRouteData = [
-  { route: '101', delays: 5 },
-  { route: '102', delays: 8 },
-  { route: '103', delays: 12 },
-  { route: '104', delays: 3 },
-  { route: '105', delays: 15 },
+  { route: 'R01', delays: 5 },
+  { route: 'R02', delays: 8 },
+  { route: 'R03', delays: 12 },
+  { route: 'R04', delays: 3 },
+  { route: 'R05', delays: 15 },
 ];
 
 export const busStatusData = (buses: Bus[]) => [

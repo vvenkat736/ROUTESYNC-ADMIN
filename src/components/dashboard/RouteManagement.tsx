@@ -71,7 +71,6 @@ export default function RouteManagement() {
       querySnapshot.forEach((doc) => {
         routesData.push({ id: doc.id, ...doc.data() });
       });
-      // Sort by route_id and then by stop_sequence
       routesData.sort((a, b) => {
         if (a.route_id < b.route_id) return -1;
         if (a.route_id > b.route_id) return 1;
@@ -105,28 +104,43 @@ export default function RouteManagement() {
     reader.onload = async (e) => {
         const content = e.target?.result as string;
         try {
-            const parsedRoutes = parseCSV(content);
-            if (parsedRoutes.length === 0) {
+            const parsedRows = parseCSV(content);
+            if (parsedRows.length === 0) {
               throw new Error("CSV is empty or invalid.");
             }
 
             const db = getFirestore();
             const batch = writeBatch(db);
             const routesCollection = collection(db, 'routes');
+            let totalSegments = 0;
 
-            parsedRoutes.forEach(route => {
-                const docRef = doc(routesCollection);
-                batch.set(docRef, {
-                  route_id: parseInt(route.route_id, 10) || 0,
-                  route_name: route.route_name || '',
-                  stop_sequence: parseInt(route.stop_sequence, 10) || 0,
-                  stop_name: route.stop_name || '',
-                  distances_km: parseFloat(route.distances_km) || 0,
-                  etas_min: parseInt(route.etas_min, 10) || 0,
-                  total_distance: parseFloat(route.total_distance) || 0,
-                  estimated_mins: parseInt(route.estimated_mins, 10) || 0,
-                  frequency: parseInt(route.frequency, 10) || 0,
-                  bus_type: route['bus_type'] || route.bus_type || '',
+            parsedRows.forEach(row => {
+                const route_id = row.route_id;
+                const route_name = row.route_name;
+                const total_distance = parseFloat(row.total_distance) || 0;
+                const estimated_mins = parseInt(row.estimated_mins, 10) || 0;
+                const frequency = parseInt(row.frequency, 10) || 0;
+                const bus_type = row.bus_type || '';
+
+                const stop_sequences = row.stop_sequence.split('|');
+                const distances_kms = row.distances_km.split('|');
+                const etas_mins = row.etas_min.split('|');
+                
+                stop_sequences.forEach((stop_name, index) => {
+                    const docRef = doc(routesCollection);
+                    batch.set(docRef, {
+                      route_id: route_id,
+                      route_name: route_name,
+                      stop_sequence: index + 1, // The actual sequence number
+                      stop_name: stop_name.trim(), // This is the stop_id like 'S14'
+                      distances_km: parseFloat(distances_kms[index]) || 0,
+                      etas_min: parseInt(etas_mins[index], 10) || 0,
+                      total_distance: total_distance,
+                      estimated_mins: estimated_mins,
+                      frequency: frequency,
+                      bus_type: bus_type
+                    });
+                    totalSegments++;
                 });
             });
 
@@ -134,7 +148,7 @@ export default function RouteManagement() {
 
             toast({
                 title: "Import Successful",
-                description: `${parsedRoutes.length} route segments have been imported.`,
+                description: `${totalSegments} route segments have been imported across ${parsedRows.length} routes.`,
             });
             setDialogOpen(false);
         } catch (error) {
