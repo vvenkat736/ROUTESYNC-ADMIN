@@ -6,7 +6,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, writeBatch, Timestamp, doc } from 'firebase/firestore';
-import { buses, alerts as staticAlerts, routes, stops } from '../src/lib/data';
+import { buses, alerts as staticAlerts, stops } from '../src/lib/data';
 
 // IMPORTANT: Replace with your actual Firebase project configuration
 const firebaseConfig = {
@@ -66,3 +66,5 @@ async function seedDatabase() {
 }
 
 seedDatabase();
+
+    

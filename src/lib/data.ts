@@ -11,11 +11,12 @@ export type Bus = {
 };
 
 export type Route = {
-    id: number;
-    stops: number;
-    path: [number, number][];
-    startStop: string;
-    endStop: string;
+    route_id: number;
+    route_name: string;
+    stop_sequence: number;
+    distances_km: number;
+    e_run_time: number;
+    bus_type: string;
 };
 
 export type Stop = {
@@ -66,12 +67,11 @@ export const buses: Bus[] = [
   { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
 ];
 
-export const routes: Route[] = [
+// This is now legacy data, as routes will be imported. Keeping for reference.
+export const routes: { id: number; stops: number; path: [number, number][]; }[] = [
     {
       id: 101,
       stops: 15,
-      startStop: 'Srirangam',
-      endStop: 'Central Bus Stand',
       path: [
         [10.850, 78.683], // Srirangam
         [10.830, 78.686], // Amma Mandapam
@@ -83,8 +83,6 @@ export const routes: Route[] = [
     {
       id: 102,
       stops: 22,
-      startStop: 'Central Bus Stand',
-      endStop: 'SIT',
       path: [
         [10.798, 78.680], // Central Bus Stand
         [10.788, 78.690], // Railway Junction
@@ -96,8 +94,6 @@ export const routes: Route[] = [
     {
       id: 103,
       stops: 18,
-      startStop: 'Chatram Bus Stand',
-      endStop: 'Srirangam',
       path: [
         [10.825, 78.683], // Chatram Bus Stand
         [10.840, 78.670], // Thillai Nagar
@@ -109,8 +105,6 @@ export const routes: Route[] = [
     {
       id: 104,
       stops: 12,
-      startStop: 'Central Bus Stand',
-      endStop: 'Airport',
       path: [
         [10.798, 78.680], // Central Bus Stand
         [10.760, 78.675], // Crawford
@@ -122,8 +116,6 @@ export const routes: Route[] = [
     {
       id: 105,
       stops: 25,
-      startStop: 'Chatram Bus Stand',
-      endStop: 'BHEL Township',
       path: [
         [10.825, 78.683], // Chatram Bus Stand
         [10.810, 78.695], // St. Joseph's College
@@ -171,3 +163,5 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
+
+    

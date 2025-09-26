@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
-import { Waypoints } from 'lucide-react';
+import { Waypoints, MapPin } from 'lucide-react';
 import { routes } from '@/lib/data';
 import { useLanguage } from '@/hooks/use-language';
-import type { Bus } from '@/lib/data';
+import type { Bus, Stop } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 
@@ -36,6 +36,15 @@ const createBusIcon = (status: Bus['status']) => {
     });
 };
 
+const createStopIcon = () => {
+    return L.divIcon({
+      html: `<div style="font-size: 20px;">📍</div>`,
+      className: 'bg-transparent border-0',
+      iconSize: [20, 20],
+      iconAnchor: [10, 20],
+    });
+};
+
 interface AnimatedBus extends Bus {
   routePath: [number, number][];
   currentSegment: number;
@@ -45,12 +54,13 @@ interface AnimatedBus extends Bus {
 export default function InteractiveMap() {
   const { t } = useLanguage();
   const [buses, setBuses] = useState<Bus[]>([]);
+  const [stops, setStops] = useState<Stop[]>([]);
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
   useEffect(() => {
-    const q = query(collection(db, 'buses'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const qBuses = query(collection(db, 'buses'));
+    const unsubscribeBuses = onSnapshot(qBuses, (querySnapshot) => {
       const busesData: Bus[] = [];
       querySnapshot.forEach((doc) => {
         busesData.push({ id: doc.id, ...doc.data() } as Bus);
@@ -58,7 +68,19 @@ export default function InteractiveMap() {
       setBuses(busesData);
     });
 
-    return () => unsubscribe();
+    const qStops = query(collection(db, 'stops'));
+    const unsubscribeStops = onSnapshot(qStops, (querySnapshot) => {
+        const stopsData: Stop[] = [];
+        querySnapshot.forEach((doc) => {
+            stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
+        });
+        setStops(stopsData);
+    });
+
+    return () => {
+        unsubscribeBuses();
+        unsubscribeStops();
+    };
   }, []);
 
   useEffect(() => {
@@ -180,6 +202,24 @@ export default function InteractiveMap() {
                     ))}
                   </LayerGroup>
                 </LayersControl.Overlay>
+                <LayersControl.Overlay checked name="Stops">
+                    <LayerGroup>
+                        {stops.map(stop => (
+                            <Marker
+                                key={stop.stop_id}
+                                position={[stop.lat, stop.lng]}
+                                icon={createStopIcon()}
+                            >
+                                <Tooltip>
+                                    <div className="p-1 font-sans">
+                                        <h3 className="font-bold text-base mb-1">{stop.stop_name}</h3>
+                                        {stop.note && <p className="text-xs text-muted-foreground">Note: {stop.note}</p>}
+                                    </div>
+                                </Tooltip>
+                            </Marker>
+                        ))}
+                    </LayerGroup>
+                </LayersControl.Overlay>
               </LayersControl>
             </MapContainer>
           </div>
@@ -187,3 +227,5 @@ export default function InteractiveMap() {
     </Card>
   );
 }
+
+    
