@@ -9,15 +9,13 @@ import { buses as initialBuses } from '@/lib/data';
 import { useLanguage } from '@/hooks/use-language';
 import type { Bus } from '@/lib/data';
 
-const createBusIcon = (color: string) => {
+const createBusIcon = () => {
     return L.divIcon({
-      html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" class="w-8 h-8 drop-shadow-lg">
-        <path d="M4 18.99h1v.51h14v-.5h1V18c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v.99zM18 6c0-1.1-.9-2-2-2H8C6.9 6 6 6.9 6 8v5h12V8c0-1.1 0-2 0-2zM6.5 14c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5S7.33 14 6.5 14zm11 0c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5S18.33 14 17.5 14z"/>
-      </svg>`,
+      html: `<div style="font-size: 24px;">🚌</div>`,
       className: 'bg-transparent border-0',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32],
+      iconSize: [24, 24],
+      iconAnchor: [12, 24],
+      popupAnchor: [0, -24],
     });
 };
 
@@ -70,7 +68,7 @@ export default function InteractiveMap() {
                 <Marker
                   key={bus.id}
                   position={[bus.lat, bus.lng]}
-                  icon={createBusIcon(statusColors[bus.status])}
+                  icon={createBusIcon()}
                 >
                   <Popup>
                     <div className="p-1 font-sans">
