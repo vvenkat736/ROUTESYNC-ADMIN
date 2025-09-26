@@ -77,7 +77,7 @@ export const translations = {
     longitude: 'Longitude',
     note: 'Note',
     total_distance_km: 'Total Distance (km)',
-    total_time_min: 'Total Time (min)',
+    total_time_min: 'Est. Time (min)',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -154,7 +154,7 @@ export const translations = {
     longitude: 'தீர்க்கரேகை',
     note: 'குறிப்பு',
     total_distance_km: 'மொத்த தூரம் (கிமீ)',
-    total_time_min: 'மொத்த நேரம் (நிமி)',
+    total_time_min: 'மதி. நேரம் (நிமி)',
   },
 };
 

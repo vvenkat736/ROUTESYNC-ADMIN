@@ -17,7 +17,10 @@ export type Route = {
     stop_sequence: number;
     stop_name: string;
     distances_km: number;
-    e_run_time: number;
+    etas_min: number;
+    total_distance: number;
+    estimated_mins: number;
+    frequency: number;
     bus_type: string;
 };
 

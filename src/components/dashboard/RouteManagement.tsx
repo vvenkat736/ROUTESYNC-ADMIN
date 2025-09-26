@@ -109,7 +109,6 @@ export default function RouteManagement() {
             const routesCollection = collection(db, 'routes');
 
             parsedRoutes.forEach(route => {
-                // Each row in the CSV is a route segment, we create a unique doc for it
                 const docRef = doc(routesCollection);
                 batch.set(docRef, {
                   route_id: parseInt(route.route_id, 10) || 0,
@@ -117,8 +116,11 @@ export default function RouteManagement() {
                   stop_sequence: parseInt(route.stop_sequence, 10) || 0,
                   stop_name: route.stop_name || '',
                   distances_km: parseFloat(route.distances_km) || 0,
-                  e_run_time: parseInt(route.e_run_time, 10) || 0,
-                  bus_type: route.bus_type || ''
+                  etas_min: parseInt(route.etas_min, 10) || 0,
+                  total_distance: parseFloat(route.total_distance) || 0,
+                  estimated_mins: parseInt(route.estimated_mins, 10) || 0,
+                  frequency: parseInt(route.frequency, 10) || 0,
+                  bus_type: route['bus _type'] || route.bus_type || '', // Handle potential space in header
                 });
             });
 
@@ -145,20 +147,26 @@ export default function RouteManagement() {
   };
 
   const groupedRoutes = React.useMemo(() => {
-    const byRouteId: { [key: number]: { name: string, type: string, stops: number, distance: number, time: number } } = {};
+    const byRouteId: { [key: number]: { 
+        name: string, 
+        type: string, 
+        stops: number, 
+        total_distance: number,
+        estimated_mins: number,
+        frequency: number,
+    } } = {};
     routes.forEach(r => {
       if (!byRouteId[r.route_id]) {
         byRouteId[r.route_id] = {
           name: r.route_name,
           type: r.bus_type,
           stops: 0,
-          distance: 0,
-          time: 0,
+          total_distance: r.total_distance,
+          estimated_mins: r.estimated_mins,
+          frequency: r.frequency
         };
       }
       byRouteId[r.route_id].stops++;
-      byRouteId[r.route_id].distance += r.distances_km;
-      byRouteId[r.route_id].time += r.e_run_time;
     });
     return Object.entries(byRouteId).map(([id, data]) => ({ id, ...data }));
   }, [routes]);
@@ -232,8 +240,8 @@ export default function RouteManagement() {
                         <TableCell>{route.name}</TableCell>
                         <TableCell>{route.type}</TableCell>
                         <TableCell>{route.stops}</TableCell>
-                        <TableCell>{route.distance.toFixed(2)}</TableCell>
-                        <TableCell>{route.time}</TableCell>
+                        <TableCell>{route.total_distance.toFixed(2)}</TableCell>
+                        <TableCell>{route.estimated_mins}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8">
