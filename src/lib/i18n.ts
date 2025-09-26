@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'ta';
 
 export const translations = {
