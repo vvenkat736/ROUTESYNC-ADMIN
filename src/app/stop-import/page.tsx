@@ -35,7 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, writeBatch, doc, addDoc, deleteDoc, getFirestore, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, writeBatch, doc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
 import type { Stop } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { geocodeLocation, GeocodeOutput } from "@/ai/flows/geocode-flow";
@@ -106,7 +106,6 @@ export default function StopImportPage() {
               throw new Error("CSV is empty or invalid.");
             }
 
-            const db = getFirestore();
             const batch = writeBatch(db);
             const stopsCollection = collection(db, 'stops');
 
@@ -202,7 +201,6 @@ export default function StopImportPage() {
         }
         setIsSaving(true);
         try {
-            const db = getFirestore();
             const docRef = doc(db, 'stops', stopId);
             await setDoc(docRef, {
                 stop_name: stopName,
