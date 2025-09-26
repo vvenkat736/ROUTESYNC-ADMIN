@@ -39,13 +39,13 @@ export function SidebarNav() {
     { href: "/map", icon: <Map />, label: 'live_map' },
     { href: "/analytics", icon: <BarChart2 />, label: 'analytics' },
     { href: "/route-optimizer", icon: <Bot />, label: 'route_optimizer' },
-    { href: "/", icon: <Bell />, label: 'alerts' },
-    { href: "/", icon: <FileUp />, label: 'route_import' },
+    { href: "/alerts", icon: <Bell />, label: 'alerts' },
+    { href: "/route-import", icon: <FileUp />, label: 'route_import' },
   ];
 
   const footerMenuItems = [
-    { href: "#", icon: <Settings />, label: 'settings' },
-    { href: "#", icon: <CircleUser />, label: 'profile' },
+    { href: "/settings", icon: <Settings />, label: 'settings' },
+    { href: "/profile", icon: <CircleUser />, label: 'profile' },
   ];
 
   return (
