@@ -86,7 +86,7 @@ const prompt = ai.definePrompt({
   tools: [getStops],
   prompt: `You are a data processing expert for a bus fleet in India. You will be given the content of a CSV file containing bus route information.
 Your task is to parse this CSV content, and construct the route paths.
-The CSV file has columns like: route_id, stop_sequence, stop_name, etc.
+The CSV file has columns like: route_id, stop_sequence, stop_name.
 
 You must group the stops by 'route_id' and order them by the 'stop_sequence' number.
 For each 'stop_name' in the CSV, you MUST use the getStops tool to find its exact geographic coordinates (latitude and longitude). The tool provides a list of all known stops and their locations. Match the 'stop_name' from the CSV with the 'stop_name' from the tool's output to find the coordinates.
