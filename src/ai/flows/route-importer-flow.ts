@@ -58,7 +58,7 @@ const getStops = ai.defineTool(
         const db = getFirestore(app);
         const stopsCollection = collection(db, 'stops');
         const snapshot = await getDocs(stopsCollection);
-        return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
+        return snapshot.docs.map(doc => ({ stop_id: doc.id, stop_name: doc.data().stop_name, ...doc.data() } as any));
     }
 );
 

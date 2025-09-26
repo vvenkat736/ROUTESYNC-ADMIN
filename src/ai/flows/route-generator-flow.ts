@@ -78,7 +78,7 @@ For each route you generate, you must provide:
 5.  An estimated 'totalDistance' in kilometers for the entire route.
 6.  An estimated 'totalTime' in minutes for the entire route.
 
-The final output must be a JSON object conforming to the required schema, containing a list of the routes you have created.
+The final output must be a JSON object conforming to the required schema, containing a single key "routes" which is a list of the routes you have created.
 `,
 });
 
