@@ -41,7 +41,7 @@ export default function RootLayout({
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossOrigin=""/>
       </head>
-      <body className={cn("font-body antialiased", "min-h-screen bg-background font-sans")}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased")}>
         {loading && <LoadingScreen />}
         <div style={{ visibility: loading ? 'hidden' : 'visible' }}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
