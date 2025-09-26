@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -35,13 +36,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query } from "firebase/firestore";
-import type { Route } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { processAndStoreRoutes } from "@/ai/flows/route-importer-flow";
 
-export default function RouteImportPage() {
+export default function RouteManagement() {
   const { t } = useLanguage();
-  const [routes, setRoutes] = React.useState<Route[]>([]);
+  const [routes, setRoutes] = React.useState<any[]>([]);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -50,9 +50,9 @@ export default function RouteImportPage() {
   React.useEffect(() => {
     const q = query(collection(db, "routes"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const routesData: Route[] = [];
+      const routesData: any[] = [];
       querySnapshot.forEach((doc) => {
-        routesData.push({ id: parseInt(doc.id), ...doc.data() } as Route);
+        routesData.push({ id: doc.id, ...doc.data() });
       });
       setRoutes(routesData);
     });
@@ -92,7 +92,7 @@ export default function RouteImportPage() {
             console.error("Error importing routes:", error);
             toast({
                 title: "Import Failed",
-                description: "There was an error processing your file.",
+                description: "There was an error processing your file. Please check the file format and content.",
                 variant: "destructive",
             });
         } finally {
@@ -158,14 +158,16 @@ export default function RouteImportPage() {
                     <TableRow>
                       <TableHead>{t('route_id')}</TableHead>
                       <TableHead>{t('stops')}</TableHead>
+                      <TableHead>{t('start_end_stops')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {routes.map((route) => (
                       <TableRow key={route.id}>
-                        <TableCell className="font-medium">{t('route')} {route.id}</TableCell>
+                        <TableCell className="font-medium">{route.id}</TableCell>
                         <TableCell>{route.stops}</TableCell>
+                        <TableCell>{route.startStop} / {route.endStop}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8">

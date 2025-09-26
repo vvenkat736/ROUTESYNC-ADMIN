@@ -5,8 +5,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
-import { Waypoints, MapPin } from 'lucide-react';
-import { routes } from '@/lib/data';
+import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import type { Bus, Stop } from '@/lib/data';
 import { db } from '@/lib/firebase';
@@ -55,6 +54,7 @@ export default function InteractiveMap() {
   const { t } = useLanguage();
   const [buses, setBuses] = useState<Bus[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
@@ -77,18 +77,28 @@ export default function InteractiveMap() {
         setStops(stopsData);
     });
 
+    const qRoutes = query(collection(db, 'routes'));
+    const unsubscribeRoutes = onSnapshot(qRoutes, (querySnapshot) => {
+        const routesData: any[] = [];
+        querySnapshot.forEach((doc) => {
+            routesData.push({ id: doc.id, ...doc.data() });
+        });
+        setRoutes(routesData);
+    });
+
     return () => {
         unsubscribeBuses();
         unsubscribeStops();
+        unsubscribeRoutes();
     };
   }, []);
 
   useEffect(() => {
     const busesWithRoutes = buses.map(bus => {
-        const routeData = routes.find(r => r.id === bus.route);
+        const routeData = routes.find(r => r.id === bus.route.toString());
         return {
             ...bus,
-            routePath: routeData?.path || [],
+            routePath: routeData?.path.map((p: any) => [p.lat, p.lng]) || [],
             currentSegment: 0,
             segmentProgress: 0,
         };
@@ -101,7 +111,7 @@ export default function InteractiveMap() {
       const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
       setMapCenter([avgLat, avgLng]);
     }
-  }, [buses]);
+  }, [buses, routes]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -173,7 +183,7 @@ export default function InteractiveMap() {
                   <LayerGroup>
                     {routes.map((route, index) => (
                       route.path && route.path.length > 0 &&
-                        <Polyline key={route.id} positions={route.path} color={routeColors[index % routeColors.length]} weight={3} />
+                        <Polyline key={route.id} positions={route.path.map((p:any) => [p.lat, p.lng])} color={routeColors[index % routeColors.length]} weight={3} />
                     ))}
                   </LayerGroup>
                 </LayersControl.Overlay>
@@ -227,5 +237,3 @@ export default function InteractiveMap() {
     </Card>
   );
 }
-
-    
