@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, collection, doc, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 // Define the input schema for the flow
@@ -37,6 +37,26 @@ const ProcessRoutesOutputSchema = z.object({
 });
 
 
+const getStops = ai.defineTool(
+    {
+      name: 'getStops',
+      description: 'Get the list of all available bus stops and their locations.',
+      outputSchema: z.array(z.object({
+          stop_id: z.string(),
+          stop_name: z.string(),
+          lat: z.number(),
+          lng: z.number(),
+      })),
+    },
+    async () => {
+        const db = getFirestore(app);
+        const stopsCollection = collection(db, 'stops');
+        const snapshot = await getDocs(stopsCollection);
+        return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
+    }
+);
+
+
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
   const result = await routeImporterFlow(input);
   
@@ -59,13 +79,15 @@ const prompt = ai.definePrompt({
   name: 'routeImporterPrompt',
   input: { schema: ProcessRoutesInputSchema },
   output: { schema: ProcessRoutesOutputSchema },
-  prompt: `You are a data processing expert. You will be given the content of a CSV file containing bus route information.
-Your task is to parse this CSV content, determine the geographic coordinates (latitude and longitude) for each stop, and structure the data.
+  tools: [getStops],
+  prompt: `You are a data processing expert for a bus fleet in India. You will be given the content of a CSV file containing bus route information.
+Your task is to parse this CSV content, and construct the route paths.
 The CSV file has the following columns: RouteID,StopName,Sequence.
 
 You need to group the stops by RouteID and order them by the Sequence number.
-Then, for each stop name, find its geographic coordinates.
-Finally, construct a path for each route as an array of coordinates.
+Then, for each stop name, find its geographic coordinates by calling the getStops tool. The tool will provide a list of all known stops and their locations. Match the StopName from the CSV with the stop_name from the tool's output to find the coordinates.
+
+Finally, construct a path for each route as an array of coordinates in the correct sequence.
 
 The output must be a JSON object containing a list of routes.
 

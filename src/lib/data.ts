@@ -17,6 +17,42 @@ export type Route = {
     path: [number, number][];
 };
 
+export type Stop = {
+  stop_id: string;
+  stop_name: string;
+  lat: number;
+  lng: number;
+  note: string;
+};
+
+export const stops: Stop[] = [
+  { stop_id: 'S01', stop_name: 'Central Bus Stand', lat: 10.79861, lng: 78.68041, note: 'sourced/approx' },
+  { stop_id: 'S02', stop_name: 'Chathiram', lat: 10.83178, lng: 78.69323, note: 'sourced/approx' },
+  { stop_id: 'S03', stop_name: 'Thillai Nagar', lat: 10.82577, lng: 78.68337, note: 'sourced/approx' },
+  { stop_id: 'S04', stop_name: 'Thillai Nagar', lat: 10.824, lng: 78.6815, note: 'approx' },
+  { stop_id: 'S05', stop_name: 'Heber Road', lat: 10.80009, lng: 78.68786, note: 'approx' },
+  { stop_id: 'S06', stop_name: 'Melapudur', lat: 10.80783, lng: 78.69416, note: 'sourced/approx' },
+  { stop_id: 'S07', stop_name: 'KKBT / Pan', lat: 10.79, lng: 78.72, note: 'approx' },
+  { stop_id: 'S08', stop_name: 'Panjapur', lat: 10.7855, lng: 78.7175, note: 'approx' },
+  { stop_id: 'S09', stop_name: 'No.1 Toll Gate', lat: 10.802, lng: 78.716, note: 'sourced/approx' },
+  { stop_id: 'S10', stop_name: 'Thiruverumbur', lat: 10.77415, lng: 78.79166, note: 'sourced/approx' },
+  { stop_id: 'S11', stop_name: 'BHEL / Kailasapuram', lat: 10.8282, lng: 78.6932, note: 'sourced/approx' },
+  { stop_id: 'S12', stop_name: 'Samayapuram', lat: 10.92296, lng: 78.74054, note: 'sourced' },
+  { stop_id: 'S13', stop_name: 'Srirangam', lat: 10.7545, lng: 78.62195, note: 'sourced' },
+  { stop_id: 'S14', stop_name: 'Woraiyur', lat: 10.82806, lng: 78.67833, note: 'sourced' },
+  { stop_id: 'S15', stop_name: 'Mannarpuram', lat: 10.785, lng: 78.703, note: 'approx' },
+  { stop_id: 'S16', stop_name: 'Rockfort', lat: 10.825, lng: 78.688, note: 'approx' },
+  { stop_id: 'S17', stop_name: 'Heber Road', lat: 10.8005, lng: 78.69, note: 'approx' },
+  { stop_id: 'S18', stop_name: 'Trichy Airport', lat: 10.765, lng: 78.7094, note: 'sourced/approx' },
+  { stop_id: 'S19', stop_name: 'Iluppur Road', lat: 10.8105, lng: 78.7253, note: 'approx' },
+  { stop_id: 'S20', stop_name: 'Palpannai', lat: 10.832, lng: 78.705, note: 'approx' },
+  { stop_id: 'S21', stop_name: 'Sanjeevi Nagar', lat: 10.824, lng: 78.69, note: 'approx' },
+  { stop_id: 'S22', stop_name: 'NN Road', lat: 10.8105, lng: 78.7253, note: 'approx' },
+  { stop_id: 'S23', stop_name: 'KKBT terminus', lat: 10.789, lng: 78.723, note: 'approx' },
+  { stop_id: 'S24', stop_name: 'Mutharasanallur', lat: 10.798, lng: 78.685, note: 'approx' },
+  { stop_id: 'S25', stop_name: 'Bharathi Nagar', lat: 10.799, lng: 78.69, note: 'approx' },
+];
+
 
 export const buses: Bus[] = [
   { id: 'bus_1', busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
