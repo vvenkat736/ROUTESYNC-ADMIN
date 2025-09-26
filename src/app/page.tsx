@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,7 +11,6 @@ import { BusStatusChart } from "@/components/dashboard/BusStatusChart";
 import { TripsChart } from "@/components/dashboard/TripsChart";
 import { DelaysChart } from "@/components/dashboard/DelaysChart";
 import { CarbonFootprintChart } from "@/components/dashboard/CarbonFootprintChart";
-import { RouteManagement } from "@/components/dashboard/RouteManagement";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
@@ -35,19 +35,14 @@ export default function Home() {
           <Header />
           <main className="p-4 lg:p-6 space-y-6 bg-background">
             <FleetOverview />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 gap-6">
                 {isClient && <InteractiveMap />}
-              </div>
-              <div className="space-y-6">
-                <RouteManagement />
-                <BusStatusChart />
-              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <TripsChart />
-              <DelaysChart />
-              <CarbonFootprintChart />
+                <BusStatusChart />
+                <TripsChart />
+                <DelaysChart />
+                <CarbonFootprintChart />
             </div>
           </main>
         </div>
