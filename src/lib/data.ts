@@ -1,0 +1,67 @@
+export type Bus = {
+  id: number;
+  busNumber: string;
+  driver: string;
+  driverAvatar: string;
+  route: number;
+  status: 'Active' | 'Delayed' | 'Inactive';
+  lat: number;
+  lng: number;
+};
+
+export const buses: Bus[] = [
+  { id: 1, busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 11.02, lng: 76.96 },
+  { id: 2, busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 11.03, lng: 76.94 },
+  { id: 3, busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 103, status: 'Delayed', lat: 11.01, lng: 76.98 },
+  { id: 4, busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 101, status: 'Active', lat: 11.00, lng: 76.95 },
+  { id: 5, busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 104, status: 'Inactive', lat: 10.99, lng: 76.97 },
+  { id: 6, busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 102, status: 'Active', lat: 11.04, lng: 76.93 },
+  { id: 7, busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 105, status: 'Delayed', lat: 11.05, lng: 76.99 },
+  { id: 8, busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.98, lng: 76.96 },
+];
+
+export const routes = [
+  { id: 101, stops: 15, frequency: '20 mins' },
+  { id: 102, stops: 22, frequency: '15 mins' },
+  { id: 103, stops: 18, frequency: '25 mins' },
+  { id: 104, stops: 12, frequency: '30 mins' },
+  { id: 105, stops: 25, frequency: '18 mins' },
+];
+
+export const alerts = [
+  { id: 1, type: 'SOS', busNumber: 'TN 37 D 9012', message: 'Mechanical issue reported.', timestamp: '2 mins ago' },
+  { id: 2, type: 'Delayed', busNumber: 'TN 37 G 4567', message: 'Heavy traffic on Gandhipuram flyover.', timestamp: '5 mins ago' },
+  { id: 3, type: 'Inactive', busNumber: 'TN 37 E 7890', message: 'Bus offline for 30 minutes.', timestamp: '10 mins ago' },
+];
+
+export const tripsPerDayData = [
+  { day: 'Mon', trips: 220 },
+  { day: 'Tue', trips: 250 },
+  { day: 'Wed', trips: 230 },
+  { day: 'Thu', trips: 260 },
+  { day: 'Fri', trips: 290 },
+  { day: 'Sat', trips: 320 },
+  { day: 'Sun', trips: 280 },
+];
+
+export const delaysPerRouteData = [
+  { route: '101', delays: 5 },
+  { route: '102', delays: 8 },
+  { route: '103', delays: 12 },
+  { route: '104', delays: 3 },
+  { route: '105', delays: 15 },
+];
+
+export const busStatusData = [
+    { name: 'Active', value: buses.filter(b => b.status === 'Active').length, color: 'emerald' },
+    { name: 'Delayed', value: buses.filter(b => b.status === 'Delayed').length, color: 'amber' },
+    { name: 'Inactive', value: buses.filter(b => b.status === 'Inactive').length, color: 'slate' },
+];
+
+export const carbonFootprintData = [
+    { name: 'Jan', fleet: 400, cars: 2400 },
+    { name: 'Feb', fleet: 300, cars: 1398 },
+    { name: 'Mar', fleet: 200, cars: 9800 },
+    { name: 'Apr', fleet: 278, cars: 3908 },
+    { name: 'May', fleet: 189, cars: 4800 },
+];
