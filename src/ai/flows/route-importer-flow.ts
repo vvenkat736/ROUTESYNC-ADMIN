@@ -64,23 +64,24 @@ const getStops = ai.defineTool(
 
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
-    const { output } = await prompt(input);
+    const response = await prompt(input);
+    const output = response.output;
     
-    if (output && output.routes) {
-        const db = getFirestore(app);
-        const batch = writeBatch(db);
-        const routesCollection = collection(db, 'routes');
-
-        output.routes.forEach(route => {
-            const docRef = doc(routesCollection, String(route.id));
-            const { id, ...routeData } = route;
-            batch.set(docRef, routeData);
-        });
-
-        await batch.commit();
-    } else {
+    if (!output) {
         throw new Error("AI failed to process the route data. The model returned an empty response.");
     }
+    
+    const db = getFirestore(app);
+    const batch = writeBatch(db);
+    const routesCollection = collection(db, 'routes');
+
+    output.routes.forEach(route => {
+        const docRef = doc(routesCollection, String(route.id));
+        const { id, ...routeData } = route;
+        batch.set(docRef, routeData);
+    });
+
+    await batch.commit();
 }
 
 const prompt = ai.definePrompt({
