@@ -18,7 +18,6 @@ import {
   Map,
   BarChart2,
   Bell,
-  FileUp,
   Settings,
   CircleUser,
   Bot,
@@ -41,8 +40,8 @@ export function SidebarNav() {
     { href: "/map", icon: <Map />, label: 'live_map' },
     { href: "/analytics", icon: <BarChart2 />, label: 'analytics' },
     { href: "/route-optimizer", icon: <Bot />, label: 'route_optimizer' },
+    { href: "/route-generator", icon: <Bot />, label: 'route_generator' },
     { href: "/alerts", icon: <Bell />, label: 'alerts' },
-    { href: "/route-import", icon: <FileUp />, label: 'route_import' },
     { href: "/stop-import", icon: <MapPin />, label: 'stop_import' },
   ];
 
@@ -70,7 +69,7 @@ export function SidebarNav() {
             <SidebarMenuItem key={item.label}>
               <SidebarMenuButton 
                 asChild 
-                isActive={pathname === item.href && item.href !== '/' || (pathname === '/' && item.href === '/')}
+                isActive={pathname === item.href && item.href !== '/' || (pathname.startsWith(item.href) && item.href !== '/')}
               >
                 <Link href={item.href}>
                   {item.icon}
@@ -86,7 +85,7 @@ export function SidebarNav() {
         <SidebarMenu>
           {footerMenuItems.map(item => (
              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
                   <Link href={item.href}>
                       {item.icon}
                       <span>{t(item.label as any)}</span>

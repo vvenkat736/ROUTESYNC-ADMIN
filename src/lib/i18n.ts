@@ -82,6 +82,16 @@ export const translations = {
     stop_sequence: 'Stop Sequence',
     distances_km: 'Distance (km)',
     etas_min: 'ETA (min)',
+    route_generator: 'AI Route Generator',
+    route_generator_desc: 'Automatically generate optimal bus routes using AI.',
+    generate_routes: 'Generate Routes',
+    save_routes: 'Save Routes',
+    generated_routes: 'Generated Routes',
+    routes_saved_success: 'Routes saved successfully!',
+    routes_saved_error: 'Error saving routes.',
+    generating_routes_desc: 'AI is analyzing stops and generating optimal routes. This may take a moment...',
+    no_stops_found: 'No Stops Found',
+    no_stops_desc: 'Please import stops on the "Stop Import" page before generating routes.',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -149,7 +159,7 @@ export const translations = {
     start_end_stops: 'தொடக்க / இறுதி நிறுத்தங்கள்',
     stop_import: 'நிறுத்த இறக்குமதி',
     stop_management: 'நிறுத்த மேலாண்மை',
-    stop_management_desc: 'பேருந்து நிறுத்தங்களை இறக்குமதி செய்து நிர்வகிக்கவும்.',
+    stop_management_desc: 'பேருந்து நிறுத்தங்களை இறக்குமதி செய்து நிர்வగிக்கவும்.',
     import_stops_csv: 'CSV இலிருந்து நிறுத்தங்களை இறக்குமதி செய்க',
     import_stops_csv_desc: 'நிறுத்தத் தரவுகளுடன் ஒரு CSV கோப்பைப் பதிவேற்றவும். கோப்பில் நிறுத்த ஐடி, நிறுத்தத்தின் பெயர், அட்சரேகை, தீர்க்கரேகை மற்றும் குறிப்பு இருக்க வேண்டும்.',
     stop_id: 'நிறுத்த ஐடி',
@@ -163,9 +173,17 @@ export const translations = {
     stop_sequence: 'நிறுத்த வரிசை',
     distances_km: 'தூரம் (கிமீ)',
     etas_min: 'ETA (நிமி)',
+    route_generator: 'AI வழித்தட உருவாக்குநர்',
+    route_generator_desc: 'AI ஐப் பயன்படுத்தி சிறந்த பேருந்து வழித்தடங்களை தானாக உருவாக்கவும்.',
+    generate_routes: 'வழித்தடங்களை உருவாக்கு',
+    save_routes: 'வழித்தடங்களைச் சேமி',
+    generated_routes: 'உருவாக்கப்பட்ட வழித்தடங்கள்',
+    routes_saved_success: 'வழித்தடங்கள் வெற்றிகரமாக சேமிக்கப்பட்டன!',
+    routes_saved_error: 'வழித்தடங்களைச் சேமிப்பதில் பிழை.',
+    generating_routes_desc: 'AI நிறுத்தங்களை பகுப்பாய்வு செய்து சிறந்த வழித்தடங்களை உருவாக்குகிறது. దీనికి కొంత సమయం పట్టవచ్చు...',
+    no_stops_found: 'நிறுத்தங்கள் எதுவும் இல்லை',
+    no_stops_desc: 'வழித்தடங்களை உருவாக்கும் முன், "நிறுத்த இறக்குமதி" பக்கத்தில் நிறுத்தங்களை இறக்குமதி செய்யவும்.',
   },
 };
 
 export type TranslationKeys = keyof typeof translations.en;
-
-    

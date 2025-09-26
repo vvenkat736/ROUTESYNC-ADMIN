@@ -11,17 +11,17 @@ export type Bus = {
 };
 
 export type Route = {
-    id: string; // Firestore doc id
-    route_id: string;
-    route_name: string;
-    stop_sequence: number;
-    stop_name: string; // This will be the stop_id like 'S14'
-    distances_km: number;
-    etas_min: number;
-    total_distance: number;
-    estimated_mins: number;
-    frequency: number;
-    bus_type: string;
+  id: string; // Firestore doc id
+  route_id: string;
+  route_name: string;
+  stop_sequence: number;
+  stop_name: string;
+  distances_km: number;
+  etas_min: number;
+  total_distance: number;
+  estimated_mins: number;
+  frequency: number;
+  bus_type: string;
 };
 
 
