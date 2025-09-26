@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { buses as allBuses, stops as allStops, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
+import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
@@ -43,13 +44,27 @@ const createStopIcon = () => {
     });
 };
 
+const createNumberedIcon = (number: number | string, color: string) => {
+  return L.divIcon({
+    html: `<div style="background-color: ${color}; color: white; border-radius: 50%; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white;">${number}</div>`,
+    className: 'bg-transparent border-0',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+};
+
+
 interface AnimatedBus extends Bus {
   routePath: [number, number][];
   currentSegment: number;
   segmentProgress: number;
 }
 
-export default function InteractiveMap() {
+interface InteractiveMapProps {
+    optimizedRoute?: OptimizeRouteOutput | null;
+}
+
+export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
   const { t } = useLanguage();
   const [buses] = useState<Bus[]>(allBuses.map((b,i) => ({ id: `bus_${i}`, ...b })));
   const [stops] = useState<Stop[]>(allStops);
@@ -160,6 +175,24 @@ export default function InteractiveMap() {
     return () => clearInterval(interval);
   }, []);
 
+  const optimizedWaypoints = useMemo(() => {
+    if (!optimizedRoute) return [];
+    return [
+      { ...optimizedRoute.start, type: 'start', color: '#10b981' },
+      ...optimizedRoute.waypoints.map(wp => ({ ...wp, type: 'waypoint', color: '#3b82f6' })),
+      { ...optimizedRoute.end, type: 'end', color: '#ef4444' },
+    ];
+  }, [optimizedRoute]);
+
+  const optimizedPolyline = useMemo(() => {
+    if (!optimizedRoute) return [];
+    return [
+      [optimizedRoute.start.lat, optimizedRoute.start.lng],
+      ...optimizedRoute.waypoints.map(wp => [wp.lat, wp.lng] as [number, number]),
+      [optimizedRoute.end.lat, optimizedRoute.end.lng],
+    ];
+  }, [optimizedRoute]);
+
   return (
     <Card className="h-[600px] lg:h-full overflow-hidden">
       <CardContent className="p-0 h-full">
@@ -240,6 +273,25 @@ export default function InteractiveMap() {
                         ))}
                     </LayerGroup>
                 </LayersControl.Overlay>
+
+                {optimizedPolyline.length > 0 && (
+                    <LayersControl.Overlay checked name="Optimized Route">
+                        <LayerGroup>
+                             {optimizedWaypoints.map((point, index) => (
+                                <Marker
+                                key={`optimized-${index}`}
+                                position={[point.lat, point.lng]}
+                                icon={createNumberedIcon(point.type === 'start' ? 'S' : point.type === 'end' ? 'E' : index, point.color)}
+                                >
+                                <Popup>{point.name}</Popup>
+                                </Marker>
+                            ))}
+                            <Polyline positions={optimizedPolyline} color="#0284c7" weight={5} dashArray="10, 5" />
+                        </LayerGroup>
+                    </LayersControl.Overlay>
+                )}
+
+
               </LayersControl>
             </MapContainer>
           </div>

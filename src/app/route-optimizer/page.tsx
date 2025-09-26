@@ -20,7 +20,7 @@ import { optimizeRoute, OptimizeRouteOutput } from '@/ai/flows/route-optimizer-f
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 
-const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap'), {
+const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
@@ -161,7 +161,7 @@ export default function RouteOptimizerPage() {
               )}
             </div>
             <div className="lg:col-span-2 h-[50vh] lg:h-auto">
-              {isClient && <OptimizerMap route={optimizedRoute} />}
+              {isClient && <InteractiveMap optimizedRoute={optimizedRoute} />}
             </div>
           </main>
         </div>
