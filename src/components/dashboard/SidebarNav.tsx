@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   SidebarHeader,
   SidebarContent,
@@ -29,6 +31,20 @@ const BusLogo = () => (
 
 export function SidebarNav() {
   const { t } = useLanguage();
+  const pathname = usePathname();
+
+  const menuItems = [
+    { href: "/", icon: <LayoutDashboard />, label: 'dashboard' },
+    { href: "#", icon: <Map />, label: 'live_map' },
+    { href: "#", icon: <BarChart2 />, label: 'analytics' },
+    { href: "#", icon: <Bell />, label: 'alerts' },
+    { href: "#", icon: <FileUp />, label: 'route_import' },
+  ];
+
+  const footerMenuItems = [
+    { href: "#", icon: <Settings />, label: 'settings' },
+    { href: "#", icon: <CircleUser />, label: 'profile' },
+  ];
 
   return (
     <>
@@ -45,53 +61,35 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton isActive>
-              <LayoutDashboard />
-              <span>{t('dashboard')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Map />
-              <span>{t('live_map')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <BarChart2 />
-              <span>{t('analytics')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Bell />
-              <span>{t('alerts')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <FileUp />
-              <span>{t('route_import')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {menuItems.map(item => (
+            <SidebarMenuItem key={item.label}>
+              <Link href={item.href} passHref legacyBehavior>
+                <SidebarMenuButton asChild isActive={pathname === item.href}>
+                  <a>
+                    {item.icon}
+                    <span>{t(item.label as any)}</span>
+                  </a>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Settings />
-              <span>{t('settings')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <CircleUser />
-              <span>{t('profile')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {footerMenuItems.map(item => (
+             <SidebarMenuItem key={item.label}>
+              <Link href={item.href} passHref legacyBehavior>
+                <SidebarMenuButton asChild>
+                  <a>
+                    {item.icon}
+                    <span>{t(item.label as any)}</span>
+                  </a>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarFooter>
     </>
