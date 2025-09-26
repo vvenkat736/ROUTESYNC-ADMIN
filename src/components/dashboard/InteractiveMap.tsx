@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
-import type { Bus, Stop } from '@/lib/data';
+import type { Bus, Stop, Route } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 
@@ -54,7 +54,7 @@ export default function InteractiveMap() {
   const { t } = useLanguage();
   const [buses, setBuses] = useState<Bus[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
-  const [routes, setRoutes] = useState<any[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
@@ -93,12 +93,40 @@ export default function InteractiveMap() {
     };
   }, []);
 
+  const generatedRoutePaths = useMemo(() => {
+    const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
+    const routePaths: { [key: string]: [number, number][] } = {};
+    
+    // Group stops by route
+    const routesWithStops: { [key: string]: any[] } = {};
+    routes.forEach(routeStop => {
+        if (!routesWithStops[routeStop.route_id]) {
+            routesWithStops[routeStop.route_id] = [];
+        }
+        routesWithStops[routeStop.route_id].push(routeStop);
+    });
+
+    // Sort stops and create paths
+    Object.keys(routesWithStops).forEach(routeId => {
+        const sortedStops = routesWithStops[routeId].sort((a, b) => a.stop_sequence - b.stop_sequence);
+        const path: [number, number][] = [];
+        sortedStops.forEach(routeStop => {
+            const stop = stopsMap.get(routeStop.stop_name);
+            if (stop) {
+                path.push([stop.lat, stop.lng]);
+            }
+        });
+        routePaths[routeId] = path;
+    });
+
+    return routePaths;
+  }, [routes, stops]);
+
   useEffect(() => {
     const busesWithRoutes = buses.map(bus => {
-        const routeData = routes.find(r => r.id === bus.route.toString());
         return {
             ...bus,
-            routePath: routeData?.path.map((p: any) => [p.lat, p.lng]) || [],
+            routePath: generatedRoutePaths[bus.route] || [],
             currentSegment: 0,
             segmentProgress: 0,
         };
@@ -111,7 +139,7 @@ export default function InteractiveMap() {
       const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
       setMapCenter([avgLat, avgLng]);
     }
-  }, [buses, routes]);
+  }, [buses, generatedRoutePaths]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -181,9 +209,9 @@ export default function InteractiveMap() {
                 
                 <LayersControl.Overlay checked name="Bus Routes">
                   <LayerGroup>
-                    {routes.map((route, index) => (
-                      route.path && route.path.length > 0 &&
-                        <Polyline key={route.id} positions={route.path.map((p:any) => [p.lat, p.lng])} color={routeColors[index % routeColors.length]} weight={3} />
+                    {Object.keys(generatedRoutePaths).map((routeId, index) => (
+                      generatedRoutePaths[routeId] && generatedRoutePaths[routeId].length > 0 &&
+                        <Polyline key={routeId} positions={generatedRoutePaths[routeId]} color={routeColors[index % routeColors.length]} weight={3} />
                     ))}
                   </LayerGroup>
                 </LayersControl.Overlay>

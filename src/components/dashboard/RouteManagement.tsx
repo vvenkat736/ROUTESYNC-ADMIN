@@ -35,13 +35,30 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, writeBatch, doc, getFirestore } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { processAndStoreRoutes } from "@/ai/flows/route-importer-flow";
+import type { Route } from "@/lib/data";
+
+// Simple CSV to JSON parser
+const parseCSV = (content: string): any[] => {
+  const lines = content.split('\n').filter(line => line.trim() !== '');
+  if (lines.length < 2) return [];
+  
+  const header = lines[0].split(',').map(h => h.trim());
+  
+  return lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim());
+    return header.reduce((obj, nextKey, index) => {
+      (obj as any)[nextKey] = values[index];
+      return obj;
+    }, {});
+  });
+};
+
 
 export default function RouteManagement() {
   const { t } = useLanguage();
-  const [routes, setRoutes] = React.useState<any[]>([]);
+  const [routes, setRoutes] = React.useState<Route[]>([]);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -82,17 +99,41 @@ export default function RouteManagement() {
     reader.onload = async (e) => {
         const content = e.target?.result as string;
         try {
-            await processAndStoreRoutes({ csvContent: content });
+            const parsedRoutes = parseCSV(content);
+            if (parsedRoutes.length === 0) {
+              throw new Error("CSV is empty or invalid.");
+            }
+
+            const db = getFirestore();
+            const batch = writeBatch(db);
+            const routesCollection = collection(db, 'routes');
+
+            parsedRoutes.forEach(route => {
+                // Each row in the CSV is a route segment, we create a unique doc for it
+                const docRef = doc(routesCollection);
+                batch.set(docRef, {
+                  route_id: parseInt(route.route_id, 10),
+                  route_name: route.route_name,
+                  stop_sequence: parseInt(route.stop_sequence, 10),
+                  stop_name: route.stop_name,
+                  distances_km: parseFloat(route.distances_km),
+                  e_run_time: parseInt(route.e_run_time, 10),
+                  bus_type: route.bus_type
+                });
+            });
+
+            await batch.commit();
+
             toast({
                 title: "Import Successful",
-                description: "The routes have been imported and stored in Firebase.",
+                description: `${parsedRoutes.length} route segments have been imported.`,
             });
             setDialogOpen(false);
         } catch (error) {
             console.error("Error importing routes:", error);
             toast({
                 title: "Import Failed",
-                description: "There was an error processing your file. Please check the file format and content.",
+                description: "There was an error processing your file. Check console for details.",
                 variant: "destructive",
             });
         } finally {
@@ -102,6 +143,25 @@ export default function RouteManagement() {
     };
     reader.readAsText(selectedFile);
   };
+
+  const groupedRoutes = React.useMemo(() => {
+    const byRouteId: { [key: number]: { name: string, type: string, stops: number, distance: number, time: number } } = {};
+    routes.forEach(r => {
+      if (!byRouteId[r.route_id]) {
+        byRouteId[r.route_id] = {
+          name: r.route_name,
+          type: r.bus_type,
+          stops: 0,
+          distance: 0,
+          time: 0,
+        };
+      }
+      byRouteId[r.route_id].stops++;
+      byRouteId[r.route_id].distance += r.distances_km;
+      byRouteId[r.route_id].time += r.e_run_time;
+    });
+    return Object.entries(byRouteId).map(([id, data]) => ({ id, ...data }));
+  }, [routes]);
 
   return (
     <SidebarProvider>
@@ -160,22 +220,20 @@ export default function RouteManagement() {
                       <TableHead>{t('route_name')}</TableHead>
                       <TableHead>{t('bus_type')}</TableHead>
                       <TableHead>{t('stops')}</TableHead>
-                      <TableHead>{t('start_end_stops')}</TableHead>
                       <TableHead>{t('total_distance_km')}</TableHead>
                       <TableHead>{t('total_time_min')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {routes.map((route) => (
+                    {groupedRoutes.map((route) => (
                       <TableRow key={route.id}>
                         <TableCell className="font-medium">{route.id}</TableCell>
-                        <TableCell>{route.routeName}</TableCell>
-                        <TableCell>{route.busType}</TableCell>
+                        <TableCell>{route.name}</TableCell>
+                        <TableCell>{route.type}</TableCell>
                         <TableCell>{route.stops}</TableCell>
-                        <TableCell>{route.startStop} / {route.endStop}</TableCell>
-                        <TableCell>{route.totalDistance?.toFixed(2)}</TableCell>
-                        <TableCell>{route.totalTime}</TableCell>
+                        <TableCell>{route.distance.toFixed(2)}</TableCell>
+                        <TableCell>{route.time}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8">

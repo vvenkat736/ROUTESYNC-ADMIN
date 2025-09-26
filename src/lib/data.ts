@@ -11,9 +11,11 @@ export type Bus = {
 };
 
 export type Route = {
+    id: string; // Firestore doc id
     route_id: number;
     route_name: string;
     stop_sequence: number;
+    stop_name: string;
     distances_km: number;
     e_run_time: number;
     bus_type: string;
@@ -31,27 +33,27 @@ export const stops: Stop[] = [
   { stop_id: 'S01', stop_name: 'Central Bus Stand', lat: 10.79861, lng: 78.68041, note: 'sourced/approx' },
   { stop_id: 'S02', stop_name: 'Chathiram', lat: 10.83178, lng: 78.69323, note: 'sourced/approx' },
   { stop_id: 'S03', stop_name: 'Thillai Nagar', lat: 10.82577, lng: 78.68337, note: 'sourced/approx' },
-  { stop_id: 'S04', stop_name: 'Thillai Nagar', lat: 10.824, lng: 78.6815, note: 'approx' },
+  { stop_id: 'S04', stop_name: 'Sastri Road', lat: 10.824, lng: 78.6815, note: 'approx' },
   { stop_id: 'S05', stop_name: 'Heber Road', lat: 10.80009, lng: 78.68786, note: 'approx' },
   { stop_id: 'S06', stop_name: 'Melapudur', lat: 10.80783, lng: 78.69416, note: 'sourced/approx' },
   { stop_id: 'S07', stop_name: 'KKBT / Pan', lat: 10.79, lng: 78.72, note: 'approx' },
   { stop_id: 'S08', stop_name: 'Panjapur', lat: 10.7855, lng: 78.7175, note: 'approx' },
-  { stop_id: 'S09', stop_name: 'No.1 Toll Gate', lat: 10.802, lng: 78.716, note: 'sourced/approx' },
+  { stop_id: 'S09', stop_name: 'No.1 Toll Gate', lat: 10.857, lng: 78.716, note: 'sourced/approx' },
   { stop_id: 'S10', stop_name: 'Thiruverumbur', lat: 10.77415, lng: 78.79166, note: 'sourced/approx' },
-  { stop_id: 'S11', stop_name: 'BHEL / Kailasapuram', lat: 10.8282, lng: 78.6932, note: 'sourced/approx' },
+  { stop_id: 'S11', stop_name: 'BHEL / Kailasapuram', lat: 10.768, lng: 78.815, note: 'sourced/approx' },
   { stop_id: 'S12', stop_name: 'Samayapuram', lat: 10.92296, lng: 78.74054, note: 'sourced' },
-  { stop_id: 'S13', stop_name: 'Srirangam', lat: 10.7545, lng: 78.62195, note: 'sourced' },
+  { stop_id: 'S13', stop_name: 'Srirangam', lat: 10.86, lng: 78.69, note: 'sourced' },
   { stop_id: 'S14', stop_name: 'Woraiyur', lat: 10.82806, lng: 78.67833, note: 'sourced' },
   { stop_id: 'S15', stop_name: 'Mannarpuram', lat: 10.785, lng: 78.703, note: 'approx' },
-  { stop_id: 'S16', stop_name: 'Rockfort', lat: 10.825, lng: 78.688, note: 'approx' },
-  { stop_id: 'S17', stop_name: 'Heber Road', lat: 10.8005, lng: 78.69, note: 'approx' },
+  { stop_id: 'S16', stop_name: 'Rockfort', lat: 10.829, lng: 78.699, note: 'approx' },
+  { stop_id: 'S17', stop_name: 'Puthur', lat: 10.8005, lng: 78.69, note: 'approx' },
   { stop_id: 'S18', stop_name: 'Trichy Airport', lat: 10.765, lng: 78.7094, note: 'sourced/approx' },
-  { stop_id: 'S19', stop_name: 'Iluppur Road', lat: 10.8105, lng: 78.7253, note: 'approx' },
+  { stop_id: 'S19', stop_name: 'Iluppur Road', lat: 10.78, lng: 78.69, note: 'approx' },
   { stop_id: 'S20', stop_name: 'Palpannai', lat: 10.832, lng: 78.705, note: 'approx' },
   { stop_id: 'S21', stop_name: 'Sanjeevi Nagar', lat: 10.824, lng: 78.69, note: 'approx' },
   { stop_id: 'S22', stop_name: 'NN Road', lat: 10.8105, lng: 78.7253, note: 'approx' },
   { stop_id: 'S23', stop_name: 'KKBT terminus', lat: 10.789, lng: 78.723, note: 'approx' },
-  { stop_id: 'S24', stop_name: 'Mutharasanallur', lat: 10.798, lng: 78.685, note: 'approx' },
+  { stop_id: 'S24', stop_name: 'Mutharasanallur', lat: 10.817, lng: 78.643, note: 'approx' },
   { stop_id: 'S25', stop_name: 'Bharathi Nagar', lat: 10.799, lng: 78.69, note: 'approx' },
 ];
 
@@ -67,64 +69,6 @@ export const buses: Bus[] = [
   { id: 'bus_8', busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
 ];
 
-// This is now legacy data, as routes will be imported. Keeping for reference.
-export const routes: { id: number; stops: number; path: [number, number][]; }[] = [
-    {
-      id: 101,
-      stops: 15,
-      path: [
-        [10.850, 78.683], // Srirangam
-        [10.830, 78.686], // Amma Mandapam
-        [10.825, 78.683], // Chatram Bus Stand
-        [10.809, 78.684], // Main Guard Gate
-        [10.798, 78.680], // Central Bus Stand
-      ]
-    },
-    {
-      id: 102,
-      stops: 22,
-      path: [
-        [10.798, 78.680], // Central Bus Stand
-        [10.788, 78.690], // Railway Junction
-        [10.795, 78.705], // Golden Rock
-        [10.808, 78.720], // Airport
-        [10.830, 78.710], // SIT
-      ]
-    },
-    {
-      id: 103,
-      stops: 18,
-      path: [
-        [10.825, 78.683], // Chatram Bus Stand
-        [10.840, 78.670], // Thillai Nagar
-        [10.855, 78.665], // Karur Bypass Road
-        [10.860, 78.690], // No 1 Tolgate
-        [10.850, 78.683], // Srirangam
-      ]
-    },
-    {
-      id: 104,
-      stops: 12,
-      path: [
-        [10.798, 78.680], // Central Bus Stand
-        [10.760, 78.675], // Crawford
-        [10.750, 78.695], // K.K. Nagar
-        [10.770, 78.710], // Panjapur
-        [10.790, 78.720], // Airport
-      ]
-    },
-    {
-      id: 105,
-      stops: 25,
-      path: [
-        [10.825, 78.683], // Chatram Bus Stand
-        [10.810, 78.695], // St. Joseph's College
-        [10.800, 78.715], // Palpannai
-        [10.785, 78.730], // Thiruverumbur
-        [10.770, 78.750], // BHEL Township
-      ]
-    },
-];
 
 export const alerts = [
   { id: 'alert_1', type: 'SOS', busNumber: 'TN 37 D 9012', message: 'Mechanical issue reported.' },
@@ -163,5 +107,3 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
-
-    
