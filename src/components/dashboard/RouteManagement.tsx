@@ -112,13 +112,13 @@ export default function RouteManagement() {
                 // Each row in the CSV is a route segment, we create a unique doc for it
                 const docRef = doc(routesCollection);
                 batch.set(docRef, {
-                  route_id: parseInt(route.route_id, 10),
-                  route_name: route.route_name,
-                  stop_sequence: parseInt(route.stop_sequence, 10),
-                  stop_name: route.stop_name,
-                  distances_km: parseFloat(route.distances_km),
-                  e_run_time: parseInt(route.e_run_time, 10),
-                  bus_type: route.bus_type
+                  route_id: parseInt(route.route_id, 10) || 0,
+                  route_name: route.route_name || '',
+                  stop_sequence: parseInt(route.stop_sequence, 10) || 0,
+                  stop_name: route.stop_name || '',
+                  distances_km: parseFloat(route.distances_km) || 0,
+                  e_run_time: parseInt(route.e_run_time, 10) || 0,
+                  bus_type: route.bus_type || ''
                 });
             });
 

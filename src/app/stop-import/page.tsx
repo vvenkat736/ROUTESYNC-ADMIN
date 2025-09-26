@@ -35,13 +35,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, writeBatch, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, writeBatch, doc, getFirestore } from "firebase/firestore";
 import type { Stop } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 
 // Simple CSV to JSON parser
 const parseCSV = (content: string): any[] => {
-  const lines = content.split('\\n').filter(line => line.trim() !== '');
+  const lines = content.split('\n').filter(line => line.trim() !== '');
   if (lines.length < 2) return [];
   
   const header = lines[0].split(',').map(h => h.trim());
@@ -109,12 +109,16 @@ export default function StopImportPage() {
             const stopsCollection = collection(db, 'stops');
 
             parsedStops.forEach(stop => {
+                if (!stop.stop_id) {
+                    console.warn("Skipping row, missing stop_id:", stop);
+                    return;
+                }
                 const docRef = doc(stopsCollection, stop.stop_id);
                 batch.set(docRef, {
-                  stop_name: stop.stop_name,
-                  lat: parseFloat(stop.lat),
-                  lng: parseFloat(stop.lng),
-                  note: stop.note
+                  stop_name: stop.stop_name || '',
+                  lat: parseFloat(stop.lat) || 0,
+                  lng: parseFloat(stop.lng) || 0,
+                  note: stop.note || ''
                 });
             });
 
