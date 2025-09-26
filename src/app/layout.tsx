@@ -2,32 +2,51 @@
 "use client";
 
 import * as React from 'react';
-import type { Metadata } from 'next';
+import { usePathname, useRouter } from 'next/navigation';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import { Toaster } from '@/components/ui/toaster';
 import LoadingScreen from '@/components/dashboard/LoadingScreen';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 
-// export const metadata: Metadata = {
-//   title: 'RouteSync ADMIN',
-//   description: 'Real-time Bus Fleet Management Dashboard',
-// };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function AppContent({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
 
   React.useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 4000); 
     return () => clearTimeout(timer);
   }, []);
 
+  React.useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated && pathname !== '/login') {
+      router.push('/login');
+    }
+  }, [isAuthLoading, isAuthenticated, pathname, router]);
 
+  if (isAuthLoading || (loading && pathname !== '/login') || (!isAuthenticated && pathname !== '/login')) {
+      if (pathname === '/login') {
+         return <div className="min-h-screen bg-background">{children}</div>;
+      }
+      return <LoadingScreen />;
+  }
+
+  return (
+    <div style={{ visibility: loading ? 'hidden' : 'visible' }}>
+      {children}
+    </div>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -42,15 +61,14 @@ export default function RootLayout({
           crossOrigin=""/>
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased")}>
-        {loading && <LoadingScreen />}
-        <div style={{ visibility: loading ? 'hidden' : 'visible' }}>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <LanguageProvider>
-                {children}
-                <Toaster />
-            </LanguageProvider>
-            </ThemeProvider>
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <LanguageProvider>
+            <AuthProvider>
+              <AppContent>{children}</AppContent>
+              <Toaster />
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

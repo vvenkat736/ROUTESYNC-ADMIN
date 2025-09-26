@@ -21,9 +21,11 @@ import {
   Settings,
   CircleUser,
   Bot,
-  MapPin
+  MapPin,
+  LogOut,
 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
+import { useAuth } from "@/contexts/AuthContext";
 
 const BusLogo = () => (
     <span className="text-3xl">🚍</span>
@@ -31,6 +33,7 @@ const BusLogo = () => (
 
 export function SidebarNav() {
   const { t } = useLanguage();
+  const { logout } = useAuth();
   const pathname = usePathname();
 
   const menuItems = [
@@ -99,10 +102,14 @@ export function SidebarNav() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+           <SidebarMenuItem>
+                <SidebarMenuButton onClick={logout}>
+                    <LogOut />
+                    <span>Logout</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </>
   )
 }
-
-    
