@@ -9,6 +9,14 @@ export type Bus = {
   lng: number;
 };
 
+export type Route = {
+    id: number;
+    stops: number;
+    frequency: string;
+    path: [number, number][];
+};
+
+
 export const buses: Bus[] = [
   { id: 1, busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
   { id: 2, busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 10.83178, lng: 78.69323 },
@@ -20,12 +28,67 @@ export const buses: Bus[] = [
   { id: 8, busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
 ];
 
-export const routes = [
-  { id: 101, stops: 15, frequency: '20 mins' },
-  { id: 102, stops: 22, frequency: '15 mins' },
-  { id: 103, stops: 18, frequency: '25 mins' },
-  { id: 104, stops: 12, frequency: '30 mins' },
-  { id: 105, stops: 25, frequency: '18 mins' },
+export const routes: Route[] = [
+    { 
+      id: 101, 
+      stops: 15, 
+      frequency: '20 mins',
+      path: [
+        [10.850, 78.683], // Srirangam
+        [10.830, 78.686], // Amma Mandapam
+        [10.825, 78.683], // Chatram Bus Stand
+        [10.809, 78.684], // Main Guard Gate
+        [10.798, 78.680], // Central Bus Stand
+      ]
+    },
+    { 
+      id: 102, 
+      stops: 22, 
+      frequency: '15 mins',
+      path: [
+        [10.798, 78.680], // Central Bus Stand
+        [10.788, 78.690], // Railway Junction
+        [10.795, 78.705], // Golden Rock
+        [10.808, 78.720], // Airport
+        [10.830, 78.710], // SIT
+      ]
+    },
+    { 
+      id: 103, 
+      stops: 18, 
+      frequency: '25 mins',
+      path: [
+        [10.825, 78.683], // Chatram Bus Stand
+        [10.840, 78.670], // Thillai Nagar
+        [10.855, 78.665], // Karur Bypass Road
+        [10.860, 78.690], // No 1 Tolgate
+        [10.850, 78.683], // Srirangam
+      ]
+    },
+    { 
+      id: 104, 
+      stops: 12, 
+      frequency: '30 mins',
+      path: [
+        [10.798, 78.680], // Central Bus Stand
+        [10.760, 78.675], // Crawford
+        [10.750, 78.695], // K.K. Nagar
+        [10.770, 78.710], // Panjapur
+        [10.790, 78.720], // Airport
+      ]
+    },
+    { 
+      id: 105, 
+      stops: 25, 
+      frequency: '18 mins',
+      path: [
+        [10.825, 78.683], // Chatram Bus Stand
+        [10.810, 78.695], // St. Joseph's College
+        [10.800, 78.715], // Palpannai
+        [10.785, 78.730], // Thiruverumbur
+        [10.770, 78.750], // BHEL Township
+      ]
+    },
 ];
 
 export const alerts = [

@@ -116,6 +116,7 @@ export default function InteractiveMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {routes.map((route, index) => (
+                route.path && route.path.length > 0 &&
                   <Polyline key={route.id} positions={route.path} color={routeColors[index % routeColors.length]} weight={3} />
               ))}
               {animatedBuses.map((bus) => (
@@ -144,4 +145,3 @@ export default function InteractiveMap() {
     </Card>
   );
 }
-
