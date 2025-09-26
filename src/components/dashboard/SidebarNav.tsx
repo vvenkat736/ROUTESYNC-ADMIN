@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/sidebar"
 import {
   LayoutDashboard,
-  Map,
   BarChart2,
   Bell,
   FileUp,
@@ -29,13 +28,24 @@ const BusLogo = () => (
     </svg>
   );
 
+const MapBusIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18.2 6.22c.2.4.21.89.02 1.32l-1.45 3.4c-.11.25-.33.42-.59.46H5.82c-.26-.04-.48-.21-.59-.46L3.78 7.54c-.19-.43-.18-.92.02-1.32.2-.4.58-.64 1-.64h12.4c.42 0 .8.24 1 .64z" />
+        <path d="M3 11h18" />
+        <path d="M12 11v3.5" />
+        <path d="M10.5 14.5h3" />
+        <path d="M12 19a4 4 0 0 1-4-4" />
+        <path d="M16 15a4 4 0 0 0-4-4" />
+    </svg>
+);
+
 export function SidebarNav() {
   const { t } = useLanguage();
   const pathname = usePathname();
 
   const menuItems = [
     { href: "/", icon: <LayoutDashboard />, label: 'dashboard' },
-    { href: "#", icon: <Map />, label: 'live_map' },
+    { href: "#", icon: <MapBusIcon />, label: 'live_map' },
     { href: "#", icon: <BarChart2 />, label: 'analytics' },
     { href: "#", icon: <Bell />, label: 'alerts' },
     { href: "#", icon: <FileUp />, label: 'route_import' },
