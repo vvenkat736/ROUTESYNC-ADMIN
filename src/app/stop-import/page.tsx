@@ -35,7 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, writeBatch, doc, addDoc, deleteDoc, getFirestore } from "firebase/firestore";
+import { collection, onSnapshot, query, writeBatch, doc, addDoc, deleteDoc, getFirestore, setDoc } from "firebase/firestore";
 import type { Stop } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { geocodeLocation, GeocodeOutput } from "@/ai/flows/geocode-flow";
@@ -203,12 +203,12 @@ export default function StopImportPage() {
         setIsSaving(true);
         try {
             const docRef = doc(db, 'stops', stopId);
-            await writeBatch(db).set(docRef, {
+            await setDoc(docRef, {
                 stop_name: stopName,
                 lat: parseFloat(lat),
                 lng: parseFloat(lng),
                 note: note
-            }).commit();
+            });
 
             toast({ title: "Stop Saved", description: "The new stop has been added."});
             setAddDialogOpen(false);
@@ -365,5 +365,3 @@ export default function StopImportPage() {
     </SidebarProvider>
   );
 }
-
-    
