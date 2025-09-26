@@ -48,6 +48,14 @@ export function SidebarNav() {
     { href: "/profile", icon: <CircleUser />, label: 'profile' },
   ];
 
+  const isActive = (href: string) => {
+    if (href === '/') {
+        return pathname === '/';
+    }
+    return pathname.startsWith(href);
+  };
+
+
   return (
     <>
       <SidebarHeader>
@@ -67,7 +75,7 @@ export function SidebarNav() {
             <SidebarMenuItem key={item.label}>
               <SidebarMenuButton 
                 asChild 
-                isActive={pathname === item.href && item.href !== '/' || (pathname.startsWith(item.href) && item.href !== '/')}
+                isActive={isActive(item.href)}
               >
                 <Link href={item.href}>
                   {item.icon}
@@ -96,3 +104,5 @@ export function SidebarNav() {
     </>
   )
 }
+
+    

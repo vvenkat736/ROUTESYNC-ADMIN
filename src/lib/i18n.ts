@@ -66,11 +66,14 @@ export const translations = {
     optimized_route: 'Optimized Route',
     eta: 'Estimated Time of Arrival',
     start_end_stops: 'Start / End Stops',
-    stop_import: 'Stop Import',
+    stop_import: 'Stop Management',
     stop_management: 'Stop Management',
     stop_management_desc: 'Import and manage bus stops.',
     import_stops_csv: 'Import Stops from CSV',
     import_stops_csv_desc: 'Upload a CSV file with stop data. The file should include columns for stop_id, stop_name, lat, lng, and note.',
+    add_manually: 'Add Manually',
+    add_stop_manually: 'Add Stop Manually',
+    add_stop_manually_desc: "Use the 'Find' feature to automatically get coordinates for a location.",
     stop_id: 'Stop ID',
     stop_name: 'Stop Name',
     latitude: 'Latitude',
@@ -91,7 +94,7 @@ export const translations = {
     routes_saved_error: 'Error saving routes.',
     generating_routes_desc: 'AI is analyzing stops and generating optimal routes. This may take a moment...',
     no_stops_found: 'No Stops Found',
-    no_stops_desc: 'Please import stops on the "Stop Import" page before generating routes.',
+    no_stops_desc: 'Please import stops on the "Stop Management" page before generating routes.',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -157,11 +160,14 @@ export const translations = {
     optimized_route: 'மேம்படுத்தப்பட்ட வழி',
     eta: 'மதிப்பிடப்பட்ட வருகை நேரம்',
     start_end_stops: 'தொடக்க / இறுதி நிறுத்தங்கள்',
-    stop_import: 'நிறுத்த இறக்குமதி',
+    stop_import: 'நிறுத்த மேலாண்மை',
     stop_management: 'நிறுத்த மேலாண்மை',
-    stop_management_desc: 'பேருந்து நிறுத்தங்களை இறக்குமதி செய்து நிர்வగிக்கவும்.',
+    stop_management_desc: 'பேருந்து நிறுத்தங்களை இறக்குமதி செய்து நிர்வகிக்கவும்.',
     import_stops_csv: 'CSV இலிருந்து நிறுத்தங்களை இறக்குமதி செய்க',
     import_stops_csv_desc: 'நிறுத்தத் தரவுகளுடன் ஒரு CSV கோப்பைப் பதிவேற்றவும். கோப்பில் நிறுத்த ஐடி, நிறுத்தத்தின் பெயர், அட்சரேகை, தீர்க்கரேகை மற்றும் குறிப்பு இருக்க வேண்டும்.',
+    add_manually: 'கைமுறையாகச் சேர்',
+    add_stop_manually: 'நிறுத்தத்தை கைமுறையாகச் சேர்',
+    add_stop_manually_desc: 'ஒரு இருப்பிடத்திற்கான স্থানাங்குகளை தானாகப் பெற \'கண்டுபிடி\' அம்சத்தைப் பயன்படுத்தவும்.',
     stop_id: 'நிறுத்த ஐடி',
     stop_name: 'நிறுத்தத்தின் பெயர்',
     latitude: 'அட்சரேகை',
@@ -182,8 +188,10 @@ export const translations = {
     routes_saved_error: 'வழித்தடங்களைச் சேமிப்பதில் பிழை.',
     generating_routes_desc: 'AI நிறுத்தங்களை பகுப்பாய்வு செய்து சிறந்த வழித்தடங்களை உருவாக்குகிறது. దీనికి కొంత సమయం పట్టవచ్చు...',
     no_stops_found: 'நிறுத்தங்கள் எதுவும் இல்லை',
-    no_stops_desc: 'வழித்தடங்களை உருவாக்கும் முன், "நிறுத்த இறக்குமதி" பக்கத்தில் நிறுத்தங்களை இறக்குமதி செய்யவும்.',
+    no_stops_desc: 'வழித்தடங்களை உருவாக்கும் முன், "நிறுத்த மேலாண்மை" பக்கத்தில் நிறுத்தங்களை இறக்குமதி செய்யவும்.',
   },
 };
 
 export type TranslationKeys = keyof typeof translations.en;
+
+    
