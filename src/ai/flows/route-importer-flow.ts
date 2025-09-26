@@ -88,12 +88,12 @@ const prompt = ai.definePrompt({
 Your task is to parse this CSV content, and construct the route paths.
 The CSV file has the following columns: RouteID,StopName,Sequence.
 
-You need to group the stops by RouteID and order them by the Sequence number.
-Then, for each stop name, find its geographic coordinates by calling the getStops tool. The tool will provide a list of all known stops and their locations. Match the StopName from the CSV with the stop_name from the tool's output to find the coordinates.
+You must group the stops by RouteID and order them by the Sequence number.
+For each StopName in the CSV, you must use the getStops tool to find its exact geographic coordinates (latitude and longitude). The tool will provide a list of all known stops and their locations. Match the StopName from the CSV with the stop_name from the tool's output to find the coordinates.
 
-Finally, construct a path for each route as an array of coordinates in the correct sequence.
+After finding the coordinates for all stops in a route, construct a path for each route as an array of coordinates in the correct sequence. The 'stops' field in the output should be the count of stops for that route.
 
-The output must be a JSON object containing a list of routes.
+The final output must be a JSON object containing a list of routes, conforming to the required schema.
 
 CSV Content:
 {{{csvContent}}}
