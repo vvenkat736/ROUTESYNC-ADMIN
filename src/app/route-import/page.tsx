@@ -159,6 +159,7 @@ export default function RouteImportPage() {
                     <TableRow>
                       <TableHead>{t('route_id')}</TableHead>
                       <TableHead>{t('stops')}</TableHead>
+                      <TableHead>{t('start_end_stops')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -167,6 +168,11 @@ export default function RouteImportPage() {
                       <TableRow key={route.id}>
                         <TableCell className="font-medium">{t('route')} {route.id}</TableCell>
                         <TableCell>{route.stops}</TableCell>
+                        <TableCell>
+                          {route.startStop && route.endStop
+                            ? `${route.startStop} → ${route.endStop}`
+                            : 'N/A'}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8">

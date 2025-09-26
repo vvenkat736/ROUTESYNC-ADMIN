@@ -13,8 +13,9 @@ export type Bus = {
 export type Route = {
     id: number;
     stops: number;
-    frequency: string;
     path: [number, number][];
+    startStop: string;
+    endStop: string;
 };
 
 export type Stop = {
@@ -69,7 +70,8 @@ export const routes: Route[] = [
     {
       id: 101,
       stops: 15,
-      frequency: '20 mins',
+      startStop: 'Srirangam',
+      endStop: 'Central Bus Stand',
       path: [
         [10.850, 78.683], // Srirangam
         [10.830, 78.686], // Amma Mandapam
@@ -81,7 +83,8 @@ export const routes: Route[] = [
     {
       id: 102,
       stops: 22,
-      frequency: '15 mins',
+      startStop: 'Central Bus Stand',
+      endStop: 'SIT',
       path: [
         [10.798, 78.680], // Central Bus Stand
         [10.788, 78.690], // Railway Junction
@@ -93,7 +96,8 @@ export const routes: Route[] = [
     {
       id: 103,
       stops: 18,
-      frequency: '25 mins',
+      startStop: 'Chatram Bus Stand',
+      endStop: 'Srirangam',
       path: [
         [10.825, 78.683], // Chatram Bus Stand
         [10.840, 78.670], // Thillai Nagar
@@ -105,7 +109,8 @@ export const routes: Route[] = [
     {
       id: 104,
       stops: 12,
-      frequency: '30 mins',
+      startStop: 'Central Bus Stand',
+      endStop: 'Airport',
       path: [
         [10.798, 78.680], // Central Bus Stand
         [10.760, 78.675], // Crawford
@@ -117,7 +122,8 @@ export const routes: Route[] = [
     {
       id: 105,
       stops: 25,
-      frequency: '18 mins',
+      startStop: 'Chatram Bus Stand',
+      endStop: 'BHEL Township',
       path: [
         [10.825, 78.683], // Chatram Bus Stand
         [10.810, 78.695], // St. Joseph's College

@@ -62,6 +62,7 @@ export const translations = {
     optimize_route: 'Optimize Route',
     optimized_route: 'Optimized Route',
     eta: 'Estimated Time of Arrival',
+    start_end_stops: 'Start / End Stops',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -77,7 +78,7 @@ export const translations = {
     total_buses: 'மொத்த பேருந்துகள்',
     active_buses: 'செயலில் உள்ள பேருந்துகள்',
     delayed_buses: 'தாமதமான பேருந்துகள்',
-    inactive_buses: 'செயலற்ற பேருந்துகள்',
+inactive_buses: 'செயலற்ற பேருந்துகள்',
     filter_by_bus_or_driver: 'பேருந்து எண் அல்லது ஓட்டுநர் மூலம் வடிகட்டவும்...',
     filter_by_route: 'வழித்தடம் மூலம் வடிகட்டவும்',
     filter_by_status: 'நிலை மூலம் வடிகட்டவும்',
@@ -124,6 +125,7 @@ export const translations = {
     optimize_route: 'வழியை மேம்படுத்து',
     optimized_route: 'மேம்படுத்தப்பட்ட வழி',
     eta: 'மதிப்பிடப்பட்ட வருகை நேரம்',
+    start_end_stops: 'தொடக்க / இறுதி நிறுத்தங்கள்',
   },
 };
 

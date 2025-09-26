@@ -29,6 +29,8 @@ const RouteSchema = z.object({
     id: z.number().describe('The unique identifier for the route.'),
     stops: z.number().describe('The number of stops in the route.'),
     path: z.array(PointSchema).describe('An array of coordinates representing the route path.'),
+    startStop: z.string().describe('The name of the first stop in the route.'),
+    endStop: z.string().describe('The name of the last stop in the route.'),
 });
 
 // Output schema containing a list of routes
@@ -58,7 +60,7 @@ const getStops = ai.defineTool(
 
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
-    const output = await routeImporterFlow(input);
+    const { output } = await routeImporterFlow(input);
     
     if (output && output.routes) {
         const db = getFirestore(app);
@@ -90,6 +92,7 @@ You must group the stops by 'route_id' and order them by the 'stop_sequence' num
 For each 'stop_name' in the CSV, you MUST use the getStops tool to find its exact geographic coordinates (latitude and longitude). The tool provides a list of all known stops and their locations. Match the 'stop_name' from the CSV with the 'stop_name' from the tool's output to find the coordinates.
 
 After finding the coordinates for all stops in a route, construct a path for each route as an array of coordinates in the correct sequence. The 'stops' field in the output schema should be the count of stops for that route.
+The 'startStop' should be the name of the first stop in the sequence, and 'endStop' should be the name of the last stop.
 
 The final output must be a JSON object containing a list of routes, conforming to the required schema.
 
