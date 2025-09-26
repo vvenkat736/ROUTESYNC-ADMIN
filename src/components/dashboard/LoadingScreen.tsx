@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { MapPin } from 'lucide-react';
 
 export default function LoadingScreen() {
     const [progress, setProgress] = useState(0);
@@ -26,14 +27,23 @@ export default function LoadingScreen() {
         };
     }, []);
 
+    const busPosition = progress;
+
     return (
         <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
             <div className="w-3/4 max-w-lg text-center">
                 <div 
-                    className="relative transition-all duration-500 ease-in-out mb-6 text-8xl"
-                    style={{ opacity: progress > 10 ? 1 : 0, transform: `scale(${progress > 10 ? 1 : 0.8})` }}
+                    className="relative w-full h-24 mb-4 flex items-center justify-center transition-opacity duration-500 ease-in-out"
+                    style={{ opacity: progress > 10 ? 1 : 0 }}
                 >
-                    🚍
+                    <div className="w-full max-w-xs h-1 bg-gray-700 rounded-full"></div>
+                    <div 
+                        className="absolute text-6xl transition-transform duration-100 ease-linear"
+                        style={{ transform: `translateX(calc(-50% + ${busPosition}% - ${busPosition/2}px))` }}
+                    >
+                        🚍
+                    </div>
+                    <MapPin className="absolute right-0 text-accent h-12 w-12" style={{ transform: 'translateX(20px)' }}/>
                 </div>
                 
                 <div className="relative h-10 overflow-hidden">
