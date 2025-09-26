@@ -18,27 +18,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { buses as allBuses } from "@/lib/data";
 import type { Bus } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
 import { ScrollArea } from "../ui/scroll-area";
 
 export function BusList() {
   const { t } = useLanguage();
-  const [buses, setBuses] = useState<Bus[]>([]);
-
-  useEffect(() => {
-    const q = query(collection(db, "buses"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const busesData: Bus[] = [];
-      snapshot.forEach((doc) => {
-        busesData.push({ id: doc.id, ...doc.data() } as Bus);
-      });
-      setBuses(busesData);
-    });
-    return () => unsubscribe();
-  }, []);
+  const [buses, setBuses] = useState<Bus[]>(allBuses.map((b, i) => ({ id: `bus_${i}`, ...b })));
 
   const getStatusVariant = (status: Bus['status']) => {
     if (status === 'Active') return 'bg-green-500 hover:bg-green-500/80';
@@ -86,5 +73,3 @@ export function BusList() {
     </Card>
   );
 }
-
-    

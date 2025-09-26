@@ -7,9 +7,7 @@ import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
-import type { Bus, Stop } from '@/lib/data';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, getDocs } from 'firebase/firestore';
+import { buses as allBuses, stops as allStops, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
@@ -53,46 +51,11 @@ interface AnimatedBus extends Bus {
 
 export default function InteractiveMap() {
   const { t } = useLanguage();
-  const [buses, setBuses] = useState<Bus[]>([]);
-  const [stops, setStops] = useState<Stop[]>([]);
-  const [routes, setRoutes] = useState<any[]>([]);
+  const [buses] = useState<Bus[]>(allBuses.map((b,i) => ({ id: `bus_${i}`, ...b })));
+  const [stops] = useState<Stop[]>(allStops);
+  const [routes] = useState<any[]>(allRoutes);
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
-
-  useEffect(() => {
-    const qBuses = query(collection(db, 'buses'));
-    const unsubscribeBuses = onSnapshot(qBuses, (querySnapshot) => {
-      const busesData: Bus[] = [];
-      querySnapshot.forEach((doc) => {
-        busesData.push({ id: doc.id, ...doc.data() } as Bus);
-      });
-      setBuses(busesData);
-    });
-
-    const qStops = query(collection(db, 'stops'));
-    const unsubscribeStops = onSnapshot(qStops, (querySnapshot) => {
-        const stopsData: Stop[] = [];
-        querySnapshot.forEach((doc) => {
-            stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
-        });
-        setStops(stopsData);
-    });
-
-    // Routes are not changing in real-time, so we can fetch them once.
-    const qRoutes = query(collection(db, 'routes'));
-    getDocs(qRoutes).then((querySnapshot) => {
-        const routesData: any[] = [];
-        querySnapshot.forEach((doc) => {
-            routesData.push({ id: doc.id, ...doc.data() });
-        });
-        setRoutes(routesData);
-    });
-
-    return () => {
-        unsubscribeBuses();
-        unsubscribeStops();
-    };
-  }, []);
 
   const generatedRoutePaths = useMemo(() => {
     const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
@@ -284,5 +247,3 @@ export default function InteractiveMap() {
     </Card>
   );
 }
-
-    

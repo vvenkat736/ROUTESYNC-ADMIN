@@ -12,40 +12,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/hooks/use-language";
-import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { buses as allBuses, routes as allRoutes } from "@/lib/data";
 import type { Bus as BusType, Route as RouteType } from "@/lib/data";
 
 export function FleetOverview() {
   const { t } = useLanguage();
-  const [buses, setBuses] = useState<BusType[]>([]);
-  const [routes, setRoutes] = useState<RouteType[]>([]);
+  const [buses, setBuses] = useState<BusType[]>(allBuses.map((b, i) => ({ id: `bus_${i}`, ...b })));
+  
+  // Get unique routes
+  const uniqueRoutes = allRoutes.reduce((acc, current) => {
+    if (!acc.find((item) => item.route_id === current.route_id)) {
+      acc.push(current);
+    }
+    return acc;
+  }, [] as Partial<RouteType>[]);
 
-  useEffect(() => {
-    const busesQuery = query(collection(db, 'buses'));
-    const routesQuery = query(collection(db, 'routes'));
-
-    const unsubscribeBuses = onSnapshot(busesQuery, (querySnapshot) => {
-      const busesData: BusType[] = [];
-      querySnapshot.forEach((doc) => {
-        busesData.push({ id: doc.id, ...doc.data() } as BusType);
-      });
-      setBuses(busesData);
-    });
-
-    const unsubscribeRoutes = onSnapshot(routesQuery, (querySnapshot) => {
-      const routesData: RouteType[] = [];
-      querySnapshot.forEach((doc) => {
-        routesData.push({ id: parseInt(doc.id), ...doc.data() } as RouteType);
-      });
-      setRoutes(routesData);
-    });
-
-    return () => {
-      unsubscribeBuses();
-      unsubscribeRoutes();
-    };
-  }, []);
 
   const totalBuses = buses.length;
   const activeBuses = buses.filter(b => b.status === "Active").length;
@@ -106,8 +87,8 @@ export function FleetOverview() {
             </div>
           </SelectTrigger>
           <SelectContent>
-            {routes.map(route => (
-              <SelectItem key={route.id} value={route.id.toString()}>{t('route')} {route.id}</SelectItem>
+            {uniqueRoutes.map(route => (
+              <SelectItem key={route.route_id} value={route.route_id!}>{route.route_name}</SelectItem>
             ))}
           </SelectContent>
         </Select>

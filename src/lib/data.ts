@@ -152,5 +152,3 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
-
-    
