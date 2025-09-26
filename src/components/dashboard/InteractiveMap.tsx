@@ -34,7 +34,15 @@ const createBusIcon = (status: Bus['status']) => {
 export default function InteractiveMap() {
   const { t } = useLanguage();
   const [buses, setBuses] = useState<Bus[]>(initialBuses);
-  const position: [number, number] = [11.0168, 76.9558];
+  const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
+
+  useEffect(() => {
+    if (initialBuses.length > 0) {
+      const avgLat = initialBuses.reduce((sum, bus) => sum + bus.lat, 0) / initialBuses.length;
+      const avgLng = initialBuses.reduce((sum, bus) => sum + bus.lng, 0) / initialBuses.length;
+      setMapCenter([avgLat, avgLng]);
+    }
+  }, []);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,7 +73,7 @@ export default function InteractiveMap() {
                 <Waypoints className="w-5 h-5 text-primary" />
                 <h2 className="font-semibold text-primary">{t('live_fleet_map')}</h2>
             </div>
-            <MapContainer center={position} zoom={12} scrollWheelZoom={true} className="h-full w-full">
+            <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full">
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

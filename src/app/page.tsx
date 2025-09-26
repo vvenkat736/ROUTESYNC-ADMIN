@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import dynamic from 'next/dynamic';
-import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { FleetOverview } from "@/components/dashboard/FleetOverview";
@@ -39,11 +39,11 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen">
+      <div className="min-h-screen md:flex">
         <Sidebar className="border-r" side="left">
           <SidebarNav />
         </Sidebar>
-        <SidebarInset>
+        <div className="flex-1">
           <Header />
           <main className="p-4 lg:p-6 space-y-6 bg-background">
             <FleetOverview />
@@ -62,7 +62,7 @@ export default function Home() {
               <CarbonFootprintChart />
             </div>
           </main>
-        </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
