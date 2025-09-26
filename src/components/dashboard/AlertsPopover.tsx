@@ -1,5 +1,7 @@
+
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { Bell, AlertTriangle, Bus, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +17,38 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { useLanguage } from "@/hooks/use-language";
-import { alerts } from "@/lib/data";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+
+type Alert = {
+  id: string;
+  type: string;
+  busNumber: string;
+  message: string;
+  timestamp: any;
+};
 
 export function AlertsPopover() {
   const { t } = useLanguage();
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"), limit(5));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const alertsData: Alert[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        alertsData.push({
+          id: doc.id,
+          ...data,
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'No timestamp',
+        } as Alert);
+      });
+      setAlerts(alertsData);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -66,7 +96,7 @@ export function AlertsPopover() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">{t('no_alerts')}</p>
+                <p className="text-sm text-muted-foreground text-center">{t('no_alerts')}</p>
               )}
             </div>
           </CardContent>

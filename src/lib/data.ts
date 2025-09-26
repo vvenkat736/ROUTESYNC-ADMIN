@@ -1,5 +1,6 @@
+
 export type Bus = {
-  id: number;
+  id: string; // Changed to string to match firestore doc id
   busNumber: string;
   driver: string;
   driverAvatar: string;
@@ -17,15 +18,15 @@ export type Route = {
 };
 
 
-export const buses: Bus[] = [
-  { id: 1, busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
-  { id: 2, busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 10.83178, lng: 78.69323 },
-  { id: 3, busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 103, status: 'Delayed', lat: 10.82577, lng: 78.68337 },
-  { id: 4, busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 101, status: 'Active', lat: 10.824, lng: 78.6815 },
-  { id: 5, busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 104, status: 'Inactive', lat: 10.80009, lng: 78.68786 },
-  { id: 6, busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 102, status: 'Active', lat: 10.80783, lng: 78.69416 },
-  { id: 7, busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 105, status: 'Delayed', lat: 10.79, lng: 78.72 },
-  { id: 8, busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
+export const buses: Omit<Bus, 'id'>[] = [
+  { busNumber: 'TN 37 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 101, status: 'Active', lat: 10.79861, lng: 78.68041 },
+  { busNumber: 'TN 38 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 102, status: 'Active', lat: 10.83178, lng: 78.69323 },
+  { busNumber: 'TN 37 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 103, status: 'Delayed', lat: 10.82577, lng: 78.68337 },
+  { busNumber: 'TN 38 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 101, status: 'Active', lat: 10.824, lng: 78.6815 },
+  { busNumber: 'TN 37 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 104, status: 'Inactive', lat: 10.80009, lng: 78.68786 },
+  { busNumber: 'TN 38 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 102, status: 'Active', lat: 10.80783, lng: 78.69416 },
+  { busNumber: 'TN 37 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 105, status: 'Delayed', lat: 10.79, lng: 78.72 },
+  { busNumber: 'TN 38 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 103, status: 'Active', lat: 10.7855, lng: 78.7175 },
 ];
 
 export const routes: Route[] = [
@@ -92,9 +93,9 @@ export const routes: Route[] = [
 ];
 
 export const alerts = [
-  { id: 1, type: 'SOS', busNumber: 'TN 37 D 9012', message: 'Mechanical issue reported.', timestamp: '2 mins ago' },
-  { id: 2, type: 'Delayed', busNumber: 'TN 37 G 4567', message: 'Heavy traffic on Gandhipuram flyover.', timestamp: '5 mins ago' },
-  { id: 3, type: 'Inactive', busNumber: 'TN 37 E 7890', message: 'Bus offline for 30 minutes.', timestamp: '10 mins ago' },
+  { type: 'SOS', busNumber: 'TN 37 D 9012', message: 'Mechanical issue reported.' },
+  { type: 'Delayed', busNumber: 'TN 37 G 4567', message: 'Heavy traffic on Gandhipuram flyover.' },
+  { type: 'Inactive', busNumber: 'TN 37 E 7890', message: 'Bus offline for 30 minutes.' },
 ];
 
 export const tripsPerDayData = [
@@ -115,7 +116,7 @@ export const delaysPerRouteData = [
   { route: '105', delays: 15 },
 ];
 
-export const busStatusData = [
+export const busStatusData = (buses: Bus[]) => [
     { name: 'Active', value: buses.filter(b => b.status === 'Active').length, color: 'emerald' },
     { name: 'Delayed', value: buses.filter(b => b.status === 'Delayed').length, color: 'amber' },
     { name: 'Inactive', value: buses.filter(b => b.status === 'Inactive').length, color: 'slate' },

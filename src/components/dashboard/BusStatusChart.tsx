@@ -1,12 +1,34 @@
+
 "use client"
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { busStatusData } from "@/lib/data";
+import { busStatusData as getBusStatusData } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
+import React, { useState, useEffect } from "react";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query } from "firebase/firestore";
+import type { Bus } from "@/lib/data";
+
 
 export function BusStatusChart() {
   const { t } = useLanguage();
+  const [buses, setBuses] = useState<Bus[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'buses'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const busesData: Bus[] = [];
+      querySnapshot.forEach((doc) => {
+        busesData.push({ id: doc.id, ...doc.data() } as Bus);
+      });
+      setBuses(busesData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const busStatusData = getBusStatusData(buses);
 
   const translatedData = busStatusData.map(item => ({
     ...item,

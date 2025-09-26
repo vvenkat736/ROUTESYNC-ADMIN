@@ -8,10 +8,38 @@ import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { useLanguage } from "@/hooks/use-language";
 import { Bell, AlertTriangle, Bus, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { alerts } from "@/lib/data";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+
+type Alert = {
+  id: string;
+  type: string;
+  busNumber: string;
+  message: string;
+  timestamp: any;
+};
 
 export default function AlertsPage() {
   const { t } = useLanguage();
+  const [alerts, setAlerts] = React.useState<Alert[]>([]);
+
+  React.useEffect(() => {
+    const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const alertsData: Alert[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        alertsData.push({
+          id: doc.id,
+          ...data,
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : 'No timestamp',
+        } as Alert);
+      });
+      setAlerts(alertsData);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {

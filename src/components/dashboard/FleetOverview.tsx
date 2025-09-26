@@ -1,5 +1,7 @@
+
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { Bus, Users, MapPin, Search } from "lucide-react";
 import {
   Card,
@@ -10,10 +12,40 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/hooks/use-language";
-import { buses, routes } from "@/lib/data";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query } from "firebase/firestore";
+import type { Bus as BusType, Route as RouteType } from "@/lib/data";
 
 export function FleetOverview() {
   const { t } = useLanguage();
+  const [buses, setBuses] = useState<BusType[]>([]);
+  const [routes, setRoutes] = useState<RouteType[]>([]);
+
+  useEffect(() => {
+    const busesQuery = query(collection(db, 'buses'));
+    const routesQuery = query(collection(db, 'routes'));
+
+    const unsubscribeBuses = onSnapshot(busesQuery, (querySnapshot) => {
+      const busesData: BusType[] = [];
+      querySnapshot.forEach((doc) => {
+        busesData.push({ id: doc.id, ...doc.data() } as BusType);
+      });
+      setBuses(busesData);
+    });
+
+    const unsubscribeRoutes = onSnapshot(routesQuery, (querySnapshot) => {
+      const routesData: RouteType[] = [];
+      querySnapshot.forEach((doc) => {
+        routesData.push({ id: parseInt(doc.id), ...doc.data() } as RouteType);
+      });
+      setRoutes(routesData);
+    });
+
+    return () => {
+      unsubscribeBuses();
+      unsubscribeRoutes();
+    };
+  }, []);
 
   const totalBuses = buses.length;
   const activeBuses = buses.filter(b => b.status === "Active").length;

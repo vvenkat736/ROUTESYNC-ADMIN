@@ -6,9 +6,11 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerG
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
-import { buses as initialBuses, routes } from '@/lib/data';
+import { routes } from '@/lib/data';
 import { useLanguage } from '@/hooks/use-language';
 import type { Bus } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
@@ -42,11 +44,25 @@ interface AnimatedBus extends Bus {
 
 export default function InteractiveMap() {
   const { t } = useLanguage();
+  const [buses, setBuses] = useState<Bus[]>([]);
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
   useEffect(() => {
-    const busesWithRoutes = initialBuses.map(bus => {
+    const q = query(collection(db, 'buses'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const busesData: Bus[] = [];
+      querySnapshot.forEach((doc) => {
+        busesData.push({ id: doc.id, ...doc.data() } as Bus);
+      });
+      setBuses(busesData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const busesWithRoutes = buses.map(bus => {
         const routeData = routes.find(r => r.id === bus.route);
         return {
             ...bus,
@@ -58,12 +74,12 @@ export default function InteractiveMap() {
 
     setAnimatedBuses(busesWithRoutes);
 
-    if (busesWithRoutes.length > 0) {
+    if (busesWithRoutes.length > 0 && mapCenter[0] === 10.80) { // Only set initial center
       const avgLat = busesWithRoutes.reduce((sum, bus) => sum + bus.lat, 0) / busesWithRoutes.length;
       const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
       setMapCenter([avgLat, avgLng]);
     }
-  }, []);
+  }, [buses]);
   
   useEffect(() => {
     const interval = setInterval(() => {
