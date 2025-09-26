@@ -58,14 +58,15 @@ const getStops = ai.defineTool(
 
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
-  const result = await routeImporterFlow(input);
+  // Directly call the prompt and handle potential null output here
+  const { output } = await prompt(input);
   
-  if (result && result.routes) {
+  if (output && output.routes) {
     const db = getFirestore(app);
     const batch = writeBatch(db);
     const routesCollection = collection(db, 'routes');
 
-    result.routes.forEach(route => {
+    output.routes.forEach(route => {
       const docRef = doc(routesCollection, String(route.id));
       const { id, ...routeData } = route;
       batch.set(docRef, routeData);
@@ -73,7 +74,8 @@ export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<
 
     await batch.commit();
   } else {
-    throw new Error("AI failed to process the route data.");
+    // This will now be caught correctly
+    throw new Error("AI failed to process the route data. The model returned an empty response.");
   }
 }
 
@@ -98,6 +100,8 @@ CSV Content:
 `,
 });
 
+// The flow can be simplified or used for more complex logic later if needed.
+// For now, the main logic is in processAndStoreRoutes.
 const routeImporterFlow = ai.defineFlow(
   {
     name: 'routeImporterFlow',
