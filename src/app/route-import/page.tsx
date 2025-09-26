@@ -93,7 +93,7 @@ export default function RouteImportPage() {
             console.error("Error importing routes:", error);
             toast({
                 title: "Import Failed",
-                description: "There was an error processing your file.",
+                description: (error as Error).message || "There was an error processing your file.",
                 variant: "destructive",
             });
         } finally {
@@ -135,7 +135,7 @@ export default function RouteImportPage() {
                     <DialogHeader>
                       <DialogTitle>{t('import_routes_csv')}</DialogTitle>
                       <DialogDescription>
-                        {t('import_routes_csv_desc')}
+                        Please export the 'routes' sheet from your Excel workbook to a CSV file and upload it here.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -182,7 +182,7 @@ export default function RouteImportPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
+                        </TableCell>                      
                       </TableRow>
                     ))}
                   </TableBody>
