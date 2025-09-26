@@ -66,7 +66,7 @@ export const translations = {
     app_name: 'ரூட்சின்க்',
     app_name_admin: 'ரூட்சின்க் நிர்வாகம்',
     admin_panel: 'நிர்வாகக் குழு',
-    dashboard: 'แดชบอร์ด',
+    dashboard: 'டாஷ்போர்டு',
     live_map: 'நேரடி வரைபடம்',
     analytics: 'பகுப்பாய்வுகள்',
     alerts: 'எச்சரிக்கைகள்',
