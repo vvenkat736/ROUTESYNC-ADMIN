@@ -29,15 +29,21 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { UploadCloud, Pencil, Trash2 } from "lucide-react"
+import { UploadCloud, Pencil, Trash2, Loader2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 import { db } from "@/lib/firebase"
 import { collection, onSnapshot, query } from "firebase/firestore"
 import type { Route } from "@/lib/data"
+import { useToast } from "@/hooks/use-toast"
+import { processAndStoreRoutes } from "@/ai/flows/route-importer-flow"
 
 export function RouteManagement() {
   const { t } = useLanguage()
   const [routes, setRoutes] = React.useState<Route[]>([]);
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [isImporting, setIsImporting] = React.useState(false);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const q = query(collection(db, "routes"));
@@ -52,6 +58,50 @@ export function RouteManagement() {
     return () => unsubscribe();
   }, []);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) {
+        toast({
+            title: "No file selected",
+            description: "Please select a CSV file to import.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    setIsImporting(true);
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const content = e.target?.result as string;
+        try {
+            await processAndStoreRoutes({ csvContent: content });
+            toast({
+                title: "Import Successful",
+                description: "The routes have been imported and stored in Firebase.",
+            });
+            setDialogOpen(false);
+        } catch (error) {
+            console.error("Error importing routes:", error);
+            toast({
+                title: "Import Failed",
+                description: "There was an error processing your file.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsImporting(false);
+            setSelectedFile(null);
+        }
+    };
+    reader.readAsText(selectedFile);
+  };
+
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -59,7 +109,7 @@ export function RouteManagement() {
           <CardTitle>{t('route_management')}</CardTitle>
           <CardDescription>{t('route_management_desc')}</CardDescription>
         </div>
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <UploadCloud className="mr-2 h-4 w-4" />
@@ -76,11 +126,14 @@ export function RouteManagement() {
             <div className="grid gap-4 py-4">
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="csv-file">{t('csv_file')}</Label>
-                <Input id="csv-file" type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} />
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">{t('upload_file')}</Button>
+              <Button onClick={handleImport} disabled={isImporting || !selectedFile}>
+                {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('upload_file')}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
