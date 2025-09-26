@@ -202,6 +202,7 @@ export default function StopImportPage() {
         }
         setIsSaving(true);
         try {
+            const db = getFirestore();
             const docRef = doc(db, 'stops', stopId);
             await setDoc(docRef, {
                 stop_name: stopName,
@@ -265,13 +266,13 @@ export default function StopImportPage() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <div className="flex flex-1">
-            <Sidebar className="border-r" side="left" collapsible="offcanvas">
-            <SidebarNav />
-            </Sidebar>
-            <main className="p-4 lg:p-6 flex-1">
+      <div className="min-h-screen md:flex">
+        <Sidebar className="border-r" side="left" collapsible="offcanvas">
+          <SidebarNav />
+        </Sidebar>
+        <div className="flex-1">
+          <Header />
+          <main className="p-4 lg:p-6">
                 <div className="flex items-center gap-4 mb-6">
                 <MapPin className="w-8 h-8 text-primary" />
                 <h1 className="text-2xl font-semibold">{t('stop_import')}</h1>
@@ -359,9 +360,11 @@ export default function StopImportPage() {
                     </Table>
                 </CardContent>
                 </Card>
-            </main>
+          </main>
         </div>
       </div>
     </SidebarProvider>
   );
 }
+
+    
