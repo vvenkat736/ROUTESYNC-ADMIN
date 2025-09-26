@@ -21,11 +21,15 @@ const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveM
 
 export default function Home() {
   const [loading, setLoading] = React.useState(true);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 4000); // Simulate loading time for the splash screen
+    
+    setIsClient(true);
+    
     return () => clearTimeout(timer);
   }, []);
 
@@ -45,7 +49,7 @@ export default function Home() {
             <FleetOverview />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <InteractiveMap />
+                {isClient && <InteractiveMap />}
               </div>
               <div className="space-y-6">
                 <RouteManagement />
