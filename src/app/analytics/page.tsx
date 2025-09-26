@@ -14,7 +14,7 @@ export default function AnalyticsPage() {
   return (
     <SidebarProvider>
       <div className="min-h-screen md:flex">
-        <Sidebar className="border-r" side="left" collapsible="icon">
+        <Sidebar className="border-r" side="left" collapsible="offcanvas">
           <SidebarNav />
         </Sidebar>
         <div className="flex-1">
