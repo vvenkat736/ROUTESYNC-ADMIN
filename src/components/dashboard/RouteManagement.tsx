@@ -71,6 +71,12 @@ export default function RouteManagement() {
       querySnapshot.forEach((doc) => {
         routesData.push({ id: doc.id, ...doc.data() });
       });
+      // Sort by route_id and then by stop_sequence
+      routesData.sort((a, b) => {
+        if (a.route_id < b.route_id) return -1;
+        if (a.route_id > b.route_id) return 1;
+        return a.stop_sequence - b.stop_sequence;
+      });
       setRoutes(routesData);
     });
 
@@ -120,7 +126,7 @@ export default function RouteManagement() {
                   total_distance: parseFloat(route.total_distance) || 0,
                   estimated_mins: parseInt(route.estimated_mins, 10) || 0,
                   frequency: parseInt(route.frequency, 10) || 0,
-                  bus_type: route['bus _type'] || route.bus_type || '', // Handle potential space in header
+                  bus_type: route['bus_type'] || route.bus_type || '',
                 });
             });
 
@@ -145,31 +151,6 @@ export default function RouteManagement() {
     };
     reader.readAsText(selectedFile);
   };
-
-  const groupedRoutes = React.useMemo(() => {
-    const byRouteId: { [key: number]: { 
-        name: string, 
-        type: string, 
-        stops: number, 
-        total_distance: number,
-        estimated_mins: number,
-        frequency: number,
-    } } = {};
-    routes.forEach(r => {
-      if (!byRouteId[r.route_id]) {
-        byRouteId[r.route_id] = {
-          name: r.route_name,
-          type: r.bus_type,
-          stops: 0,
-          total_distance: r.total_distance,
-          estimated_mins: r.estimated_mins,
-          frequency: r.frequency
-        };
-      }
-      byRouteId[r.route_id].stops++;
-    });
-    return Object.entries(byRouteId).map(([id, data]) => ({ id, ...data }));
-  }, [routes]);
 
   return (
     <SidebarProvider>
@@ -226,24 +207,30 @@ export default function RouteManagement() {
                     <TableRow>
                       <TableHead>{t('route_id')}</TableHead>
                       <TableHead>{t('route_name')}</TableHead>
-                      <TableHead>{t('stops')}</TableHead>
-                      <TableHead>{t('frequency')}</TableHead>
-                      <TableHead>{t('bus_type')}</TableHead>
+                      <TableHead>{t('stop_sequence')}</TableHead>
+                      <TableHead>{t('stop_name')}</TableHead>
+                      <TableHead>{t('distances_km')}</TableHead>
+                      <TableHead>{t('etas_min')}</TableHead>
                       <TableHead>{t('total_distance_km')}</TableHead>
                       <TableHead>{t('total_time_min')}</TableHead>
+                      <TableHead>{t('frequency')}</TableHead>
+                      <TableHead>{t('bus_type')}</TableHead>
                       <TableHead className="text-right">{t('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {groupedRoutes.map((route) => (
+                    {routes.map((route) => (
                       <TableRow key={route.id}>
-                        <TableCell className="font-medium">{route.id}</TableCell>
-                        <TableCell>{route.name}</TableCell>
-                        <TableCell>{route.stops}</TableCell>
-                        <TableCell>{route.frequency}</TableCell>
-                        <TableCell>{route.type}</TableCell>
+                        <TableCell className="font-medium">{route.route_id}</TableCell>
+                        <TableCell>{route.route_name}</TableCell>
+                        <TableCell>{route.stop_sequence}</TableCell>
+                        <TableCell>{route.stop_name}</TableCell>
+                        <TableCell>{route.distances_km.toFixed(2)}</TableCell>
+                        <TableCell>{route.etas_min}</TableCell>
                         <TableCell>{route.total_distance.toFixed(2)}</TableCell>
                         <TableCell>{route.estimated_mins}</TableCell>
+                        <TableCell>{route.frequency}</TableCell>
+                        <TableCell>{route.bus_type}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -266,3 +253,5 @@ export default function RouteManagement() {
     </SidebarProvider>
   );
 }
+
+    

@@ -79,6 +79,9 @@ export const translations = {
     total_distance_km: 'Total Distance (km)',
     total_time_min: 'Est. Time (min)',
     frequency: 'Frequency',
+    stop_sequence: 'Stop Sequence',
+    distances_km: 'Distance (km)',
+    etas_min: 'ETA (min)',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -157,7 +160,12 @@ export const translations = {
     total_distance_km: 'மொத்த தூரம் (கிமீ)',
     total_time_min: 'மதி. நேரம் (நிமி)',
     frequency: 'அதிர்வெண்',
+    stop_sequence: 'நிறுத்த வரிசை',
+    distances_km: 'தூரம் (கிமீ)',
+    etas_min: 'ETA (நிமி)',
   },
 };
 
 export type TranslationKeys = keyof typeof translations.en;
+
+    
