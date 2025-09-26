@@ -34,42 +34,41 @@ const GenerateRoutesOutputSchema = z.object({
 });
 export type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
 
-// Tool for the AI to get all available bus stops from Firestore
-const getStops = ai.defineTool(
-    {
-      name: 'getStops',
-      description: 'Get the list of all available bus stops and their locations.',
-      outputSchema: z.array(z.object({
-          stop_id: z.string(),
-          stop_name: z.string(),
-          lat: z.number(),
-          lng: z.number(),
-      })),
-    },
-    async () => {
-        const db = getFirestore(app);
-        const stopsCollection = collection(db, 'stops');
-        const snapshot = await getDocs(stopsCollection);
-        return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
-    }
-);
+// Helper function to get all available bus stops from Firestore
+async function getStops() {
+    const db = getFirestore(app);
+    const stopsCollection = collection(db, 'stops');
+    const snapshot = await getDocs(stopsCollection);
+    return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
+}
 
 // The main exported function that the UI will call
 export async function generateRoutes(): Promise<GenerateRoutesOutput> {
   return generateRoutesFlow();
 }
 
+const StopInfoSchema = z.object({
+  stop_id: z.string(),
+  stop_name: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+});
+
 // The prompt that instructs the AI how to generate routes
 const prompt = ai.definePrompt({
   name: 'routeGeneratorPrompt',
+  input: { schema: z.object({ stops: z.array(StopInfoSchema) }) },
   output: { schema: GenerateRoutesOutputSchema },
-  tools: [getStops],
   prompt: `You are a master transport logistics expert for the city of Trichy, India.
-Your task is to create a set of logical and efficient bus routes that connect the available bus stops.
+Your task is to create a set of logical and efficient bus routes that connect the available bus stops provided to you.
 
-First, you MUST use the getStops tool to get a complete list of all available bus stops and their locations.
+Based on the list of stops below, you will create between 5 and 8 distinct bus routes. Each route should cover a logical area or connect important hubs (like 'Central Bus Stand', 'Chathiram', 'Srirangam', 'Thiruverumbur').
 
-Based on the list of stops, you will create between 5 and 8 distinct bus routes. Each route should cover a logical area or connect important hubs (like 'Central Bus Stand', 'Chathiram', 'Srirangam', 'Thiruverumbur').
+Available Stops:
+{{#each stops}}
+- {{stop_name}} (Lat: {{lat}}, Lng: {{lng}})
+{{/each}}
+
 
 For each route you generate, you must provide:
 1.  A descriptive 'routeName' (e.g., 'Central Bus Stand to Thiruverumbur').
@@ -90,7 +89,16 @@ const generateRoutesFlow = ai.defineFlow(
     outputSchema: GenerateRoutesOutputSchema,
   },
   async () => {
-    const { output } = await prompt();
+    // Step 1: Explicitly fetch the stops first.
+    const stops = await getStops();
+
+    if (!stops || stops.length === 0) {
+      throw new Error("No stops found in the database. Please import stops first.");
+    }
+    
+    // Step 2: Pass the fetched stops to the AI.
+    const { output } = await prompt({ stops });
+
     if (!output) {
       throw new Error("AI failed to generate routes. The model returned an empty response.");
     }
