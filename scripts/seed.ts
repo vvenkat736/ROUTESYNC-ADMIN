@@ -54,19 +54,9 @@ async function seedDatabase() {
   });
   console.log('Alerts prepared.');
 
-    // Seed routes
-    const routesCollection = collection(db, 'routes');
-    console.log('Seeding routes...');
-    routes.forEach(route => {
-        const { id, ...routeData } = route;
-        const docRef = doc(routesCollection, String(id));
-        batch.set(docRef, routeData);
-    });
-    console.log('Routes prepared.');
-
   try {
     await batch.commit();
-    console.log('Database seeded successfully!');
+    console.log('Database seeded successfully with stops, buses, and alerts!');
   } catch (error) {
     console.error('Error seeding database:', error);
   } finally {
