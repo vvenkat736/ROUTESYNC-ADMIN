@@ -7,6 +7,7 @@ import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
+import { useAuth } from '@/contexts/AuthContext';
 import { buses as allBuses, stops as allStops, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
 import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
 
@@ -66,42 +67,54 @@ interface InteractiveMapProps {
 
 export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
   const { t } = useLanguage();
-  const [buses] = useState<Bus[]>(allBuses.map((b,i) => ({ id: `bus_${i}`, ...b })));
-  const [stops] = useState<Stop[]>(allStops);
-  const [routes] = useState<any[]>(allRoutes);
+  const { organization } = useAuth();
+
+  const cityStops = useMemo(() => {
+    return allStops.filter(stop => stop.city === organization);
+  }, [organization]);
+
+  const cityBuses = useMemo(() => {
+    return allBuses.filter(bus => bus.city === organization);
+  }, [organization]);
+
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
   const generatedRoutePaths = useMemo(() => {
-    const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
+    const stopsMap = new Map(cityStops.map(s => [s.stop_name, s]));
     const routePaths: { [key: string]: [number, number][] } = {};
     
     const routesWithStops: { [key: string]: any[] } = {};
-    routes.forEach(routeStop => {
-        if (!routesWithStops[routeStop.route_id]) {
-            routesWithStops[routeStop.route_id] = [];
+    allRoutes.forEach(routeStop => {
+        if (!routesWithStops[routeStop.route_id!]) {
+            routesWithStops[routeStop.route_id!] = [];
         }
-        routesWithStops[routeStop.route_id].push(routeStop);
+        routesWithStops[routeStop.route_id!].push(routeStop);
     });
 
     Object.keys(routesWithStops).forEach(routeId => {
         const sortedStops = routesWithStops[routeId].sort((a, b) => a.stop_sequence - b.stop_sequence);
         const path: [number, number][] = [];
+        let pathIsValidForCity = true;
         sortedStops.forEach(routeStop => {
             const stop = stopsMap.get(routeStop.stop_name);
             if (stop) {
                 path.push([stop.lat, stop.lng]);
+            } else {
+                pathIsValidForCity = false;
             }
         });
-        routePaths[routeId] = path;
+
+        if(pathIsValidForCity && path.length > 0) {
+            routePaths[routeId] = path;
+        }
     });
 
     return routePaths;
-  }, [routes, stops]);
+  }, [cityStops]);
 
   useEffect(() => {
-    // Initialize buses with route paths and random progress for a more dynamic start
-    const busesWithRoutes = buses.map(bus => {
+    const busesWithRoutes = cityBuses.map(bus => {
         const routePath = generatedRoutePaths[bus.route] || [];
         const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
         const segmentProgress = Math.random();
@@ -118,6 +131,7 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
 
         return {
             ...bus,
+            id: bus.busNumber, // ensure unique id for key
             lat: initialLat,
             lng: initialLng,
             routePath: routePath,
@@ -128,15 +142,20 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
 
     setAnimatedBuses(busesWithRoutes);
 
-    if (busesWithRoutes.length > 0 && mapCenter[0] === 10.80) { // Only set initial center
+    if (busesWithRoutes.length > 0) {
       const avgLat = busesWithRoutes.reduce((sum, bus) => sum + bus.lat, 0) / busesWithRoutes.length;
       const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
       if (avgLat && avgLng) {
         setMapCenter([avgLat, avgLng]);
       }
+    } else if (cityStops.length > 0) {
+        const avgLat = cityStops.reduce((sum, stop) => sum + stop.lat, 0) / cityStops.length;
+        const avgLng = cityStops.reduce((sum, stop) => sum + stop.lng, 0) / cityStops.length;
+        if (avgLat && avgLng) {
+            setMapCenter([avgLat, avgLng]);
+        }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buses, generatedRoutePaths]);
+  }, [cityBuses, cityStops, generatedRoutePaths]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -201,7 +220,7 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
                 <Waypoints className="w-5 h-5 text-primary" />
                 <h2 className="font-semibold text-primary">{t('live_fleet_map')}</h2>
             </div>
-            <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full">
+            <MapContainer key={mapCenter.join(',')} center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full">
                <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name="Streets">
                     <TileLayer
@@ -257,7 +276,7 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
                 </LayersControl.Overlay>
                 <LayersControl.Overlay checked name="Stops">
                     <LayerGroup>
-                        {stops.map(stop => (
+                        {cityStops.map(stop => (
                             <Marker
                                 key={stop.stop_id}
                                 position={[stop.lat, stop.lng]}

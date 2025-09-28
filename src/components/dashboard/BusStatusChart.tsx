@@ -5,15 +5,20 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { busStatusData as getBusStatusData, buses as allBuses } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type { Bus } from "@/lib/data";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export function BusStatusChart() {
   const { t } = useLanguage();
-  const [buses, setBuses] = useState<Bus[]>(allBuses.map((b, i) => ({ id: `bus_${i}`, ...b })));
+  const { organization } = useAuth();
+  
+  const cityBuses = useMemo(() => {
+    return allBuses.filter(bus => bus.city === organization).map((b, i) => ({ id: `bus_${i}`, ...b }));
+  }, [organization]);
 
-  const busStatusData = getBusStatusData(buses);
+  const busStatusData = getBusStatusData(cityBuses);
 
   const translatedData = busStatusData.map(item => ({
     ...item,

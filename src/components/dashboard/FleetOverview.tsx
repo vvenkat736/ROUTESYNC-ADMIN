@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Bus, Users, MapPin, Search } from "lucide-react";
 import {
   Card,
@@ -12,26 +12,40 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/hooks/use-language";
-import { buses as allBuses, routes as allRoutes } from "@/lib/data";
-import type { Bus as BusType, Route as RouteType } from "@/lib/data";
+import { useAuth } from "@/contexts/AuthContext";
+import { buses as allBuses, routes as allRoutes, stops as allStops } from "@/lib/data";
+import type { Bus as BusType, Route as RouteType, Stop as StopType } from "@/lib/data";
 
 export function FleetOverview() {
   const { t } = useLanguage();
-  const [buses, setBuses] = useState<BusType[]>(allBuses.map((b, i) => ({ id: `bus_${i}`, ...b })));
+  const { organization } = useAuth();
   
-  // Get unique routes
-  const uniqueRoutes = allRoutes.reduce((acc, current) => {
-    if (!acc.find((item) => item.route_id === current.route_id)) {
-      acc.push(current);
-    }
-    return acc;
-  }, [] as Partial<RouteType>[]);
+  const cityStops = useMemo(() => {
+    return allStops.filter(stop => stop.city === organization);
+  }, [organization]);
+
+  const cityBuses = useMemo(() => {
+    return allBuses.filter(bus => bus.city === organization).map((b, i) => ({ id: `bus_${i}`, ...b }));
+  }, [organization]);
+  
+  const cityStopNames = useMemo(() => new Set(cityStops.map(s => s.stop_name)), [cityStops]);
+
+  const cityRoutes = useMemo(() => {
+    const relevantRoutes = allRoutes.filter(route => cityStopNames.has(route.stop_name!));
+    // Get unique routes from the filtered list
+    return relevantRoutes.reduce((acc, current) => {
+      if (!acc.find((item) => item.route_id === current.route_id)) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as Partial<RouteType>[]);
+  }, [cityStopNames]);
 
 
-  const totalBuses = buses.length;
-  const activeBuses = buses.filter(b => b.status === "Active").length;
-  const delayedBuses = buses.filter(b => b.status === "Delayed").length;
-  const inactiveBuses = buses.filter(b => b.status === "Inactive").length;
+  const totalBuses = cityBuses.length;
+  const activeBuses = cityBuses.filter(b => b.status === "Active").length;
+  const delayedBuses = cityBuses.filter(b => b.status === "Delayed").length;
+  const inactiveBuses = cityBuses.filter(b => b.status === "Inactive").length;
 
   return (
     <div>
@@ -87,7 +101,7 @@ export function FleetOverview() {
             </div>
           </SelectTrigger>
           <SelectContent>
-            {uniqueRoutes.map(route => (
+            {cityRoutes.map(route => (
               <SelectItem key={route.route_id} value={route.route_id!}>{route.route_name}</SelectItem>
             ))}
           </SelectContent>

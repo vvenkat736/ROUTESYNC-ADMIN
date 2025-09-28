@@ -9,6 +9,7 @@ export type Bus = {
   status: 'Active' | 'Delayed' | 'Inactive';
   lat: number;
   lng: number;
+  city: string;
 };
 
 export type Route = {
@@ -32,78 +33,79 @@ export type Stop = {
   lat: number;
   lng: number;
   note: string;
+  city: string;
 };
 
 export const stops: Stop[] = [
   // Trichy Stops
-  { stop_id: 'S01', stop_name: 'Central Bus Stand', lat: 10.79861, lng: 78.68041, note: 'Trichy' },
-  { stop_id: 'S02', stop_name: 'Chathiram', lat: 10.83178, lng: 78.69323, note: 'Trichy' },
-  { stop_id: 'S03', stop_name: 'Thillai Nagar', lat: 10.82577, lng: 78.68337, note: 'Trichy' },
-  { stop_id: 'S04', stop_name: 'Sastri Road', lat: 10.824, lng: 78.6815, note: 'Trichy' },
-  { stop_id: 'S05', stop_name: 'Heber Road', lat: 10.80009, lng: 78.68786, note: 'Trichy' },
-  { stop_id: 'S06', stop_name: 'Melapudur', lat: 10.80783, lng: 78.69416, note: 'Trichy' },
-  { stop_id: 'S07', stop_name: 'KKBT / Pan', lat: 10.79, lng: 78.72, note: 'Trichy' },
-  { stop_id: 'S08', stop_name: 'Panjapur', lat: 10.7855, lng: 78.7175, note: 'Trichy' },
-  { stop_id: 'S09', stop_name: 'No.1 Toll Gate', lat: 10.857, lng: 78.716, note: 'Trichy' },
-  { stop_id: 'S10', stop_name: 'Thiruverumbur', lat: 10.77415, lng: 78.79166, note: 'Trichy' },
-  { stop_id: 'S11', stop_name: 'BHEL / Kailasapuram', lat: 10.768, lng: 78.815, note: 'Trichy' },
-  { stop_id: 'S12', stop_name: 'Samayapuram', lat: 10.92296, lng: 78.74054, note: 'Trichy' },
-  { stop_id: 'S13', stop_name: 'Srirangam', lat: 10.86, lng: 78.69, note: 'Trichy' },
-  { stop_id: 'S14', stop_name: 'Woraiyur', lat: 10.82806, lng: 78.67833, note: 'Trichy' },
-  { stop_id: 'S15', stop_name: 'Mannarpuram', lat: 10.785, lng: 78.703, note: 'Trichy' },
-  { stop_id: 'S16', stop_name: 'Rockfort', lat: 10.829, lng: 78.699, note: 'Trichy' },
-  { stop_id: 'S17', stop_name: 'Puthur', lat: 10.8005, lng: 78.69, note: 'Trichy' },
-  { stop_id: 'S18', stop_name: 'Trichy Airport', lat: 10.765, lng: 78.7094, note: 'Trichy' },
-  { stop_id: 'S19', stop_name: 'Iluppur Road', lat: 10.78, lng: 78.69, note: 'Trichy' },
-  { stop_id: 'S20', stop_name: 'Palpannai', lat: 10.832, lng: 78.705, note: 'Trichy' },
-  { stop_id: 'S21', stop_name: 'Sanjeevi Nagar', lat: 10.824, lng: 78.69, note: 'Trichy' },
-  { stop_id: 'S22', stop_name: 'NN Road', lat: 10.8105, lng: 78.7253, note: 'Trichy' },
-  { stop_id: 'S23', stop_name: 'KKBT terminus', lat: 10.789, lng: 78.723, note: 'Trichy' },
-  { stop_id: 'S24', stop_name: 'Mutharasanallur', lat: 10.817, lng: 78.643, note: 'Trichy' },
-  { stop_id: 'S25', stop_name: 'Bharathi Nagar', lat: 10.799, lng: 78.69, note: 'Trichy' },
+  { stop_id: 'S01', stop_name: 'Central Bus Stand', lat: 10.79861, lng: 78.68041, note: '', city: 'trichy' },
+  { stop_id: 'S02', stop_name: 'Chathiram', lat: 10.83178, lng: 78.69323, note: '', city: 'trichy' },
+  { stop_id: 'S03', stop_name: 'Thillai Nagar', lat: 10.82577, lng: 78.68337, note: '', city: 'trichy' },
+  { stop_id: 'S04', stop_name: 'Sastri Road', lat: 10.824, lng: 78.6815, note: '', city: 'trichy' },
+  { stop_id: 'S05', stop_name: 'Heber Road', lat: 10.80009, lng: 78.68786, note: '', city: 'trichy' },
+  { stop_id: 'S06', stop_name: 'Melapudur', lat: 10.80783, lng: 78.69416, note: '', city: 'trichy' },
+  { stop_id: 'S07', stop_name: 'KKBT / Pan', lat: 10.79, lng: 78.72, note: '', city: 'trichy' },
+  { stop_id: 'S08', stop_name: 'Panjapur', lat: 10.7855, lng: 78.7175, note: '', city: 'trichy' },
+  { stop_id: 'S09', stop_name: 'No.1 Toll Gate', lat: 10.857, lng: 78.716, note: '', city: 'trichy' },
+  { stop_id: 'S10', stop_name: 'Thiruverumbur', lat: 10.77415, lng: 78.79166, note: '', city: 'trichy' },
+  { stop_id: 'S11', stop_name: 'BHEL / Kailasapuram', lat: 10.768, lng: 78.815, note: '', city: 'trichy' },
+  { stop_id: 'S12', stop_name: 'Samayapuram', lat: 10.92296, lng: 78.74054, note: '', city: 'trichy' },
+  { stop_id: 'S13', stop_name: 'Srirangam', lat: 10.86, lng: 78.69, note: '', city: 'trichy' },
+  { stop_id: 'S14', stop_name: 'Woraiyur', lat: 10.82806, lng: 78.67833, note: '', city: 'trichy' },
+  { stop_id: 'S15', stop_name: 'Mannarpuram', lat: 10.785, lng: 78.703, note: '', city: 'trichy' },
+  { stop_id: 'S16', stop_name: 'Rockfort', lat: 10.829, lng: 78.699, note: '', city: 'trichy' },
+  { stop_id: 'S17', stop_name: 'Puthur', lat: 10.8005, lng: 78.69, note: '', city: 'trichy' },
+  { stop_id: 'S18', stop_name: 'Trichy Airport', lat: 10.765, lng: 78.7094, note: '', city: 'trichy' },
+  { stop_id: 'S19', stop_name: 'Iluppur Road', lat: 10.78, lng: 78.69, note: '', city: 'trichy' },
+  { stop_id: 'S20', stop_name: 'Palpannai', lat: 10.832, lng: 78.705, note: '', city: 'trichy' },
+  { stop_id: 'S21', stop_name: 'Sanjeevi Nagar', lat: 10.824, lng: 78.69, note: '', city: 'trichy' },
+  { stop_id: 'S22', stop_name: 'NN Road', lat: 10.8105, lng: 78.7253, note: '', city: 'trichy' },
+  { stop_id: 'S23', stop_name: 'KKBT terminus', lat: 10.789, lng: 78.723, note: '', city: 'trichy' },
+  { stop_id: 'S24', stop_name: 'Mutharasanallur', lat: 10.817, lng: 78.643, note: '', city: 'trichy' },
+  { stop_id: 'S25', stop_name: 'Bharathi Nagar', lat: 10.799, lng: 78.69, note: '', city: 'trichy' },
 
   // Tanjavur Stops
-  { stop_id: 'T01', stop_name: 'Tanjavur Old Bus Stand', lat: 10.7900, lng: 79.1384, note: 'Tanjavur' },
-  { stop_id: 'T02', stop_name: 'Tanjavur New Bus Stand', lat: 10.7551, lng: 79.1170, note: 'Tanjavur' },
-  { stop_id: 'T03', stop_name: 'Brihadeeswarar Temple', lat: 10.7828, lng: 79.1318, note: 'Tanjavur' },
-  { stop_id: 'T04', stop_name: 'Tanjavur Junction', lat: 10.7865, lng: 79.1194, note: 'Tanjavur' },
+  { stop_id: 'T01', stop_name: 'Tanjavur Old Bus Stand', lat: 10.7900, lng: 79.1384, note: '', city: 'tanjavur' },
+  { stop_id: 'T02', stop_name: 'Tanjavur New Bus Stand', lat: 10.7551, lng: 79.1170, note: '', city: 'tanjavur' },
+  { stop_id: 'T03', stop_name: 'Brihadeeswarar Temple', lat: 10.7828, lng: 79.1318, note: '', city: 'tanjavur' },
+  { stop_id: 'T04', stop_name: 'Tanjavur Junction', lat: 10.7865, lng: 79.1194, note: '', city: 'tanjavur' },
 
   // Erode Stops
-  { stop_id: 'E01', stop_name: 'Erode Central Bus Terminus', lat: 11.3360, lng: 77.7186, note: 'Erode' },
-  { stop_id: 'E02', stop_name: 'Erode Junction', lat: 11.3414, lng: 77.7077, note: 'Erode' },
-  { stop_id: 'E03', stop_name: 'Moolapalayam', lat: 11.3533, lng: 77.6975, note: 'Erode' },
-  { stop_id: 'E04', stop_name: 'Perundurai', lat: 11.2750, lng: 77.5833, note: 'Erode' },
+  { stop_id: 'E01', stop_name: 'Erode Central Bus Terminus', lat: 11.3360, lng: 77.7186, note: '', city: 'erode' },
+  { stop_id: 'E02', stop_name: 'Erode Junction', lat: 11.3414, lng: 77.7077, note: '', city: 'erode' },
+  { stop_id: 'E03', stop_name: 'Moolapalayam', lat: 11.3533, lng: 77.6975, note: '', city: 'erode' },
+  { stop_id: 'E04', stop_name: 'Perundurai', lat: 11.2750, lng: 77.5833, note: '', city: 'erode' },
 
   // Salem Stops
-  { stop_id: 'L01', stop_name: 'Salem New Bus Stand', lat: 11.6643, lng: 78.1460, note: 'Salem' },
-  { stop_id: 'L02', stop_name: 'Salem Old Bus Stand', lat: 11.6534, lng: 78.1639, note: 'Salem' },
-  { stop_id: 'L03', stop_name: 'Salem Junction', lat: 11.6708, lng: 78.1255, note: 'Salem' },
-  { stop_id: 'L04', stop_name: 'Hasthampatti', lat: 11.6766, lng: 78.1508, note: 'Salem' },
+  { stop_id: 'L01', stop_name: 'Salem New Bus Stand', lat: 11.6643, lng: 78.1460, note: '', city: 'salem' },
+  { stop_id: 'L02', stop_name: 'Salem Old Bus Stand', lat: 11.6534, lng: 78.1639, note: '', city: 'salem' },
+  { stop_id: 'L03', stop_name: 'Salem Junction', lat: 11.6708, lng: 78.1255, note: '', city: 'salem' },
+  { stop_id: 'L04', stop_name: 'Hasthampatti', lat: 11.6766, lng: 78.1508, note: '', city: 'salem' },
 ];
 
 
 export const buses: Omit<Bus, 'id'>[] = [
   // Trichy Buses
-  { busNumber: 'TN 45 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R-01', status: 'Active', lat: 10.79861, lng: 78.68041 },
-  { busNumber: 'TN 45 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R-02', status: 'Active', lat: 10.83178, lng: 78.69323 },
-  { busNumber: 'TN 45 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R-03', status: 'Delayed', lat: 10.82577, lng: 78.68337 },
-  { busNumber: 'TN 45 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R-01', status: 'Active', lat: 10.824, lng: 78.6815 },
-  { busNumber: 'TN 45 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R-04', status: 'Inactive', lat: 10.80009, lng: 78.68786 },
-  { busNumber: 'TN 45 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 'R-02', status: 'Active', lat: 10.80783, lng: 78.69416 },
-  { busNumber: 'TN 45 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 'R-05', status: 'Delayed', lat: 10.79, lng: 78.72 },
-  { busNumber: 'TN 45 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 'R-03', status: 'Active', lat: 10.7855, lng: 78.7175 },
+  { busNumber: 'TN 45 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R-01', status: 'Active', lat: 10.79861, lng: 78.68041, city: 'trichy' },
+  { busNumber: 'TN 45 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R-02', status: 'Active', lat: 10.83178, lng: 78.69323, city: 'trichy' },
+  { busNumber: 'TN 45 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R-03', status: 'Delayed', lat: 10.82577, lng: 78.68337, city: 'trichy' },
+  { busNumber: 'TN 45 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R-01', status: 'Active', lat: 10.824, lng: 78.6815, city: 'trichy' },
+  { busNumber: 'TN 45 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R-04', status: 'Inactive', lat: 10.80009, lng: 78.68786, city: 'trichy' },
+  { busNumber: 'TN 45 F 1230', driver: 'L. Meena', driverAvatar: '6', route: 'R-02', status: 'Active', lat: 10.80783, lng: 78.69416, city: 'trichy' },
+  { busNumber: 'TN 45 G 4567', driver: 'P. Rajan', driverAvatar: '7', route: 'R-05', status: 'Delayed', lat: 10.79, lng: 78.72, city: 'trichy' },
+  { busNumber: 'TN 45 H 8901', driver: 'G. Devi', driverAvatar: '8', route: 'R-03', status: 'Active', lat: 10.7855, lng: 78.7175, city: 'trichy' },
 
   // Tanjavur Buses
-  { busNumber: 'TN 49 C 1111', driver: 'A. Ganesh', driverAvatar: '1', route: 'R-T1', status: 'Active', lat: 10.7900, lng: 79.1384 },
-  { busNumber: 'TN 49 A 2222', driver: 'B. Lakshmi', driverAvatar: '2', route: 'R-T1', status: 'Delayed', lat: 10.7828, lng: 79.1318 },
+  { busNumber: 'TN 49 C 1111', driver: 'A. Ganesh', driverAvatar: '1', route: 'R-T1', status: 'Active', lat: 10.7900, lng: 79.1384, city: 'tanjavur' },
+  { busNumber: 'TN 49 A 2222', driver: 'B. Lakshmi', driverAvatar: '2', route: 'R-T1', status: 'Delayed', lat: 10.7828, lng: 79.1318, city: 'tanjavur' },
 
   // Erode Buses
-  { busNumber: 'TN 33 D 3333', driver: 'C. Murugan', driverAvatar: '3', route: 'R-E1', status: 'Active', lat: 11.3360, lng: 77.7186 },
-  { busNumber: 'TN 33 B 4444', driver: 'D. Saraswathi', driverAvatar: '4', route: 'R-E1', status: 'Inactive', lat: 11.3533, lng: 77.6975 },
+  { busNumber: 'TN 33 D 3333', driver: 'C. Murugan', driverAvatar: '3', route: 'R-E1', status: 'Active', lat: 11.3360, lng: 77.7186, city: 'erode' },
+  { busNumber: 'TN 33 B 4444', driver: 'D. Saraswathi', driverAvatar: '4', route: 'R-E1', status: 'Inactive', lat: 11.3533, lng: 77.6975, city: 'erode' },
 
   // Salem Buses
-  { busNumber: 'TN 30 E 5555', driver: 'E. Ramesh', driverAvatar: '5', route: 'R-L1', status: 'Delayed', lat: 11.6643, lng: 78.1460 },
-  { busNumber: 'TN 30 F 6666', driver: 'F. Vimala', driverAvatar: '6', route: 'R-L1', status: 'Active', lat: 11.6708, lng: 78.1255 },
+  { busNumber: 'TN 30 E 5555', driver: 'E. Ramesh', driverAvatar: '5', route: 'R-L1', status: 'Delayed', lat: 11.6643, lng: 78.1460, city: 'salem' },
+  { busNumber: 'TN 30 F 6666', driver: 'F. Vimala', driverAvatar: '6', route: 'R-L1', status: 'Active', lat: 11.6708, lng: 78.1255, city: 'salem' },
 ];
 
 export const routes: Partial<Route>[] = [

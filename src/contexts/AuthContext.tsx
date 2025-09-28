@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const match = email.match(emailRegex);
 
     if (match && pass === "trichyrs") {
-      const org = match[1]; // The city name
+      const org = match[1].toLowerCase(); // The city name, normalized to lowercase
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("organization", org);
       setIsAuthenticated(true);
