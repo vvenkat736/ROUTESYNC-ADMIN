@@ -4,14 +4,11 @@
  * @fileOverview An AI flow for optimizing a route between multiple points.
  *
  * - optimizeRoute - A function that takes a start point and a list of stops and returns an optimized route.
- * - OptimizeRouteInput - The input type for the optimizeRoute function.
- * - OptimizeRouteOutput - The return type for the optimizeRoute function.
  */
 
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { geocodeLocation } from './geocode-flow';
-import type { GeocodeOutput } from './geocode-flow';
-
 
 const PointSchema = z.object({
   name: z.string().describe('The name or address of the location.'),
@@ -19,13 +16,13 @@ const PointSchema = z.object({
   lng: z.number().describe('The longitude of the location.'),
 });
 
-const OptimizeRouteInputSchema = z.object({
+export const OptimizeRouteInputSchema = z.object({
   start: z.string().describe('The starting point of the route.'),
   stops: z.array(z.string()).describe('An array of destinations or stops.'),
 });
 export type OptimizeRouteInput = z.infer<typeof OptimizeRouteInputSchema>;
 
-const OptimizeRouteOutputSchema = z.object({
+export const OptimizeRouteOutputSchema = z.object({
     start: PointSchema.describe("The starting point of the optimized route."),
     waypoints: z.array(PointSchema).describe('The optimized sequence of waypoints between the start and end.'),
     end: PointSchema.describe("The final destination of the optimized route."),
@@ -34,73 +31,67 @@ const OptimizeRouteOutputSchema = z.object({
 });
 export type OptimizeRouteOutput = z.infer<typeof OptimizeRouteOutputSchema>;
 
-
-// Haversine distance calculation
-function getDistance(p1: GeocodeOutput, p2: GeocodeOutput): number {
-  const R = 6371; // Radius of the Earth in km
-  const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-  const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
+const GeocodedStopsSchema = z.object({
+  start: PointSchema,
+  stops: z.array(PointSchema),
+});
 
 export async function optimizeRoute(input: OptimizeRouteInput): Promise<OptimizeRouteOutput> {
   const { start, stops } = input;
-  const averageSpeedKmh = 30; // Average speed for ETA calculation
-
+  
   if (stops.length === 0) {
     throw new Error("At least one destination is required.");
   }
-  
-  // Geocode all locations in parallel
+
   const allLocations = [start, ...stops];
   const geocodedLocations = await Promise.all(
     allLocations.map(location => geocodeLocation({ location }))
   );
-
-  const startPoint = geocodedLocations[0];
-  const endPoint = geocodedLocations[geocodedLocations.length - 1];
-  let waypointsToVisit = geocodedLocations.slice(1, -1);
   
-  const optimizedWaypoints: GeocodeOutput[] = [];
-  let totalDistance = 0;
-  let currentPoint = startPoint;
+  const geocodedStart = geocodedLocations[0];
+  const geocodedStops = geocodedLocations.slice(1);
 
-  // Nearest neighbor algorithm
-  while (waypointsToVisit.length > 0) {
-    let nearestIndex = -1;
-    let minDistance = Infinity;
-
-    waypointsToVisit.forEach((point, index) => {
-      const distance = getDistance(currentPoint, point);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestIndex = index;
-      }
-    });
-    
-    const nearestPoint = waypointsToVisit[nearestIndex];
-    optimizedWaypoints.push(nearestPoint);
-    totalDistance += minDistance;
-    currentPoint = nearestPoint;
-    waypointsToVisit.splice(nearestIndex, 1);
-  }
-
-  // Add distance from last waypoint to the end point
-  totalDistance += getDistance(currentPoint, endPoint);
-
-  const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
-
-  return {
-    start: startPoint,
-    waypoints: optimizedWaypoints,
-    end: endPoint,
-    totalTime,
-    totalDistance: parseFloat(totalDistance.toFixed(2)),
-  };
+  return optimizeRouteFlow({ start: geocodedStart, stops: geocodedStops });
 }
+
+const prompt = ai.definePrompt({
+  name: 'optimizeRoutePrompt',
+  input: { schema: GeocodedStopsSchema },
+  output: { schema: OptimizeRouteOutputSchema },
+  prompt: `You are a highly intelligent route optimization expert for travel within India.
+Your task is to determine the most efficient order to visit a series of stops, starting from a given point.
+
+The user provides a starting point and a list of destinations. One of these destinations must be treated as the final stop in the sequence.
+You need to reorder the other destinations to create the most logical and time-efficient route.
+
+Starting Point: {{start.name}} (Lat: {{start.lat}}, Lng: {{start.lng}})
+
+Destinations to visit:
+{{#each stops}}
+- {{name}} (Lat: {{lat}}, Lng: {{lng}})
+{{/each}}
+
+Based on real-world road networks and traffic patterns in India, determine the optimal sequence.
+Your final output MUST designate one of the provided destinations as the 'end' point. The remaining destinations should be ordered as 'waypoints'.
+
+You must also estimate the total travel time in minutes and total distance in kilometers for the entire journey.
+Assume an average travel speed of 30 km/h within cities and 50 km/h on highways.
+
+Return a JSON object with the start point, the ordered waypoints, the end point, the totalTime, and the totalDistance.
+`,
+});
+
+const optimizeRouteFlow = ai.defineFlow(
+  {
+    name: 'optimizeRouteFlow',
+    inputSchema: GeocodedStopsSchema,
+    outputSchema: OptimizeRouteOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    if (!output) {
+        throw new Error("AI failed to optimize the route. The model returned an empty response.");
+    }
+    return output;
+  }
+);

@@ -9,16 +9,14 @@ import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
-import type { GeneratePathOutput } from './path-generator-flow';
 
-// Schema for a single point in a route's path
-const PointSchema = z.object({
+// Define schemas for types
+export const PointSchema = z.object({
   lat: z.number().describe('The latitude of the stop.'),
   lng: z.number().describe('The longitude of the stop.'),
 });
 
-// The final output schema containing a list of generated routes
-const GenerateRoutesOutputSchema = z.object({
+export const GenerateRoutesOutputSchema = z.object({
   routes: z.array(z.object({
     route_id: z.string().describe("A unique ID for the route (e.g., 'R-01')."),
     routeName: z.string().describe("A descriptive name for the route (e.g., 'Central Bus Stand to Srirangam')."),
@@ -55,7 +53,7 @@ async function getStops(city: string): Promise<StopInfo[]> {
 }
 
 // Haversine distance calculation
-function getDistance(p1: StopInfo, p2: StopInfo): number {
+function getDistance(p1: {lat: number, lng: number}, p2: {lat: number, lng: number}): number {
   const R = 6371; // Radius of the Earth in km
   const dLat = (p2.lat - p1.lat) * Math.PI / 180;
   const dLng = (p2.lng - p1.lng) * Math.PI / 180;
@@ -80,47 +78,41 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
   }
 }
 
-// Algorithmic Route Generation (Hub and Spoke)
+// Hardcoded Algorithmic Route Generation
 async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
-    const hubKeywords = ['central bus stand', 'chathiram', 'junction'];
-    const hubs = stops.filter(s => hubKeywords.some(k => s.stop_name.toLowerCase().includes(k)));
-    let spokes = stops.filter(s => !hubs.some(h => h.stop_id === s.stop_id));
-    
-    if (hubs.length === 0 && spokes.length > 0) {
-        hubs.push(spokes.shift()!); // Use a random stop as a hub if none are found
-    }
-    if(spokes.length === 0) return [];
-
-    const routes: Omit<z.infer<typeof GenerateRoutesOutputSchema>['routes'][0], 'path'>[] = [];
-    let routeCounter = 1;
+    const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
     const averageSpeedKmh = 25;
+    let routeCounter = 1;
 
-    for (const hub of hubs) {
-        if (spokes.length === 0) break;
+    // Define route structures with stop names
+    const routeDefinitions = [
+        { routeName: "Central Bus Stand Circle", busType: "Express", stops: ["Central Bus Stand", "Heber Road", "Puthur", "Thillai Nagar", "Chathiram", "Rockfort", "Central Bus Stand"] },
+        { routeName: "Outer Ring Connector", busType: "Deluxe", stops: ["Chathiram", "Palpannai", "Melapudur", "NN Road", "Thiruverumbur", "BHEL / Kailasapuram"] },
+        { routeName: "North-South Express", busType: "Standard", stops: ["Samayapuram", "No.1 Toll Gate", "Srirangam", "Chathiram", "Central Bus Stand", "Mannarpuram", "Trichy Airport"] },
+        { routeName: "West-East Connector", busType: "Express", stops: ["Mutharasanallur", "Woraiyur", "Chathiram", "Sanjeevi Nagar", "Palpannai", "KKBT terminus"] },
+        { routeName: "City Core Loop", busType: "Deluxe", stops: ["Panjapur", "Iluppur Road", "Bharathi Nagar", "Sastri Road", "Central Bus Stand", "Panjapur"] },
+    ];
 
-        // Find the 4 closest spokes to the current hub to form a route
-        const sortedSpokes = spokes.sort((a, b) => getDistance(hub, a) - getDistance(hub, b));
-        const routeStops = [hub, ...sortedSpokes.slice(0, 4)];
+    const routes = routeDefinitions.map(routeDef => {
+        const validStops = routeDef.stops.map(name => stopsMap.get(name)).filter((s): s is StopInfo => !!s);
         
-        // Remove these stops from the available spokes pool
-        spokes = spokes.filter(s => !routeStops.some(rs => rs.stop_id === s.stop_id));
+        if (validStops.length < 2) return null;
 
-        // Create the route structure
         let totalDistance = 0;
-        for (let i = 0; i < routeStops.length - 1; i++) {
-            totalDistance += getDistance(routeStops[i], routeStops[i+1]);
+        for (let i = 0; i < validStops.length - 1; i++) {
+            totalDistance += getDistance(validStops[i], validStops[i + 1]);
         }
         const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
-
-        routes.push({
+        
+        return {
             route_id: `R-${routeCounter++}`,
-            routeName: `${hub.stop_name} to ${routeStops[routeStops.length - 1].stop_name}`,
-            busType: ['Express', 'Deluxe', 'Standard'][routeCounter % 3],
-            stops: routeStops.map(s => s.stop_name),
+            routeName: routeDef.routeName,
+            busType: routeDef.busType,
+            stops: validStops.map(s => s.stop_name),
             totalDistance: parseFloat(totalDistance.toFixed(2)),
             totalTime: totalTime,
-        });
-    }
+        };
+    }).filter((r): r is NonNullable<typeof r> => r !== null);
 
     return { routes };
 }
@@ -134,7 +126,7 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
       throw new Error("At least 2 stops must be present to generate routes. Please import more stops.");
     }
     
-    // Step 1: Generate route structures using an algorithm.
+    // Step 1: Generate route structures using a hardcoded algorithm.
     const structuredRoutes = await createAlgorithmicRoutes(allStops, city);
 
     if (!structuredRoutes || structuredRoutes.routes.length === 0) {
@@ -152,7 +144,7 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
             })
             .filter((s): s is { lat: number; lng: number } => s !== null);
 
-        let pathResult: GeneratePathOutput = { path: [] };
+        let pathResult: { path: { lat: number; lng: number; }[] } = { path: [] };
         if (stopCoordinates.length > 1) {
             pathResult = await generatePath({ stops: stopCoordinates });
         } else if (stopCoordinates.length === 1) {
