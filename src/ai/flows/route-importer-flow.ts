@@ -72,7 +72,7 @@ export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<
     
     const { output: aiOutput } = await prompt(input);
     
-    if (!aiOutput) {
+    if (!aiOutput || !aiOutput.routes) {
         throw new Error("AI failed to process the route data. The model returned an empty response.");
     }
     
@@ -88,7 +88,14 @@ export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<
             .filter((s): s is { lat: number; lng: number } => s !== null);
 
         // Generate the accurate path
-        const pathResult = await generatePath({ stops: stopCoordinates });
+        let pathResult = { path: stopCoordinates }; // Fallback to straight lines
+        try {
+            if (stopCoordinates.length > 1) {
+                pathResult = await generatePath({ stops: stopCoordinates });
+            }
+        } catch(e) {
+            console.error("Path generation failed for imported route, falling back to straight lines", e);
+        }
 
         const docRef = doc(routesCollection); // Auto-generate ID
         batch.set(docRef, {
