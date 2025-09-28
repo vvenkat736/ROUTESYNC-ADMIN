@@ -10,7 +10,7 @@ import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { kmeans } from 'node-kmeans';
+import kmeans from 'node-kmeans';
 
 type Point = {
   lat: number;
@@ -141,7 +141,7 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise
 
     // 2. Run k-means clustering
     const kMeansResult = await new Promise<any[]>((resolve, reject) => {
-      kmeans.clusterize(vectors, { k: numClusters }, (err, res) => {
+      kmeans.clusterize(vectors, { k: numClusters }, (err: any, res: any) => {
         if (err) return reject(err);
         resolve(res);
       });
