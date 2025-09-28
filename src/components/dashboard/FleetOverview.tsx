@@ -13,51 +13,50 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/contexts/AuthContext";
-import { buses as allBuses, routes as allRoutes } from "@/lib/data";
-import type { Bus as BusType, Route as RouteType, Stop as StopType } from "@/lib/data";
+import { buses as allBuses, type Route, type Stop } from "@/lib/data";
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function FleetOverview() {
   const { t } = useLanguage();
   const { organization } = useAuth();
-  const [cityStops, setCityStops] = useState<StopType[]>([]);
+  const [cityStops, setCityStops] = useState<Stop[]>([]);
+  const [cityRoutes, setCityRoutes] = useState<Route[]>([]);
   
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
+      setCityRoutes([]);
       return;
     }
 
-    const q = query(collection(db, "stops"), where("city", "==", organization));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const stopsData: StopType[] = [];
+    const stopsQuery = query(collection(db, "stops"), where("city", "==", organization));
+    const stopsUnsubscribe = onSnapshot(stopsQuery, (querySnapshot) => {
+      const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
-        stopsData.push({ stop_id: doc.id, ...doc.data() } as StopType);
+        stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
       });
       setCityStops(stopsData);
     });
 
-    return () => unsubscribe();
+    const routesQuery = query(collection(db, "routes"), where("city", "==", organization));
+    const routesUnsubscribe = onSnapshot(routesQuery, (querySnapshot) => {
+        const routesData: Route[] = [];
+        querySnapshot.forEach((doc) => {
+            routesData.push({ id: doc.id, ...doc.data() } as Route);
+        });
+        setCityRoutes(routesData);
+    });
+
+    return () => {
+      stopsUnsubscribe();
+      routesUnsubscribe();
+    };
   }, [organization]);
 
   const cityBuses = useMemo(() => {
     return allBuses.filter(bus => bus.city === organization).map((b, i) => ({ id: `bus_${i}`, ...b }));
   }, [organization]);
-  
-  const cityStopNames = useMemo(() => new Set(cityStops.map(s => s.stop_name)), [cityStops]);
-
-  const cityRoutes = useMemo(() => {
-    const relevantRoutes = allRoutes.filter(route => cityStopNames.has(route.stop_name!));
-    // Get unique routes from the filtered list
-    return relevantRoutes.reduce((acc, current) => {
-      if (!acc.find((item) => item.route_id === current.route_id)) {
-        acc.push(current);
-      }
-      return acc;
-    }, [] as Partial<RouteType>[]);
-  }, [cityStopNames]);
-
 
   const totalBuses = cityBuses.length;
   const activeBuses = cityBuses.filter(b => b.status === "Active").length;
@@ -119,7 +118,7 @@ export function FleetOverview() {
           </SelectTrigger>
           <SelectContent>
             {cityRoutes.map(route => (
-              <SelectItem key={route.route_id} value={route.route_id!}>{route.route_name}</SelectItem>
+              <SelectItem key={route.route_id} value={route.route_id!}>{route.routeName}</SelectItem>
             ))}
           </SelectContent>
         </Select>

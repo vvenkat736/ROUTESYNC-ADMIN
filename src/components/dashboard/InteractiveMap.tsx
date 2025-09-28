@@ -8,9 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
-import { buses as allBuses, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
+import { buses as allBuses, type Bus, type Stop, type Route as RouteType } from '@/lib/data';
 import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
-import { collection, query, where, onSnapshot, getDocs, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const statusColors: { [key: string]: string } = {
@@ -67,98 +67,57 @@ interface InteractiveMapProps {
     optimizedRoute?: OptimizeRouteOutput | null;
 }
 
-interface RouteWithPath {
-    route_id: string;
-    path: [number, number][];
-}
-
 export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
-  const [cityRoutes, setCityRoutes] = useState<RouteWithPath[]>([]);
+  const [cityRoutes, setCityRoutes] = useState<RouteType[]>([]);
 
   const cityBuses = useMemo(() => {
     return allBuses.filter(bus => bus.city === organization);
   }, [organization]);
 
-  // Fetch stops in real-time
+  // Fetch stops and routes in real-time
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
+      setCityRoutes([]);
       return;
     }
 
-    const q = query(collection(db, "stops"), where("city", "==", organization));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const stopsQuery = query(collection(db, "stops"), where("city", "==", organization));
+    const stopsUnsubscribe = onSnapshot(stopsQuery, (querySnapshot) => {
       const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
         stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
       });
       setCityStops(stopsData);
     });
-
-    return () => unsubscribe();
-  }, [organization]);
-
-  // Fetch routes and generate paths
-   useEffect(() => {
-    if (!organization) {
-      setCityRoutes([]);
-      return;
-    }
-
-    const fetchRoutes = async () => {
-        const stopsMap = new Map(cityStops.map(s => [s.stop_name, s]));
-        const routeSegments: { [key: string]: any[] } = {};
-
-        const q = query(collection(db, "routes"));
-        const querySnapshot = await getDocs(q);
-
+    
+    const routesQuery = query(collection(db, "routes"), where("city", "==", organization));
+    const routesUnsubscribe = onSnapshot(routesQuery, (querySnapshot) => {
+        const routesData: RouteType[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            // Filter routes based on whether their stops belong to the current city
-            if (stopsMap.has(data.stop_name)) {
-                if (!routeSegments[data.route_id]) {
-                    routeSegments[data.route_id] = [];
-                }
-                routeSegments[data.route_id].push(data);
-            }
+            routesData.push({ id: doc.id, ...doc.data() } as RouteType);
         });
-        
-        const routePaths: RouteWithPath[] = [];
-        for (const routeId in routeSegments) {
-            const sortedStops = routeSegments[routeId].sort((a, b) => a.stop_sequence - b.stop_sequence);
-            const path: [number, number][] = sortedStops
-                .map(segment => {
-                    const stop = stopsMap.get(segment.stop_name);
-                    return stop ? [stop.lat, stop.lng] as [number, number] : null;
-                })
-                .filter((p): p is [number, number] => p !== null);
-            
-            if (path.length > 1) {
-                // In a real application, you would call a routing service here.
-                // For this simulation, we'll continue to use the AI-generated path if available
-                // or just connect the dots.
-                routePaths.push({ route_id: routeId, path: path });
-            }
-        }
-        setCityRoutes(routePaths);
+        setCityRoutes(routesData);
+    });
+
+    return () => {
+        stopsUnsubscribe();
+        routesUnsubscribe();
     };
-
-    if (cityStops.length > 0) {
-        fetchRoutes();
-    }
-  }, [cityStops, organization]);
-
+  }, [organization]);
 
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
-  const generatedRoutePaths = useMemo(() => {
+  const routePaths = useMemo(() => {
     const paths: { [key: string]: [number, number][] } = {};
     cityRoutes.forEach(route => {
-        paths[route.route_id] = route.path;
+        if (route.path) {
+            paths[route.route_id] = route.path.map(p => [p.lat, p.lng]);
+        }
     });
     return paths;
   }, [cityRoutes]);
@@ -166,7 +125,7 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
 
   useEffect(() => {
     const busesWithRoutes = cityBuses.map(bus => {
-        const routePath = generatedRoutePaths[bus.route] || [];
+        const routePath = routePaths[bus.route] || [];
         const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
         const segmentProgress = Math.random();
         
@@ -206,7 +165,7 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
             setMapCenter([avgLat, avgLng]);
         }
     }
-  }, [cityBuses, cityStops, generatedRoutePaths]);
+  }, [cityBuses, cityStops, routePaths]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -294,9 +253,9 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
                 
                 <LayersControl.Overlay checked name="Bus Routes">
                   <LayerGroup>
-                    {Object.keys(generatedRoutePaths).map((routeId, index) => (
-                      generatedRoutePaths[routeId] && generatedRoutePaths[routeId].length > 0 &&
-                        <Polyline key={routeId} positions={generatedRoutePaths[routeId]} color={routeColors[index % routeColors.length]} weight={3} />
+                    {Object.keys(routePaths).map((routeId, index) => (
+                      routePaths[routeId] && routePaths[routeId].length > 0 &&
+                        <Polyline key={routeId} positions={routePaths[routeId]} color={routeColors[index % routeColors.length]} weight={3} />
                     ))}
                   </LayerGroup>
                 </LayersControl.Overlay>

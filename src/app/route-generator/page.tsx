@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/table";
 import dynamic from 'next/dynamic';
 import type { Stop } from '@/lib/data';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap'), {
   ssr: false,
@@ -39,6 +41,7 @@ const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap')
 
 export default function RouteGeneratorPage() {
   const { t } = useLanguage();
+  const { organization } = useAuth();
   const [generatedRoutes, setGeneratedRoutes] = React.useState<GenerateRoutesOutput | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -48,7 +51,8 @@ export default function RouteGeneratorPage() {
 
   React.useEffect(() => {
     setIsClient(true);
-    const q = query(collection(db, "stops"));
+    if (!organization) return;
+    const q = query(collection(db, "stops"), "where", "city", "==", organization);
     getDocs(q).then((querySnapshot) => {
       const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
@@ -56,13 +60,14 @@ export default function RouteGeneratorPage() {
       });
       setStops(stopsData);
     });
-  }, []);
+  }, [organization]);
 
   const handleGenerateRoutes = async () => {
+    if (!organization) return;
     setIsLoading(true);
     setGeneratedRoutes(null);
     try {
-      const result = await generateRoutes();
+      const result = await generateRoutes(organization);
       setGeneratedRoutes(result);
     } catch (error) {
       console.error('Error generating routes:', error);
@@ -77,32 +82,17 @@ export default function RouteGeneratorPage() {
   };
 
   const handleSaveRoutes = async () => {
-    if (!generatedRoutes) return;
+    if (!generatedRoutes || !organization) return;
     setIsSaving(true);
     try {
         const batch = writeBatch(db);
         const routesCollection = collection(db, 'routes');
 
-        generatedRoutes.routes.forEach((route, routeIndex) => {
-            const routeId = `AI-${Date.now()}-${routeIndex}`;
-            route.stops.forEach((stopName, stopIndex) => {
-                const docRef = doc(routesCollection);
-                // A simple approximation for segment data
-                const distance_km = route.totalDistance / route.stops.length;
-                const etas_min = route.totalTime / route.stops.length;
-
-                batch.set(docRef, {
-                    route_id: routeId,
-                    route_name: route.routeName,
-                    stop_sequence: stopIndex + 1,
-                    stop_name: stopName,
-                    distances_km: parseFloat(distance_km.toFixed(2)),
-                    etas_min: Math.round(etas_min),
-                    total_distance: route.totalDistance,
-                    estimated_mins: route.totalTime,
-                    frequency: 15, // Default frequency
-                    bus_type: route.busType,
-                });
+        generatedRoutes.routes.forEach((route) => {
+            const docRef = doc(routesCollection); // Let Firestore auto-generate the document ID
+            batch.set(docRef, {
+                ...route,
+                city: organization, // Tag the route with the current city
             });
         });
 

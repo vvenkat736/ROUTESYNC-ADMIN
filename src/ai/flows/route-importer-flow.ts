@@ -9,12 +9,14 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, collection, doc, writeBatch, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, writeBatch, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+import { generatePath } from './path-generator-flow';
 
 // Define the input schema for the flow
 const ProcessRoutesInputSchema = z.object({
   csvContent: z.string().describe('The full content of the CSV file.'),
+  city: z.string().describe('The city these routes belong to.'),
 });
 export type ProcessRoutesInput = z.infer<typeof ProcessRoutesInputSchema>;
 
@@ -24,29 +26,22 @@ const PointSchema = z.object({
   lng: z.number().describe('The longitude of the stop.'),
 });
 
-// Route schema for the output
-const RouteSchema = z.object({
-    id: z.number().describe('The unique identifier for the route.'),
+// Route schema for the output from the AI prompt
+const AiRouteSchema = z.object({
+    route_id: z.string().describe('The unique identifier for the route.'),
     routeName: z.string().describe('The name of the route.'),
     busType: z.string().describe('The type of bus for the route (e.g., Express, Deluxe).'),
-    stops: z.number().describe('The number of stops in the route.'),
-    path: z.array(PointSchema).describe('An array of coordinates representing the route path.'),
-    startStop: z.string().describe('The name of the first stop in the route.'),
-    endStop: z.string().describe('The name of the last stop in the route.'),
+    stops: z.array(z.string()).describe("An ordered list of stop names for the route."),
     totalDistance: z.number().describe('The total distance of the route in kilometers.'),
     totalTime: z.number().describe('The total estimated run time for the route in minutes.'),
 });
 
-// Output schema containing a list of routes
-const ProcessRoutesOutputSchema = z.object({
-  routes: z.array(RouteSchema),
-});
 
-
-const getStops = ai.defineTool(
+const getStopsTool = ai.defineTool(
     {
       name: 'getStops',
-      description: 'Get the list of all available bus stops and their locations.',
+      description: 'Get the list of all available bus stops and their locations for a specific city.',
+      inputSchema: z.object({ city: z.string() }),
       outputSchema: z.array(z.object({
           stop_id: z.string(),
           stop_name: z.string(),
@@ -54,32 +49,46 @@ const getStops = ai.defineTool(
           lng: z.number(),
       })),
     },
-    async () => {
+    async ({city}) => {
         const db = getFirestore(app);
-        const stopsCollection = collection(db, 'stops');
-        const snapshot = await getDocs(stopsCollection);
-        return snapshot.docs.map(doc => ({ stop_id: doc.id, stop_name: doc.data().stop_name, ...doc.data() } as any));
+        const q = query(collection(db, "stops"), where("city", "==", city));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
     }
 );
 
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
-    const response = await prompt(input);
-    const output = response.output;
+    const db = getFirestore(app);
+    const stopsMap = new Map((await getStopsTool(input)).map(stop => [stop.stop_name, stop]));
     
-    if (!output) {
+    const { output: aiOutput } = await prompt(input);
+    
+    if (!aiOutput) {
         throw new Error("AI failed to process the route data. The model returned an empty response.");
     }
     
-    const db = getFirestore(app);
     const batch = writeBatch(db);
     const routesCollection = collection(db, 'routes');
 
-    output.routes.forEach(route => {
-        const docRef = doc(routesCollection, String(route.id));
-        const { id, ...routeData } = route;
-        batch.set(docRef, routeData);
-    });
+    for (const route of aiOutput.routes) {
+        const stopCoordinates = route.stops
+            .map(stopName => {
+                const stop = stopsMap.get(stopName);
+                return stop ? { lat: stop.lat, lng: stop.lng } : null;
+            })
+            .filter((s): s is { lat: number; lng: number } => s !== null);
+
+        // Generate the accurate path
+        const pathResult = await generatePath({ stops: stopCoordinates });
+
+        const docRef = doc(routesCollection); // Auto-generate ID
+        batch.set(docRef, {
+            ...route,
+            path: pathResult.path,
+            city: input.city,
+        });
+    }
 
     await batch.commit();
 }
@@ -87,26 +96,30 @@ export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<
 const prompt = ai.definePrompt({
   name: 'routeImporterPrompt',
   input: { schema: ProcessRoutesInputSchema },
-  output: { schema: ProcessRoutesOutputSchema },
-  tools: [getStops],
+  output: { schema: z.object({ routes: z.array(AiRouteSchema) }) },
+  tools: [getStopsTool],
   prompt: `You are a data processing expert for a bus fleet in India. You will be given the content of a CSV file containing bus route information.
-Your task is to parse this CSV content, and construct the route paths.
+Your task is to parse this CSV content, identify distinct routes, and structure the data.
+
 The CSV file has columns: route_id, route_name, stop_sequence, stop_name, distances_km, e_run_time, bus_type.
 
 You must group the stops by 'route_id' and order them by the 'stop_sequence' number.
 For each group, the 'route_name' and 'bus_type' will be the same.
-The 'distances_km' and 'e_run_time' columns represent the value for each segment of the route. You need to sum these up for each route to get the 'totalDistance' and 'totalTime'.
+The 'distances_km' and 'e_run_time' columns represent the value for each segment of the route. You need to sum these up for each distinct route to get the 'totalDistance' and 'totalTime'.
 
-For each 'stop_name' in the CSV, you MUST use the getStops tool to find its exact geographic coordinates (latitude and longitude). The tool provides a list of all known stops and their locations. Match the 'stop_name' from the CSV with the 'stop_name' from the tool's output to find the coordinates.
+For each route, compile an ordered list of 'stop_name' based on 'stop_sequence'.
 
-After finding the coordinates for all stops in a route, construct a path for each route as an array of coordinates in the correct sequence.
-- The 'id' field is the 'route_id'.
-- The 'stops' field in the output schema should be the count of stops for that route.
-- The 'routeName' is the 'route_name' from the CSV.
-- The 'busType' is the 'bus_type' from the CSV.
-- The 'startStop' should be the name of the first stop in the sequence, and 'endStop' should be the name of the last stop.
+The 'city' for these routes is: {{{city}}}.
 
-The final output must be a JSON object containing a list of routes, conforming to the required schema.
+The final output must be a JSON object containing a "routes" key, which is a list of route objects. Each object should have:
+- route_id
+- routeName
+- busType
+- stops (an array of stop names in order)
+- totalDistance (sum for the route)
+- totalTime (sum for the route)
+
+Do NOT use any tools. You are only responsible for parsing the CSV and structuring the route data. Path generation will happen later.
 
 CSV Content:
 {{{csvContent}}}

@@ -14,16 +14,14 @@ export type Bus = {
 
 export type Route = {
   id: string; // Firestore doc id
-  route_id: string;
-  route_name: string;
-  stop_sequence: number;
-  stop_name: string;
-  distances_km: number;
-  etas_min: number;
-  total_distance: number;
-  estimated_mins: number;
-  frequency: number;
-  bus_type: string;
+  route_id: string; // Keep a separate route identifier if needed
+  routeName: string;
+  busType: string;
+  stops: string[]; // Array of stop names
+  path: { lat: number; lng: number; }[]; // Array of coordinates for the full path
+  totalDistance: number;
+  totalTime: number;
+  city: string;
 };
 
 
@@ -108,62 +106,48 @@ export const buses: Omit<Bus, 'id'>[] = [
   { busNumber: 'TN 30 F 6666', driver: 'F. Vimala', driverAvatar: '6', route: 'R-L1', status: 'Active', lat: 11.6708, lng: 78.1255, city: 'salem' },
 ];
 
-export const routes: Partial<Route>[] = [
-    // Route 1: Central Bus Stand to Srirangam (Trichy)
-    { route_id: "R-01", route_name: "Central Bus Stand - Srirangam", bus_type: "Express", stop_sequence: 1, stop_name: "Central Bus Stand" },
-    { route_id: "R-01", stop_sequence: 2, stop_name: "Heber Road" },
-    { route_id: "R-01", stop_sequence: 3, stop_name: "Puthur" },
-    { route_id: "R-01", stop_sequence: 4, stop_name: "Thillai Nagar" },
-    { route_id: "R-01", stop_sequence: 5, stop_name: "Chathiram" },
-    { route_id: "R-01", stop_sequence: 6, stop_name: "Rockfort" },
-    { route_id: "R-01", stop_sequence: 7, stop_name: "Srirangam" },
+// This is now just for seeding and type reference.
+// The app will now store and read full route objects from Firestore.
+export const routes: {
+  route_id: string,
+  route_name?: string,
+  bus_type?: string,
+  stop_sequence: number,
+  stop_name: string,
+  city: string,
+}[] = [
+    // Trichy Routes
+    { route_id: "R-01", route_name: "Central Bus Stand - Srirangam", bus_type: "Express", stop_sequence: 1, stop_name: "Central Bus Stand", city: "trichy" },
+    { route_id: "R-01", stop_sequence: 2, stop_name: "Heber Road", city: "trichy" },
+    { route_id: "R-01", stop_sequence: 3, stop_name: "Puthur", city: "trichy" },
+    { route_id: "R-01", stop_sequence: 4, stop_name: "Thillai Nagar", city: "trichy" },
+    { route_id: "R-01", stop_sequence: 5, stop_name: "Chathiram", city: "trichy" },
+    { route_id: "R-01", stop_sequence: 6, stop_name: "Rockfort", city: "trichy" },
+    { route_id: "R-01", stop_sequence: 7, stop_name: "Srirangam", city: "trichy" },
+    { route_id: "R-02", route_name: "Chathiram - Thiruverumbur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Chathiram", city: "trichy" },
+    { route_id: "R-02", stop_sequence: 2, stop_name: "Palpannai", city: "trichy" },
+    { route_id: "R-02", stop_sequence: 3, stop_name: "Melapudur", city: "trichy" },
+    { route_id: "R-02", stop_sequence: 4, stop_name: "NN Road", city: "trichy" },
+    { route_id: "R-02", stop_sequence: 5, stop_name: "Thiruverumbur", city: "trichy" },
+    { route_id: "R-02", stop_sequence: 6, stop_name: "BHEL / Kailasapuram", city: "trichy" },
 
-    // Route 2: Chathiram to Thiruverumbur (Trichy)
-    { route_id: "R-02", route_name: "Chathiram - Thiruverumbur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Chathiram" },
-    { route_id: "R-02", stop_sequence: 2, stop_name: "Palpannai" },
-    { route_id: "R-02", stop_sequence: 3, stop_name: "Melapudur" },
-    { route_id: "R-02", stop_sequence: 4, stop_name: "NN Road" },
-    { route_id: "R-02", stop_sequence: 5, stop_name: "Thiruverumbur" },
-    { route_id: "R-02", stop_sequence: 6, stop_name: "BHEL / Kailasapuram" },
+    // Tanjavur Route
+    { route_id: "R-T1", route_name: "New Bus Stand - Old Bus Stand", bus_type: "Express", stop_sequence: 1, stop_name: "Tanjavur New Bus Stand", city: "tanjavur" },
+    { route_id: "R-T1", stop_sequence: 2, stop_name: "Tanjavur Junction", city: "tanjavur" },
+    { route_id: "R-T1", stop_sequence: 3, stop_name: "Brihadeeswarar Temple", city: "tanjavur" },
+    { route_id: "R-T1", stop_sequence: 4, stop_name: "Tanjavur Old Bus Stand", city: "tanjavur" },
 
-    // Route 3: Central Bus Stand to Samayapuram (Trichy)
-    { route_id: "R-03", route_name: "Central Bus Stand - Samayapuram", bus_type: "Standard", stop_sequence: 1, stop_name: "Central Bus Stand" },
-    { route_id: "R-03", stop_sequence: 2, stop_name: "Mannarpuram" },
-    { route_id: "R-03", stop_sequence: 3, stop_name: "Palpannai" },
-    { route_id: "R-03", stop_sequence: 4, stop_name: "No.1 Toll Gate" },
-    { route_id: "R-03", stop_sequence: 5, stop_name: "Samayapuram" },
+    // Erode Route
+    { route_id: "R-E1", route_name: "Erode Bus Terminus - Perundurai", bus_type: "Standard", stop_sequence: 1, stop_name: "Erode Central Bus Terminus", city: "erode" },
+    { route_id: "R-E1", stop_sequence: 2, stop_name: "Erode Junction", city: "erode" },
+    { route_id: "R-E1", stop_sequence: 3, stop_name: "Moolapalayam", city: "erode" },
+    { route_id: "R-E1", stop_sequence: 4, stop_name: "Perundurai", city: "erode" },
 
-    // Route 4: Woraiyur to Airport (Trichy)
-    { route_id: "R-04", route_name: "Woraiyur - Trichy Airport", bus_type: "Express", stop_sequence: 1, stop_name: "Woraiyur" },
-    { route_id: "R-04", stop_sequence: 2, stop_name: "Thillai Nagar" },
-    { route_id: "R-04", stop_sequence: 3, stop_name: "Central Bus Stand" },
-    { route_id: "R-04", stop_sequence: 4, stop_name: "Mannarpuram" },
-    { route_id: "R-04", stop_sequence: 5, stop_name: "Trichy Airport" },
-
-    // Route 5: Panjapur to Mutharasanallur (Trichy)
-    { route_id: "R-05", route_name: "Panjapur - Mutharasanallur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Panjapur" },
-    { route_id: "R-05", stop_sequence: 2, stop_name: "KKBT terminus" },
-    { route_id: "R-05", stop_sequence: 3, stop_name: "Central Bus Stand" },
-    { route_id: "R-05", stop_sequence: 4, stop_name: "Woraiyur" },
-    { route_id: "R-05", stop_sequence: 5, stop_name: "Mutharasanallur" },
-
-    // Route T1: Tanjavur New Bus Stand to Old Bus Stand
-    { route_id: "R-T1", route_name: "New Bus Stand - Old Bus Stand", bus_type: "Express", stop_sequence: 1, stop_name: "Tanjavur New Bus Stand" },
-    { route_id: "R-T1", stop_sequence: 2, stop_name: "Tanjavur Junction" },
-    { route_id: "R-T1", stop_sequence: 3, stop_name: "Brihadeeswarar Temple" },
-    { route_id: "R-T1", stop_sequence: 4, stop_name: "Tanjavur Old Bus Stand" },
-
-    // Route E1: Erode Bus Terminus to Perundurai
-    { route_id: "R-E1", route_name: "Erode Bus Terminus - Perundurai", bus_type: "Standard", stop_sequence: 1, stop_name: "Erode Central Bus Terminus" },
-    { route_id: "R-E1", stop_sequence: 2, stop_name: "Erode Junction" },
-    { route_id: "R-E1", stop_sequence: 3, stop_name: "Moolapalayam" },
-    { route_id: "R-E1", stop_sequence: 4, stop_name: "Perundurai" },
-
-    // Route L1: Salem New Bus Stand to Junction
-    { route_id: "R-L1", route_name: "New Bus Stand - Salem Junction", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Salem New Bus Stand" },
-    { route_id: "R-L1", stop_sequence: 2, stop_name: "Hasthampatti" },
-    { route_id: "R-L1", stop_sequence: 3, stop_name: "Salem Old Bus Stand" },
-    { route_id: "R-L1", stop_sequence: 4, stop_name: "Salem Junction" },
+    // Salem Route
+    { route_id: "R-L1", route_name: "New Bus Stand - Salem Junction", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Salem New Bus Stand", city: "salem" },
+    { route_id: "R-L1", stop_sequence: 2, stop_name: "Hasthampatti", city: "salem" },
+    { route_id: "R-L1", stop_sequence: 3, stop_name: "Salem Old Bus Stand", city: "salem" },
+    { route_id: "R-L1", stop_sequence: 4, stop_name: "Salem Junction", city: "salem" },
 ];
 
 
@@ -205,4 +189,5 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
+
 
