@@ -77,7 +77,6 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
 
 // K-Means Clustering and Nearest Neighbor Algorithm
 async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
-    const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
     const averageSpeedKmh = 25;
     const numRoutes = Math.min(5, Math.floor(stops.length / 3)); // Aim for 5 routes, or fewer if not enough stops
 
@@ -191,20 +190,28 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
             })
             .filter((s): s is { lat: number; lng: number } => s !== null);
 
-        let pathResult: { path: { lat: number; lng: number; }[] } = { path: [] };
-        if (stopCoordinates.length > 1) {
-            pathResult = await generatePath({ stops: stopCoordinates });
-        } else if (stopCoordinates.length === 1) {
-            pathResult = { path: stopCoordinates };
+        try {
+            let pathResult: { path: { lat: number; lng: number; }[] } = { path: [] };
+            if (stopCoordinates.length > 1) {
+                pathResult = await generatePath({ stops: stopCoordinates });
+            } else if (stopCoordinates.length === 1) {
+                pathResult = { path: stopCoordinates };
+            }
+            return {
+                ...route,
+                path: pathResult.path,
+            };
+        } catch (error) {
+            console.error(`Failed to generate path for route ${route.routeName}. Falling back to straight lines.`, error);
+            // Fallback to a straight-line path if the AI fails
+            return {
+                ...route,
+                path: stopCoordinates,
+            };
         }
-
-
-        return {
-          ...route,
-          path: pathResult.path, // Add the accurate path to the final route object
-        };
       })
     );
 
     return { routes: finalRoutes };
 };
+
