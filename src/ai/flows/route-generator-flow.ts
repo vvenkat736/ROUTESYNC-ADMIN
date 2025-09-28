@@ -8,7 +8,8 @@
 import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
-import { generatePath, GeneratePathOutput } from './path-generator-flow';
+import { generatePath } from './path-generator-flow';
+import type { GeneratePathOutput } from './path-generator-flow';
 
 // Schema for a single point in a route's path
 const PointSchema = z.object({
@@ -85,7 +86,7 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     const hubs = stops.filter(s => hubKeywords.some(k => s.stop_name.toLowerCase().includes(k)));
     let spokes = stops.filter(s => !hubs.some(h => h.stop_id === s.stop_id));
     
-    if (hubs.length === 0) {
+    if (hubs.length === 0 && spokes.length > 0) {
         hubs.push(spokes.shift()!); // Use a random stop as a hub if none are found
     }
     if(spokes.length === 0) return [];
