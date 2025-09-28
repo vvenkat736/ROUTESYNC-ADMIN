@@ -9,7 +9,6 @@ import { getFirestore, collection, getDocs, query, where } from 'firebase/firest
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
 
-// Define schemas for types
 type Point = {
   lat: number;
   lng: number;
@@ -76,59 +75,92 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
   }
 }
 
-// Hardcoded Algorithmic Route Generation
+// K-Means Clustering and Nearest Neighbor Algorithm
 async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
     const averageSpeedKmh = 25;
-    let routeCounter = 1;
+    const numRoutes = Math.min(5, Math.floor(stops.length / 3)); // Aim for 5 routes, or fewer if not enough stops
 
-    let routeDefinitions: { routeName: string, busType: string, stops: string[] }[] = [];
-
-    // Define route structures with stop names based on the city
-    if (city === 'trichy') {
-        routeDefinitions = [
-            { routeName: "Central Bus Stand Circle", busType: "Express", stops: ["Central Bus Stand", "Heber Road", "Puthur", "Thillai Nagar", "Chathiram", "Rockfort", "Central Bus Stand"] },
-            { routeName: "Outer Ring Connector", busType: "Deluxe", stops: ["Chathiram", "Palpannai", "Melapudur", "NN Road", "Thiruverumbur", "BHEL / Kailasapuram"] },
-            { routeName: "North-South Express", busType: "Standard", stops: ["Samayapuram", "No.1 Toll Gate", "Srirangam", "Chathiram", "Central Bus Stand", "Mannarpuram", "Trichy Airport"] },
-            { routeName: "West-East Connector", busType: "Express", stops: ["Mutharasanallur", "Woraiyur", "Chathiram", "Sanjeevi Nagar", "Palpannai", "KKBT terminus"] },
-            { routeName: "City Core Loop", busType: "Deluxe", stops: ["Panjapur", "Iluppur Road", "Bharathi Nagar", "Sastri Road", "Central Bus Stand", "Panjapur"] },
-        ];
-    } else if (city === 'tanjavur') {
-        routeDefinitions = [
-            { routeName: "Tanjavur Main Route", busType: "Express", stops: ["Tanjavur New Bus Stand", "Tanjavur Junction", "Brihadeeswarar Temple", "Tanjavur Old Bus Stand", "Tanjavur New Bus Stand"] }
-        ];
-    } else if (city === 'erode') {
-        routeDefinitions = [
-            { routeName: "Erode City Ring", busType: "Deluxe", stops: ["Erode Central Bus Terminus", "Erode Junction", "Moolapalayam", "Perundurai", "Erode Central Bus Terminus"] }
-        ];
-    } else if (city === 'salem') {
-        routeDefinitions = [
-            { routeName: "Salem City Express", busType: "Express", stops: ["Salem New Bus Stand", "Hasthampatti", "Salem Old Bus Stand", "Salem Junction", "Salem New Bus Stand"] }
-        ];
+    if (numRoutes < 1) {
+        return { routes: [] };
     }
 
+    // 1. K-Means Clustering to group stops
+    let centroids = stops.slice(0, numRoutes).map(stop => ({ lat: stop.lat, lng: stop.lng }));
+    let clusters: StopInfo[][] = Array.from({ length: numRoutes }, () => []);
 
-    const routes = routeDefinitions.map(routeDef => {
-        const validStops = routeDef.stops.map(name => stopsMap.get(name)).filter((s): s is StopInfo => !!s);
+    for (let i = 0; i < 10; i++) { // Iterate a few times for convergence
+        clusters = Array.from({ length: numRoutes }, () => []);
+        stops.forEach(stop => {
+            let minDistance = Infinity;
+            let closestCentroidIndex = 0;
+            centroids.forEach((centroid, index) => {
+                const distance = getDistance(stop, centroid);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCentroidIndex = index;
+                }
+            });
+            clusters[closestCentroidIndex].push(stop);
+        });
+
+        centroids = clusters.map(cluster => {
+            if (cluster.length === 0) return { lat: 0, lng: 0 };
+            const sumLat = cluster.reduce((sum, stop) => sum + stop.lat, 0);
+            const sumLng = cluster.reduce((sum, stop) => sum + stop.lng, 0);
+            return { lat: sumLat / cluster.length, lng: sumLng / cluster.length };
+        }).filter(c => c.lat !== 0);
+    }
+    
+    // 2. Nearest Neighbor within each cluster to form a path
+    let routeCounter = 1;
+    const routes = clusters.map((cluster, index) => {
+        if (cluster.length < 2) return null;
+
+        let unvisited = [...cluster];
+        let orderedStops: StopInfo[] = [];
+        let currentStop = unvisited.splice(0, 1)[0]; // Start with the first stop
+        orderedStops.push(currentStop);
+
+        while (unvisited.length > 0) {
+            let nearestStop: StopInfo | null = null;
+            let minDistance = Infinity;
+            let nearestIndex = -1;
+
+            unvisited.forEach((stop, idx) => {
+                const distance = getDistance(currentStop, stop);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestStop = stop;
+                    nearestIndex = idx;
+                }
+            });
+            
+            if (nearestStop && nearestIndex > -1) {
+                orderedStops.push(nearestStop);
+                currentStop = unvisited.splice(nearestIndex, 1)[0];
+            } else {
+                break; // Should not happen if unvisited is not empty
+            }
+        }
         
-        if (validStops.length < 2) return null;
-
+        // Calculate total distance and time for the ordered route
         let totalDistance = 0;
-        for (let i = 0; i < validStops.length - 1; i++) {
-            totalDistance += getDistance(validStops[i], validStops[i + 1]);
+        for (let i = 0; i < orderedStops.length - 1; i++) {
+            totalDistance += getDistance(orderedStops[i], orderedStops[i + 1]);
         }
         const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
-        
+
         return {
-            route_id: `R-${routeCounter++}`,
-            routeName: routeDef.routeName,
-            busType: routeDef.busType,
-            stops: validStops.map(s => s.stop_name),
+            route_id: `R-${city.substring(0,2).toUpperCase()}-${routeCounter++}`,
+            routeName: `Route Cluster ${index + 1}`,
+            busType: "Standard",
+            stops: orderedStops.map(s => s.stop_name),
             totalDistance: parseFloat(totalDistance.toFixed(2)),
             totalTime: totalTime,
         };
     }).filter((r): r is NonNullable<typeof r> => r !== null);
-
+    
     return { routes };
 }
 
@@ -141,7 +173,7 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
       throw new Error("At least 2 stops must be present to generate routes. Please import more stops.");
     }
     
-    // Step 1: Generate route structures using a hardcoded algorithm.
+    // Step 1: Generate route structures using a dynamic algorithm.
     const structuredRoutes = await createAlgorithmicRoutes(allStops, city);
 
     if (!structuredRoutes || structuredRoutes.routes.length === 0) {
