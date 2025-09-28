@@ -147,23 +147,26 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise
       });
     });
     
-    const clusters: { [key: number]: StopInfo[] } = {};
-    kMeansResult.forEach(cluster => {
-        clusters[cluster.clusterInd] = cluster.cluster.map((vector: number[]) => 
+    let clusters: StopInfo[][] = kMeansResult.map(cluster => {
+        return cluster.cluster.map((vector: number[]) => 
             stops.find(s => s.lat === vector[0] && s.lng === vector[1])!
         ).filter(Boolean);
     });
     
     // 3. Handle outliers/unassigned stops
     const assignedStops = new Set<string>();
-    Object.values(clusters).forEach(clusterStops => 
+    clusters.forEach(clusterStops => 
         clusterStops.forEach(stop => assignedStops.add(stop.stop_id))
     );
 
     const unassignedStops = stops.filter(stop => !assignedStops.has(stop.stop_id));
 
     if (unassignedStops.length > 0) {
-        unassignedStops.forEach(outlier => {
+        if (unassignedStops.length > 1) {
+            clusters.push(unassignedStops); // Add outliers as their own new cluster/route
+        } else if (clusters.length > 0) {
+            // If only one outlier, add it to the nearest existing cluster
+            const outlier = unassignedStops[0];
             let nearestClusterIndex = -1;
             let minDistance = Infinity;
 
@@ -174,16 +177,15 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise
                     nearestClusterIndex = index;
                 }
             });
-
             if (nearestClusterIndex !== -1) {
                 clusters[nearestClusterIndex].push(outlier);
             }
-        });
+        }
     }
 
 
     // 4. Create routes from clusters
-    const generatedRoutes = Object.values(clusters).map((clusterStops, index) => {
+    const generatedRoutes = clusters.map((clusterStops, index) => {
       if (clusterStops.length < 2) return null;
       
       const orderedClusterStops = orderStops(clusterStops);
@@ -197,9 +199,13 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise
 
       const totalTime = Math.round(totalDistance / (20 / 60)); // Avg speed 20km/h
 
+      const routeName = clusterStops === unassignedStops
+        ? `Connector Route`
+        : `${firstStop.stop_name} to ${lastStop.stop_name}`;
+
       return {
         route_id: `R-${city.substring(0,2).toUpperCase()}-${index + 1}`,
-        routeName: `${firstStop.stop_name} to ${lastStop.stop_name}`,
+        routeName: routeName,
         busType: ['Express', 'Deluxe', 'Standard'][index % 3],
         stops: orderedClusterStops.map(s => s.stop_name),
         stopCoordinates: orderedClusterStops.map(s => ({ lat: s.lat, lng: s.lng })),
