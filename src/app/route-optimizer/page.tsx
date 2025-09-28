@@ -20,6 +20,7 @@ import { Bot, Loader, Plus, Trash2 } from 'lucide-react';
 import { optimizeRoute, OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
+import { useToast } from '@/hooks/use-toast';
 
 const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap'), {
   ssr: false,
@@ -28,6 +29,7 @@ const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap')
 
 export default function RouteOptimizerPage() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [startPoint, setStartPoint] = React.useState('');
   const [destinations, setDestinations] = React.useState(['']);
   const [optimizedRoute, setOptimizedRoute] = React.useState<OptimizeRouteOutput | null>(null);
@@ -65,7 +67,11 @@ export default function RouteOptimizerPage() {
       setOptimizedRoute(result);
     } catch (error) {
       console.error('Error optimizing route:', error);
-      // You can add user-facing error handling here, e.g., using a toast
+      toast({
+        title: "Optimization Failed",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +120,7 @@ export default function RouteOptimizerPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveDestination(index)}
-                          disabled={destinations.length <= 1}
+                          disabled={destinations.length <= 1 && index === 0}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -150,13 +156,16 @@ export default function RouteOptimizerPage() {
                     </CardHeader>
                     <CardContent>
                         <ol className="list-decimal list-inside space-y-2">
-                            <li>{optimizedRoute.start.name} (Start)</li>
+                            <li className="font-semibold">{optimizedRoute.start.name} (Start)</li>
                             {optimizedRoute.waypoints.map((point, index) => (
                                 <li key={index}>{point.name}</li>
                             ))}
-                            <li>{optimizedRoute.end.name} (End)</li>
+                            <li className="font-semibold">{optimizedRoute.end.name} (End)</li>
                         </ol>
-                        <p className="mt-4 font-semibold">{t('eta')}: {optimizedRoute.totalTime} minutes</p>
+                        <div className="mt-4 space-y-1 text-sm">
+                            <p><span className="font-semibold">{t('eta')}:</span> {optimizedRoute.totalTime} minutes</p>
+                            <p><span className="font-semibold">{t('total_distance_km')}:</span> {optimizedRoute.totalDistance} km</p>
+                        </div>
                     </CardContent>
                  </Card>
               )}
