@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import type { Bus, Route } from '@/lib/data';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function useBusData(routes: Route[]) {
+export function useBusData(routes?: Route[]) {
   const { organization } = useAuth();
   const [buses, setBuses] = useState<Bus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +18,9 @@ export function useBusData(routes: Route[]) {
   const busSimStateRef = useRef<Map<string, { pathIndex: number }>>(new Map());
 
   useEffect(() => {
+    // Guard against undefined routes array during initial render
+    if (!routes) return;
+    
     const routeMap = new Map<string, { lat: number; lng: number }[]>();
     routes.forEach(route => {
         if (route.path && route.path.length > 0) {
