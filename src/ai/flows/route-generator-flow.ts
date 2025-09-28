@@ -52,7 +52,14 @@ async function getStops(city: string): Promise<{ stop_id: string; stop_name: str
 
 // The main exported function that the UI will call
 export async function generateRoutes(city: string): Promise<GenerateRoutesOutput> {
-  return generateRoutesFlow(city);
+  try {
+    return await generateRoutesFlow(city);
+  } catch (error: any) {
+    if (error.message && error.message.includes('Service Unavailable')) {
+      throw new Error("The route generation service is temporarily unavailable. Please try again in a few moments.");
+    }
+    throw error;
+  }
 }
 
 const StopInfoSchema = z.object({

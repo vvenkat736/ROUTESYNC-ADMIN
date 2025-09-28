@@ -78,9 +78,10 @@ export default function RouteGeneratorPage() {
       setGeneratedRoutes(result);
     } catch (error) {
       console.error('Error generating routes:', error);
+      const errorMessage = (error as Error).message || "The AI failed to generate routes. Please try again.";
       toast({
         title: "Generation Failed",
-        description: "The AI failed to generate routes. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
