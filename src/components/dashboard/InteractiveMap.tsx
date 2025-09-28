@@ -8,8 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
-import { buses as allBuses, stops as allStops, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
+import { buses as allBuses, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
 import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
@@ -68,13 +70,28 @@ interface InteractiveMapProps {
 export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
-
-  const cityStops = useMemo(() => {
-    return allStops.filter(stop => stop.city === organization);
-  }, [organization]);
+  const [cityStops, setCityStops] = useState<Stop[]>([]);
 
   const cityBuses = useMemo(() => {
     return allBuses.filter(bus => bus.city === organization);
+  }, [organization]);
+
+  useEffect(() => {
+    if (!organization) {
+      setCityStops([]);
+      return;
+    }
+
+    const q = query(collection(db, "stops"), where("city", "==", organization));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const stopsData: Stop[] = [];
+      querySnapshot.forEach((doc) => {
+        stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
+      });
+      setCityStops(stopsData);
+    });
+
+    return () => unsubscribe();
   }, [organization]);
 
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);

@@ -13,15 +13,32 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/contexts/AuthContext";
-import { buses as allBuses, routes as allRoutes, stops as allStops } from "@/lib/data";
+import { buses as allBuses, routes as allRoutes } from "@/lib/data";
 import type { Bus as BusType, Route as RouteType, Stop as StopType } from "@/lib/data";
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function FleetOverview() {
   const { t } = useLanguage();
   const { organization } = useAuth();
+  const [cityStops, setCityStops] = useState<StopType[]>([]);
   
-  const cityStops = useMemo(() => {
-    return allStops.filter(stop => stop.city === organization);
+  useEffect(() => {
+    if (!organization) {
+      setCityStops([]);
+      return;
+    }
+
+    const q = query(collection(db, "stops"), where("city", "==", organization));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const stopsData: StopType[] = [];
+      querySnapshot.forEach((doc) => {
+        stopsData.push({ stop_id: doc.id, ...doc.data() } as StopType);
+      });
+      setCityStops(stopsData);
+    });
+
+    return () => unsubscribe();
   }, [organization]);
 
   const cityBuses = useMemo(() => {
