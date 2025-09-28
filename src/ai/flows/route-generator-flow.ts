@@ -14,7 +14,7 @@ type Point = {
   lng: number;
 };
 
-type GenerateRoutesOutput = {
+export type GenerateRoutesOutput = {
   routes: {
     route_id: string;
     routeName: string;
@@ -329,5 +329,3 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
 
     return { routes: finalRoutes };
 };
-
-
