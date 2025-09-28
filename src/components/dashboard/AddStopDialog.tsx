@@ -43,7 +43,7 @@ export function AddStopDialog({ onSuccess }: AddStopDialogProps) {
     }
     setIsFinding(true);
     try {
-      const result: GeocodeOutput = await geocodeLocation({ location: stopName });
+      const result: GeocodeOutput = await geocodeLocation({ location: stopName, city: organization || undefined });
       setLat(String(result.lat));
       setLng(String(result.lng));
       toast({
@@ -51,7 +51,12 @@ export function AddStopDialog({ onSuccess }: AddStopDialogProps) {
         description: `Coordinates for ${result.name} have been filled.`,
       });
     } catch (error) {
-      toast({ title: 'Could not find location', variant: 'destructive' });
+      const errorMessage = (error as Error).message || 'Could not find location';
+      toast({ 
+        title: 'Geocoding Failed',
+        description: errorMessage,
+        variant: 'destructive' 
+      });
       console.error(error);
     } finally {
       setIsFinding(false);

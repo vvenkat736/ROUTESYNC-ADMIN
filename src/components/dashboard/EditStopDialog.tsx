@@ -19,6 +19,7 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useLanguage } from '@/hooks/use-language';
 import type { Stop } from '@/lib/data';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EditStopDialogProps {
   stop: Stop;
@@ -27,6 +28,7 @@ interface EditStopDialogProps {
 
 export function EditStopDialog({ stop, onSuccess }: EditStopDialogProps) {
   const { t } = useLanguage();
+  const { organization } = useAuth();
   const [stopName, setStopName] = React.useState(stop.stop_name);
   const [lat, setLat] = React.useState(String(stop.lat));
   const [lng, setLng] = React.useState(String(stop.lng));
@@ -42,7 +44,7 @@ export function EditStopDialog({ stop, onSuccess }: EditStopDialogProps) {
     }
     setIsFinding(true);
     try {
-      const result: GeocodeOutput = await geocodeLocation({ location: stopName });
+      const result: GeocodeOutput = await geocodeLocation({ location: stopName, city: organization || undefined });
       setLat(String(result.lat));
       setLng(String(result.lng));
       toast({
@@ -50,7 +52,12 @@ export function EditStopDialog({ stop, onSuccess }: EditStopDialogProps) {
         description: `Coordinates for ${result.name} have been filled.`,
       });
     } catch (error) {
-      toast({ title: 'Could not find location', variant: 'destructive' });
+      const errorMessage = (error as Error).message || 'Could not find location';
+      toast({ 
+        title: 'Geocoding Failed',
+        description: errorMessage,
+        variant: 'destructive' 
+      });
       console.error(error);
     } finally {
       setIsFinding(false);
