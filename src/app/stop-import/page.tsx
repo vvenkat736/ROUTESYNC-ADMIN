@@ -194,9 +194,6 @@ export default function StopImportPage() {
   };
   
   const handleDeleteStop = async (stopId: string) => {
-    if (!confirm('Are you sure you want to delete this stop? This action cannot be undone.')) {
-        return;
-    }
     try {
         await deleteDoc(doc(db, "stops", stopId));
         toast({
@@ -334,14 +331,32 @@ export default function StopImportPage() {
                             <TableCell>{stop.lng}</TableCell>
                             <TableCell>{stop.note}</TableCell>
                             <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(stop)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground" onClick={() => handleDeleteStop(stop.stop_id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
+                                <div className="flex justify-end gap-2">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(stop)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action will permanently delete the stop "{stop.stop_name}". This cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteStop(stop.stop_id)}>
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
                             </TableCell>
                         </TableRow>
                         ))}
@@ -401,5 +416,3 @@ export default function StopImportPage() {
     </SidebarProvider>
   );
 }
-
-    
