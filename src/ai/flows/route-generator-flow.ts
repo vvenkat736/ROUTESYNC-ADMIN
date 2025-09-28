@@ -5,13 +5,10 @@
  *
  * - generateRoutes - A function that fetches all stops and asks the AI to create logical routes.
  */
-
-import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath, GeneratePathOutput } from './path-generator-flow';
-
 
 // Schema for a single point in a route's path
 const PointSchema = z.object({
@@ -33,9 +30,15 @@ const GenerateRoutesOutputSchema = z.object({
 });
 export type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
 
+type StopInfo = {
+    stop_id: string;
+    stop_name: string;
+    lat: number;
+    lng: number;
+};
 
 // Helper function to get all available bus stops from Firestore
-async function getStops(city: string): Promise<{ stop_id: string; stop_name: string; lat: number; lng: number; }[]> {
+async function getStops(city: string): Promise<StopInfo[]> {
     const db = getFirestore(app);
     const q = query(collection(db, "stops"), where("city", "==", city));
     const snapshot = await getDocs(q);
@@ -50,6 +53,20 @@ async function getStops(city: string): Promise<{ stop_id: string; stop_name: str
     });
 }
 
+// Haversine distance calculation
+function getDistance(p1: StopInfo, p2: StopInfo): number {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+  const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+
 // The main exported function that the UI will call
 export async function generateRoutes(city: string): Promise<GenerateRoutesOutput> {
   try {
@@ -62,77 +79,68 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
   }
 }
 
-const StopInfoSchema = z.object({
-  stop_id: z.string(),
-  stop_name: z.string(),
-  lat: z.number(),
-  lng: z.number(),
-});
+// Algorithmic Route Generation (Hub and Spoke)
+async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
+    const hubKeywords = ['central bus stand', 'chathiram', 'junction'];
+    const hubs = stops.filter(s => hubKeywords.some(k => s.stop_name.toLowerCase().includes(k)));
+    let spokes = stops.filter(s => !hubs.some(h => h.stop_id === s.stop_id));
+    
+    if (hubs.length === 0) {
+        hubs.push(spokes.shift()!); // Use a random stop as a hub if none are found
+    }
+    if(spokes.length === 0) return [];
 
-// The prompt that instructs the AI how to generate routes
-const prompt = ai.definePrompt({
-  name: 'routeGeneratorPrompt',
-  input: { schema: z.object({ stops: z.array(StopInfoSchema), city: z.string() }) },
-  // The AI will only generate the route structure, not the detailed path.
-  output: { schema: z.object({
-      routes: z.array(z.object({
-          route_id: z.string(),
-          routeName: z.string(),
-          busType: z.string(),
-          stops: z.array(z.string()),
-          totalDistance: z.number(),
-          totalTime: z.number(),
-      }))
-  })},
-  prompt: `You are a master transport logistics expert for the city of {{{city}}}, India.
-Your task is to create a set of logical and efficient bus routes that connect the available bus stops provided to you.
+    const routes: Omit<z.infer<typeof GenerateRoutesOutputSchema>['routes'][0], 'path'>[] = [];
+    let routeCounter = 1;
+    const averageSpeedKmh = 25;
 
-Based on the list of stops below, you will create between 3 and 5 distinct bus routes. Each route should cover a logical area or connect important hubs (like 'Central Bus Stand', 'Chathiram', 'Srirangam', 'Thiruverumbur').
+    for (const hub of hubs) {
+        if (spokes.length === 0) break;
 
-Available Stops:
-{{#each stops}}
-- {{stop_name}} (ID: {{stop_id}}, Lat: {{lat}}, Lng: {{lng}})
-{{/each}}
+        // Find the 4 closest spokes to the current hub to form a route
+        const sortedSpokes = spokes.sort((a, b) => getDistance(hub, a) - getDistance(hub, b));
+        const routeStops = [hub, ...sortedSpokes.slice(0, 4)];
+        
+        // Remove these stops from the available spokes pool
+        spokes = spokes.filter(s => !routeStops.some(rs => rs.stop_id === s.stop_id));
 
+        // Create the route structure
+        let totalDistance = 0;
+        for (let i = 0; i < routeStops.length - 1; i++) {
+            totalDistance += getDistance(routeStops[i], routeStops[i+1]);
+        }
+        const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
 
-For each route you generate, you must provide:
-1.  A unique 'route_id' (e.g., R-01, R-02).
-2.  A descriptive 'routeName' (e.g., 'Central Bus Stand to Thiruverumbur').
-3.  A 'busType' (either 'Express', 'Deluxe', or 'Standard').
-4.  An ordered list of 'stops' (the stop names). The order is critical and must represent a sensible path.
-5.  An estimated 'totalDistance' in kilometers for the entire route.
-6.  An estimated 'totalTime' in minutes for the entire route.
+        routes.push({
+            route_id: `R-${routeCounter++}`,
+            routeName: `${hub.stop_name} to ${routeStops[routeStops.length - 1].stop_name}`,
+            busType: ['Express', 'Deluxe', 'Standard'][routeCounter % 3],
+            stops: routeStops.map(s => s.stop_name),
+            totalDistance: parseFloat(totalDistance.toFixed(2)),
+            totalTime: totalTime,
+        });
+    }
 
-You will NOT generate the 'path' array of coordinates. That will be handled by a different process.
-
-The final output must be a JSON object conforming to the required schema, containing a single key "routes" which is a list of the routes you have created.
-`,
-});
+    return { routes };
+}
 
 
-const generateRoutesFlow = ai.defineFlow(
-  {
-    name: 'generateRoutesFlow',
-    inputSchema: z.string(),
-    outputSchema: GenerateRoutesOutputSchema,
-  },
-  async (city) => {
-    // Step 1: Explicitly fetch the stops first.
+const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> => {
     const allStops = await getStops(city);
     const stopsMap = new Map(allStops.map(stop => [stop.stop_name, stop]));
 
-    if (!allStops || allStops.length === 0) {
-      throw new Error("No stops found in the database. Please import stops first.");
+    if (!allStops || allStops.length < 2) {
+      throw new Error("At least 2 stops must be present to generate routes. Please import more stops.");
     }
     
-    // Step 2: Pass the fetched stops to the AI to get the route structure.
-    const { output: structuredRoutes } = await prompt({ stops: allStops, city });
+    // Step 1: Generate route structures using an algorithm.
+    const structuredRoutes = await createAlgorithmicRoutes(allStops, city);
 
-    if (!structuredRoutes) {
-      throw new Error("AI failed to generate routes. The model returned an empty response.");
+    if (!structuredRoutes || structuredRoutes.routes.length === 0) {
+      throw new Error("Algorithm failed to generate routes. Check if you have enough stops.");
     }
 
-    // Step 3: For each generated route, call the path generator AI to get the accurate path.
+    // Step 2: For each generated route, call the path generator AI to get the accurate path.
     const finalRoutes = await Promise.all(
       structuredRoutes.routes.map(async (route) => {
         const stopCoordinates = route.stops
@@ -145,7 +153,6 @@ const generateRoutesFlow = ai.defineFlow(
 
         let pathResult: GeneratePathOutput = { path: [] };
         if (stopCoordinates.length > 1) {
-            // Generate the detailed, road-accurate path
             pathResult = await generatePath({ stops: stopCoordinates });
         } else if (stopCoordinates.length === 1) {
             pathResult = { path: stopCoordinates };
@@ -160,5 +167,4 @@ const generateRoutesFlow = ai.defineFlow(
     );
 
     return { routes: finalRoutes };
-  }
-);
+};
