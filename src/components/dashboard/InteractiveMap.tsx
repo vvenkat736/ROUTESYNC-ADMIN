@@ -9,7 +9,6 @@ import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Bus, type Stop, type Route as RouteType } from '@/lib/data';
-import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useBusData } from '@/hooks/use-bus-data';
@@ -48,16 +47,6 @@ const createStopIcon = () => {
     });
 };
 
-const createNumberedIcon = (number: number | string, color: string) => {
-  return L.divIcon({
-    html: `<div style="background-color: ${color}; color: white; border-radius: 50%; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white;">${number}</div>`,
-    className: 'bg-transparent border-0',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
-};
-
-
 interface AnimatedBus extends Bus {
   routePath: [number, number][];
   currentSegment: number;
@@ -65,24 +54,23 @@ interface AnimatedBus extends Bus {
 }
 
 interface InteractiveMapProps {
-    optimizedRoute?: OptimizeRouteOutput | null;
     liveBuses?: Bus[];
+    displayRoutes?: RouteType[];
 }
 
-export default function InteractiveMap({ optimizedRoute = null, liveBuses }: InteractiveMapProps) {
+export default function InteractiveMap({ liveBuses, displayRoutes }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
   const { buses: allCityBuses } = useBusData();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
-  const [cityRoutes, setCityRoutes] = useState<RouteType[]>([]);
   
   const cityBuses = liveBuses ?? allCityBuses;
+  const cityRoutes = displayRoutes ?? [];
 
-  // Fetch stops and routes in real-time
+  // Fetch stops in real-time
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
-      setCityRoutes([]);
       return;
     }
 
@@ -101,18 +89,8 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
       setCityStops(stopsData);
     });
     
-    const routesQuery = query(collection(db, "routes"), where("city", "==", organization));
-    const routesUnsubscribe = onSnapshot(routesQuery, (querySnapshot) => {
-        const routesData: RouteType[] = [];
-        querySnapshot.forEach((doc) => {
-            routesData.push({ id: doc.id, ...doc.data() } as RouteType);
-        });
-        setCityRoutes(routesData);
-    });
-
     return () => {
         stopsUnsubscribe();
-        routesUnsubscribe();
     };
   }, [organization]);
 
@@ -131,18 +109,14 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
 
 
   useEffect(() => {
-    // This effect initializes the buses for animation ONLY when they change.
-    // It shouldn't run every frame.
     const busesWithRoutes = cityBuses.map(bus => {
         const existingAnimatedBus = animatedBuses.find(ab => ab.id === bus.id);
+        const routePath = routePaths[bus.route] || [];
 
         if (existingAnimatedBus) {
-            // If bus already exists, just update its static data
-            return { ...existingAnimatedBus, ...bus };
+            return { ...existingAnimatedBus, ...bus, routePath };
         }
 
-        // If it's a new bus, initialize its animation state
-        const routePath = routePaths[bus.route] || [];
         const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
         const segmentProgress = Math.random();
         
@@ -168,7 +142,6 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
 
     setAnimatedBuses(busesWithRoutes);
 
-    // Set map center based on initial data
     if (cityBuses.length > 0) {
       const avgLat = cityBuses.reduce((sum, bus) => sum + bus.lat, 0) / cityBuses.length;
       const avgLng = cityBuses.reduce((sum, bus) => sum + bus.lng, 0) / cityBuses.length;
@@ -182,16 +155,13 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
             setMapCenter([avgLat, avgLng]);
         }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityBuses, cityStops, routePaths]);
   
   useEffect(() => {
-    // This effect runs the animation loop
     const interval = setInterval(() => {
       setAnimatedBuses(currentBuses => 
         currentBuses.map(bus => {
           if (bus.status !== 'Active' || bus.routePath.length < 2) {
-              // For non-active buses, just ensure their position is the one from the database
               const dbBus = cityBuses.find(b => b.id === bus.id);
               if (dbBus) {
                   return { ...bus, lat: dbBus.lat, lng: dbBus.lng };
@@ -200,7 +170,7 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
           }
           
           let { currentSegment, segmentProgress } = bus;
-          const speed = 0.05; // Adjust for faster/slower animation
+          const speed = 0.05; 
           segmentProgress += speed;
 
           if (segmentProgress >= 1.0) {
@@ -225,28 +195,10 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
           };
         })
       );
-    }, 1000); // Update every second
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [cityBuses]); // Depend on cityBuses to update positions for non-active buses
-
-  const optimizedWaypoints = useMemo(() => {
-    if (!optimizedRoute) return [];
-    return [
-      { ...optimizedRoute.start, type: 'start', color: '#10b981' },
-      ...optimizedRoute.waypoints.map(wp => ({ ...wp, type: 'waypoint', color: '#3b82f6' })),
-      { ...optimizedRoute.end, type: 'end', color: '#ef4444' },
-    ];
-  }, [optimizedRoute]);
-
-  const optimizedPolyline = useMemo(() => {
-    if (!optimizedRoute) return [];
-    return [
-      [optimizedRoute.start.lat, optimizedRoute.start.lng],
-      ...optimizedRoute.waypoints.map(wp => [wp.lat, wp.lng] as [number, number]),
-      [optimizedRoute.end.lat, optimizedRoute.end.lng],
-    ];
-  }, [optimizedRoute]);
+  }, [cityBuses]);
 
   return (
     <Card className="h-[600px] lg:h-full overflow-hidden">
@@ -328,25 +280,6 @@ export default function InteractiveMap({ optimizedRoute = null, liveBuses }: Int
                         ))}
                     </LayerGroup>
                 </LayersControl.Overlay>
-
-                {optimizedPolyline.length > 0 && (
-                    <LayersControl.Overlay checked name="Optimized Route">
-                        <LayerGroup>
-                             {optimizedWaypoints.map((point, index) => (
-                                <Marker
-                                key={`optimized-${index}`}
-                                position={[point.lat, point.lng]}
-                                icon={createNumberedIcon(point.type === 'start' ? 'S' : point.type === 'end' ? 'E' : index, point.color)}
-                                >
-                                <Popup>{point.name}</Popup>
-                                </Marker>
-                            ))}
-                            <Polyline positions={optimizedPolyline} color="#0284c7" weight={5} dashArray="10, 5" />
-                        </LayerGroup>
-                    </LayersControl.Overlay>
-                )}
-
-
               </LayersControl>
             </MapContainer>
           </div>

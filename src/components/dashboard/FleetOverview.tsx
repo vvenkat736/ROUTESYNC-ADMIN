@@ -83,7 +83,6 @@ export function FleetOverview({
   const delayedBuses = cityBuses.filter(b => b.status === "Delayed").length;
   const inactiveBuses = cityBuses.filter(b => b.status === "Inactive").length;
 
-  // Get unique routes for the dropdown
   const uniqueRoutes = useMemo(() => {
       const routeMap = new Map<string, Route>();
       cityRoutes.forEach(route => {
@@ -155,7 +154,7 @@ export function FleetOverview({
           <SelectContent>
             <SelectItem value="all">All Routes</SelectItem>
             {uniqueRoutes.map(route => (
-              <SelectItem key={route.route_id} value={route.route_id}>{route.routeName}</SelectItem>
+              <SelectItem key={route.id} value={route.route_id}>{route.routeName}</SelectItem>
             ))}
           </SelectContent>
         </Select>
