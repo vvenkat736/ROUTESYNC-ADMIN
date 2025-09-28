@@ -104,6 +104,13 @@ export const translations = {
     delete_success_desc: 'All stops for your city have been removed.',
     delete_error: 'Deletion Failed',
     delete_error_desc: 'Could not delete the stops. Please try again.',
+    delete_driver_list: 'Delete All Drivers',
+    delete_driver_list_confirm_title: 'Are you absolutely sure?',
+    delete_driver_list_confirm_desc: 'This will permanently delete all driver data for your city. This action cannot be undone.',
+    delete_driver_list_success_title: 'All Drivers Deleted',
+    delete_driver_list_success_desc: 'All drivers for your city have been removed.',
+    delete_driver_list_error_title: 'Deletion Failed',
+    delete_driver_list_error_desc: 'Could not delete the drivers. Please try again.',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -207,6 +214,13 @@ export const translations = {
     delete_success_desc: 'உங்கள் நகரத்திற்கான அனைத்து நிறுத்தங்களும் அகற்றப்பட்டன.',
     delete_error: 'நீக்குதல் தோல்வியடைந்தது',
     delete_error_desc: 'நிறுத்தங்களை நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+    delete_driver_list: 'அனைத்து ஓட்டுநர்களையும் நீக்கு',
+    delete_driver_list_confirm_title: 'நீங்கள் முற்றிலும் உறுதியாக இருக்கிறீர்களா?',
+    delete_driver_list_confirm_desc: 'இது உங்கள் நகரத்திற்கான அனைத்து ஓட்டுநர் தரவையும் நிரந்தரமாக நீக்கும். இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.',
+    delete_driver_list_success_title: 'அனைத்து ஓட்டுநர்களும் நீக்கப்பட்டனர்',
+    delete_driver_list_success_desc: 'உங்கள் நகரத்திற்கான அனைத்து ஓட்டுநர்களும் அகற்றப்பட்டனர்.',
+    delete_driver_list_error_title: 'நீக்குதல் தோல்வியடைந்தது',
+    delete_driver_list_error_desc: 'ஓட்டுநர்களை நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
   },
 };
 

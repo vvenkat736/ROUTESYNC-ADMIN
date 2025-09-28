@@ -6,7 +6,7 @@ import { SidebarProvider, Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { useLanguage } from "@/hooks/use-language";
-import { Users, Plus, Pencil, Trash2 } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -39,7 +39,7 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, doc, deleteDoc, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, where, doc, deleteDoc, getDocs, writeBatch } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AddDriverDialog } from "@/components/dashboard/AddDriverDialog";
@@ -105,6 +105,39 @@ export default function DriversPage() {
     setSelectedDriver(driver);
     setEditDialogOpen(true);
   };
+  
+  const handleDeleteAllDrivers = async () => {
+    if (!organization) return;
+
+    try {
+        const q = query(collection(db, "drivers"), where("city", "==", organization));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            toast({ title: "No drivers to delete.", variant: "default" });
+            return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        toast({
+            title: t('delete_driver_list_success_title'),
+            description: t('delete_driver_list_success_desc'),
+        });
+    } catch (error) {
+        console.error("Error deleting all drivers: ", error);
+        toast({
+            title: t('delete_driver_list_error_title'),
+            description: t('delete_driver_list_error_desc'),
+            variant: "destructive",
+        });
+    }
+  };
+
 
   return (
     <SidebarProvider>
@@ -185,6 +218,41 @@ export default function DriversPage() {
                     </TableBody>
                     </Table>
                 </CardContent>
+                </Card>
+                <Card className="mt-6 border-destructive">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle />
+                            {t('delete_driver_list')}
+                        </CardTitle>
+                        <CardDescription>
+                            {t('delete_driver_list_confirm_desc')}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {t('delete_driver_list')}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>{t('delete_driver_list_confirm_title')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('delete_driver_list_confirm_desc')}
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteAllDrivers}>
+                                    Continue
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </CardContent>
                 </Card>
           </main>
         </div>
