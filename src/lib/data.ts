@@ -81,6 +81,26 @@ export const stops: Stop[] = [
   { stop_id: 'L02', stop_name: 'Salem Old Bus Stand', lat: 11.6534, lng: 78.1639, note: '', city: 'salem' },
   { stop_id: 'L03', stop_name: 'Salem Junction', lat: 11.6708, lng: 78.1255, note: '', city: 'salem' },
   { stop_id: 'L04', stop_name: 'Hasthampatti', lat: 11.6766, lng: 78.1508, note: '', city: 'salem' },
+
+  // Madurai Stops
+  { stop_id: 'M01', stop_name: 'Mattuthavani Bus Stand', lat: 9.9463, lng: 78.1583, note: 'MGR Bus Stand', city: 'madurai' },
+  { stop_id: 'M02', stop_name: 'Periyar Bus Stand', lat: 9.9145, lng: 78.1143, note: '', city: 'madurai' },
+
+  // Dindigul Stops
+  { stop_id: 'D01', stop_name: 'Dindigul Bus Stand', lat: 10.3683, lng: 77.9607, note: '', city: 'dindigul' },
+
+  // Tindivanam Stops
+  { stop_id: 'V01', stop_name: 'Tindivanam Bus Stand', lat: 12.2393, lng: 79.6468, note: '', city: 'thindivanam' },
+
+  // Coimbatore Stops
+  { stop_id: 'C01', stop_name: 'Gandhipuram Central Bus Terminus', lat: 11.0183, lng: 76.9634, note: '', city: 'coimbatore' },
+  { stop_id: 'C02', stop_name: 'Ukkadam Bus Terminus', lat: 10.9922, lng: 76.9641, note: '', city: 'coimbatore' },
+
+  // Kanyakumari Stops
+  { stop_id: 'K01', stop_name: 'Kanyakumari Bus Stand', lat: 8.0883, lng: 77.5453, note: '', city: 'kanyakumari' },
+
+  // Tirunelveli Stops
+  { stop_id: 'N01', stop_name: 'Tirunelveli New Bus Stand', lat: 8.7037, lng: 77.7247, note: '', city: 'thirunelveli' },
 ];
 
 
@@ -91,6 +111,24 @@ export const buses: Omit<Bus, 'id'>[] = [
   { busNumber: 'TN 45 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R-TR-1', status: 'Delayed', lat: 10.82577, lng: 78.68337, city: 'trichy', occupancy: 'Overcrowded', nextStop: 'Chathiram', nextStopETA: 15 },
   { busNumber: 'TN 45 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R-TR-1', status: 'Active', lat: 10.824, lng: 78.6815, city: 'trichy', occupancy: 'Empty', nextStop: 'Thillai Nagar', nextStopETA: 8 },
   { busNumber: 'TN 45 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R-TR-2', status: 'Inactive', lat: 10.80009, lng: 78.68786, city: 'trichy', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
+  
+  // Madurai Buses
+  { busNumber: 'TN 58 F 1122', driver: 'P. Pandi', driverAvatar: '6', route: 'R-MD-1', status: 'Active', lat: 9.9463, lng: 78.1583, city: 'madurai', occupancy: 'Full', nextStop: 'Periyar Bus Stand', nextStopETA: 12 },
+  
+  // Dindigul Buses
+  { busNumber: 'TN 57 G 3344', driver: 'L. Lakshmi', driverAvatar: '7', route: 'R-DG-1', status: 'Active', lat: 10.3683, lng: 77.9607, city: 'dindigul', occupancy: 'Half-Full', nextStop: 'Dindigul Market', nextStopETA: 9 },
+
+  // Thindivanam Buses
+  { busNumber: 'TN 16 H 5566', driver: 'G. Ganesh', driverAvatar: '8', route: 'R-TV-1', status: 'Delayed', lat: 12.2393, lng: 79.6468, city: 'thindivanam', occupancy: 'Full', nextStop: 'Tindivanam RTO', nextStopETA: 20 },
+  
+  // Coimbatore Buses
+  { busNumber: 'TN 66 J 7788', driver: 'A. Devi', driverAvatar: '1', route: 'R-CB-1', status: 'Active', lat: 11.0183, lng: 76.9634, city: 'coimbatore', occupancy: 'Half-Full', nextStop: 'Ukkadam Bus Terminus', nextStopETA: 7 },
+  
+  // Kanyakumari Buses
+  { busNumber: 'TN 74 K 9900', driver: 'S. Murugan', driverAvatar: '2', route: 'R-KK-1', status: 'Active', lat: 8.0883, lng: 77.5453, city: 'kanyakumari', occupancy: 'Empty', nextStop: 'Vivekananda Rock', nextStopETA: 4 },
+  
+  // Thirunelveli Buses
+  { busNumber: 'TN 72 M 1212', driver: 'T. Meena', driverAvatar: '3', route: 'R-TVL-1', status: 'Inactive', lat: 8.7037, lng: 77.7247, city: 'thirunelveli', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
 ];
 
 // This is now just for seeding and type reference.
@@ -104,37 +142,57 @@ export const routes: {
   city: string,
 }[] = [
     // Trichy Routes
-    { route_id: "R-01", route_name: "Central Bus Stand - Srirangam", bus_type: "Express", stop_sequence: 1, stop_name: "Central Bus Stand", city: "trichy" },
-    { route_id: "R-01", stop_sequence: 2, stop_name: "Heber Road", city: "trichy" },
-    { route_id: "R-01", stop_sequence: 3, stop_name: "Puthur", city: "trichy" },
-    { route_id: "R-01", stop_sequence: 4, stop_name: "Thillai Nagar", city: "trichy" },
-    { route_id: "R-01", stop_sequence: 5, stop_name: "Chathiram", city: "trichy" },
-    { route_id: "R-01", stop_sequence: 6, stop_name: "Rockfort", city: "trichy" },
-    { route_id: "R-01", stop_sequence: 7, stop_name: "Srirangam", city: "trichy" },
-    { route_id: "R-02", route_name: "Chathiram - Thiruverumbur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Chathiram", city: "trichy" },
-    { route_id: "R-02", stop_sequence: 2, stop_name: "Palpannai", city: "trichy" },
-    { route_id: "R-02", stop_sequence: 3, stop_name: "Melapudur", city: "trichy" },
-    { route_id: "R-02", stop_sequence: 4, stop_name: "NN Road", city: "trichy" },
-    { route_id: "R-02", stop_sequence: 5, stop_name: "Thiruverumbur", city: "trichy" },
-    { route_id: "R-02", stop_sequence: 6, stop_name: "BHEL / Kailasapuram", city: "trichy" },
+    { route_id: "R-TR-1", route_name: "Central Bus Stand - Srirangam", bus_type: "Express", stop_sequence: 1, stop_name: "Central Bus Stand", city: "trichy" },
+    { route_id: "R-TR-1", stop_sequence: 2, stop_name: "Heber Road", city: "trichy" },
+    { route_id: "R-TR-1", stop_sequence: 3, stop_name: "Puthur", city: "trichy" },
+    { route_id: "R-TR-1", stop_sequence: 4, stop_name: "Thillai Nagar", city: "trichy" },
+    { route_id: "R-TR-1", stop_sequence: 5, stop_name: "Chathiram", city: "trichy" },
+    { route_id: "R-TR-1", stop_sequence: 6, stop_name: "Rockfort", city: "trichy" },
+    { route_id: "R-TR-1", stop_sequence: 7, stop_name: "Srirangam", city: "trichy" },
+    { route_id: "R-TR-2", route_name: "Chathiram - Thiruverumbur", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Chathiram", city: "trichy" },
+    { route_id: "R-TR-2", stop_sequence: 2, stop_name: "Palpannai", city: "trichy" },
+    { route_id: "R-TR-2", stop_sequence: 3, stop_name: "Melapudur", city: "trichy" },
+    { route_id: "R-TR-2", stop_sequence: 4, stop_name: "NN Road", city: "trichy" },
+    { route_id: "R-TR-2", stop_sequence: 5, stop_name: "Thiruverumbur", city: "trichy" },
+    { route_id: "R-TR-2", stop_sequence: 6, stop_name: "BHEL / Kailasapuram", city: "trichy" },
 
     // Tanjavur Route
-    { route_id: "R-T1", route_name: "New Bus Stand - Old Bus Stand", bus_type: "Express", stop_sequence: 1, stop_name: "Tanjavur New Bus Stand", city: "tanjavur" },
-    { route_id: "R-T1", stop_sequence: 2, stop_name: "Tanjavur Junction", city: "tanjavur" },
-    { route_id: "R-T1", stop_sequence: 3, stop_name: "Brihadeeswarar Temple", city: "tanjavur" },
-    { route_id: "R-T1", stop_sequence: 4, stop_name: "Tanjavur Old Bus Stand", city: "tanjavur" },
+    { route_id: "R-TJ-1", route_name: "New Bus Stand - Old Bus Stand", bus_type: "Express", stop_sequence: 1, stop_name: "Tanjavur New Bus Stand", city: "tanjavur" },
+    { route_id: "R-TJ-1", stop_sequence: 2, stop_name: "Tanjavur Junction", city: "tanjavur" },
+    { route_id: "R-TJ-1", stop_sequence: 3, stop_name: "Brihadeeswarar Temple", city: "tanjavur" },
+    { route_id: "R-TJ-1", stop_sequence: 4, stop_name: "Tanjavur Old Bus Stand", city: "tanjavur" },
 
     // Erode Route
-    { route_id: "R-E1", route_name: "Erode Bus Terminus - Perundurai", bus_type: "Standard", stop_sequence: 1, stop_name: "Erode Central Bus Terminus", city: "erode" },
-    { route_id: "R-E1", stop_sequence: 2, stop_name: "Erode Junction", city: "erode" },
-    { route_id: "R-E1", stop_sequence: 3, stop_name: "Moolapalayam", city: "erode" },
-    { route_id: "R-E1", stop_sequence: 4, stop_name: "Perundurai", city: "erode" },
+    { route_id: "R-E-1", route_name: "Erode Bus Terminus - Perundurai", bus_type: "Standard", stop_sequence: 1, stop_name: "Erode Central Bus Terminus", city: "erode" },
+    { route_id: "R-E-1", stop_sequence: 2, stop_name: "Erode Junction", city: "erode" },
+    { route_id: "R-E-1", stop_sequence: 3, stop_name: "Moolapalayam", city: "erode" },
+    { route_id: "R-E-1", stop_sequence: 4, stop_name: "Perundurai", city: "erode" },
 
     // Salem Route
-    { route_id: "R-L1", route_name: "New Bus Stand - Salem Junction", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Salem New Bus Stand", city: "salem" },
-    { route_id: "R-L1", stop_sequence: 2, stop_name: "Hasthampatti", city: "salem" },
-    { route_id: "R-L1", stop_sequence: 3, stop_name: "Salem Old Bus Stand", city: "salem" },
-    { route_id: "R-L1", stop_sequence: 4, stop_name: "Salem Junction", city: "salem" },
+    { route_id: "R-SL-1", route_name: "New Bus Stand - Salem Junction", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Salem New Bus Stand", city: "salem" },
+    { route_id: "R-SL-1", stop_sequence: 2, stop_name: "Hasthampatti", city: "salem" },
+    { route_id: "R-SL-1", stop_sequence: 3, stop_name: "Salem Old Bus Stand", city: "salem" },
+    { route_id: "R-SL-1", stop_sequence: 4, stop_name: "Salem Junction", city: "salem" },
+
+    // Madurai Route
+    { route_id: "R-MD-1", route_name: "Mattuthavani - Periyar", bus_type: "Express", stop_sequence: 1, stop_name: "Mattuthavani Bus Stand", city: "madurai" },
+    { route_id: "R-MD-1", stop_sequence: 2, stop_name: "Periyar Bus Stand", city: "madurai" },
+
+    // Dindigul Route
+    { route_id: "R-DG-1", route_name: "Dindigul Main", bus_type: "Standard", stop_sequence: 1, stop_name: "Dindigul Bus Stand", city: "dindigul" },
+
+    // Thindivanam Route
+    { route_id: "R-TV-1", route_name: "Thindivanam Circle", bus_type: "Standard", stop_sequence: 1, stop_name: "Tindivanam Bus Stand", city: "thindivanam" },
+    
+    // Coimbatore Route
+    { route_id: "R-CB-1", route_name: "Gandhipuram - Ukkadam", bus_type: "Deluxe", stop_sequence: 1, stop_name: "Gandhipuram Central Bus Terminus", city: "coimbatore" },
+    { route_id: "R-CB-1", stop_sequence: 2, stop_name: "Ukkadam Bus Terminus", city: "coimbatore" },
+    
+    // Kanyakumari Route
+    { route_id: "R-KK-1", route_name: "Beach Route", bus_type: "Tourist", stop_sequence: 1, stop_name: "Kanyakumari Bus Stand", city: "kanyakumari" },
+
+    // Thirunelveli Route
+    { route_id: "R-TVL-1", route_name: "Junction - New Stand", bus_type: "Express", stop_sequence: 1, stop_name: "Tirunelveli New Bus Stand", city: "thirunelveli" },
 ];
 
 
@@ -176,5 +234,7 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
+
+    
 
     
