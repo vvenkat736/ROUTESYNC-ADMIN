@@ -40,7 +40,6 @@ export function SidebarNav() {
     { href: "/", icon: <LayoutDashboard />, label: 'dashboard' },
     { href: "/map", icon: <Map />, label: 'live_map' },
     { href: "/analytics", icon: <BarChart2 />, label: 'analytics' },
-    { href: "/route-optimizer", icon: <Bot />, label: 'route_optimizer' },
     { href: "/route-generator", icon: <Bot />, label: 'route_generator' },
     { href: "/alerts", icon: <Bell />, label: 'alerts' },
     { href: "/stop-import", icon: <MapPin />, label: 'stop_import' },
