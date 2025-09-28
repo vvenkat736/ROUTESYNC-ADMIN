@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
-import { Waypoints } from 'lucide-react';
+import { Waypoints, User, Clock, Users, AlertCircle, BusFront } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Bus, type Stop, type Route as RouteType } from '@/lib/data';
@@ -15,20 +15,26 @@ import { useBusData } from '@/hooks/use-bus-data';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
-  Delayed: '#F97316', // orange-500
+  Delayed: '#EF4444', // red-500
   Inactive: '#6B7280', // gray-500
+};
+
+const occupancyColors: { [key: string]: string } = {
+    Empty: 'text-green-500',
+    Full: 'text-orange-500',
+    Overcrowded: 'text-red-500',
 };
 
 const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
 
 const createBusIcon = (status: Bus['status']) => {
     const color = statusColors[status] || '#000';
-    const busEmoji = status === 'Inactive' ? '⚫' : '🚍';
+    const busEmoji = status === 'Active' ? '🟢' : status === 'Delayed' ? '🔴' : '⚫️';
     return L.divIcon({
       html: `
-        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-bottom: 2px; border: 1px solid white;"></div>
-          <div style="font-size: 24px;">${busEmoji}</div>
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: rotate(270deg);">
+          <div style="font-size: 28px; ">🚍</div>
+          <div style="position: absolute; top: 12px; left: 13px; font-size: 14px; transform: rotate(-270deg);">${busEmoji}</div>
         </div>
       `,
       className: 'bg-transparent border-0',
@@ -82,8 +88,8 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
         stopsData.push({ 
             stop_id: doc.id,
             ...data,
-            lat: parseFloat(data.lat),
-            lng: parseFloat(data.lng),
+            lat: parseFloat(data.lat as any),
+            lng: parseFloat(data.lng as any),
         } as Stop);
       });
       setCityStops(stopsData);
@@ -170,7 +176,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
           }
           
           let { currentSegment, segmentProgress } = bus;
-          const speed = 0.05; 
+          const speed = 0.02; // Adjusted for a ~30km/h feel
           segmentProgress += speed;
 
           if (segmentProgress >= 1.0) {
@@ -201,7 +207,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   }, [cityBuses]);
 
   return (
-    <Card className="h-[600px] lg:h-full overflow-hidden">
+    <Card className="h-full overflow-hidden">
       <CardContent className="p-0 h-full">
           <div className="h-full w-full relative">
             <div className="absolute top-2 left-2 z-[1000] bg-background/80 p-2 rounded-lg shadow-md flex items-center gap-2">
@@ -247,15 +253,33 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
                         icon={createBusIcon(bus.status)}
                       >
                         <Popup>
-                          <div className="p-1 font-sans">
-                            <h3 className="font-bold text-lg mb-2">{t('bus')} #{bus.busNumber}</h3>
-                            <p><span className="font-semibold">{t('route')}:</span> {bus.route}</p>
-                            <p><span className="font-semibold">{t('driver')}:</span> {bus.driver}</p>
-                            <p><span className="font-semibold">{t('status')}:</span> 
-                              <span style={{ color: statusColors[bus.status] }} className="ml-1 font-bold">
-                                {t(bus.status.toLowerCase() as any)}
-                              </span>
-                            </p>
+                          <div className="w-64 p-1 font-sans">
+                             <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-bold text-lg text-primary">{bus.busNumber}</h3>
+                                <div className="text-sm font-semibold rounded-full px-2 py-0.5" style={{backgroundColor: statusColors[bus.status], color: 'white'}}>
+                                  {t(bus.status.toLowerCase() as any)}
+                                </div>
+                             </div>
+
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <BusFront className="w-4 h-4 text-muted-foreground" />
+                                    <span><span className="font-semibold">Route:</span> {bus.route}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-muted-foreground" />
+                                    <span><span className="font-semibold">Driver:</span> {bus.driver}</span>
+                                </div>
+                                <hr className="my-2" />
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-muted-foreground" />
+                                    <span><span className="font-semibold">Next Stop:</span> {bus.nextStop} ({bus.nextStopETA})</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Users className="w-4 h-4 text-muted-foreground" />
+                                    <span className={occupancyColors[bus.occupancy]}><span className="font-semibold text-foreground">Occupancy:</span> {bus.occupancy}</span>
+                                </div>
+                            </div>
                           </div>
                         </Popup>
                       </Marker>
