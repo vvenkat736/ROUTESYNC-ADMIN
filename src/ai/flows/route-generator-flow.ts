@@ -11,6 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+import { generatePath } from './path-generator-flow';
 
 // Schema for a single point in a route's path
 const PointSchema = z.object({
@@ -58,7 +59,16 @@ const StopInfoSchema = z.object({
 const prompt = ai.definePrompt({
   name: 'routeGeneratorPrompt',
   input: { schema: z.object({ stops: z.array(StopInfoSchema) }) },
-  output: { schema: GenerateRoutesOutputSchema },
+  // The AI will only generate the route structure, not the detailed path.
+  output: { schema: z.object({
+      routes: z.array(z.object({
+          routeName: z.string(),
+          busType: z.string(),
+          stops: z.array(z.string()),
+          totalDistance: z.number(),
+          totalTime: z.number(),
+      }))
+  })},
   prompt: `You are a master transport logistics expert for the city of Trichy, India.
 Your task is to create a set of logical and efficient bus routes that connect the available bus stops provided to you.
 
@@ -74,9 +84,10 @@ For each route you generate, you must provide:
 1.  A descriptive 'routeName' (e.g., 'Central Bus Stand to Thiruverumbur').
 2.  A 'busType' (either 'Express', 'Deluxe', or 'Standard').
 3.  An ordered list of 'stops' (the stop names). The order is critical and must represent a sensible path.
-4.  An ordered 'path' of geographic coordinates corresponding to the sequence of stops.
-5.  An estimated 'totalDistance' in kilometers for the entire route.
-6.  An estimated 'totalTime' in minutes for the entire route.
+4.  An estimated 'totalDistance' in kilometers for the entire route.
+5.  An estimated 'totalTime' in minutes for the entire route.
+
+You will NOT generate the 'path' array of coordinates. That will be handled by a different process.
 
 The final output must be a JSON object conforming to the required schema, containing a single key "routes" which is a list of the routes you have created.
 `,
@@ -90,18 +101,41 @@ const generateRoutesFlow = ai.defineFlow(
   },
   async () => {
     // Step 1: Explicitly fetch the stops first.
-    const stops = await getStops();
+    const allStops = await getStops();
+    const stopsMap = new Map(allStops.map(stop => [stop.stop_name, stop]));
 
-    if (!stops || stops.length === 0) {
+    if (!allStops || allStops.length === 0) {
       throw new Error("No stops found in the database. Please import stops first.");
     }
     
-    // Step 2: Pass the fetched stops to the AI.
-    const { output } = await prompt({ stops });
+    // Step 2: Pass the fetched stops to the AI to get the route structure.
+    const { output: structuredRoutes } = await prompt({ stops: allStops });
 
-    if (!output) {
+    if (!structuredRoutes) {
       throw new Error("AI failed to generate routes. The model returned an empty response.");
     }
-    return output;
+
+    // Step 3: For each generated route, call the path generator AI to get the accurate path.
+    const finalRoutes = await Promise.all(
+      structuredRoutes.routes.map(async (route) => {
+        const stopCoordinates = route.stops
+            .map(stopName => {
+                const stop = stopsMap.get(stopName);
+                if (!stop) return null;
+                return { lat: stop.lat, lng: stop.lng };
+            })
+            .filter((s): s is { lat: number; lng: number } => s !== null);
+
+        // Generate the detailed, road-accurate path
+        const pathResult = await generatePath({ stops: stopCoordinates });
+
+        return {
+          ...route,
+          path: pathResult.path, // Add the accurate path to the final route object
+        };
+      })
+    );
+
+    return { routes: finalRoutes };
   }
 );

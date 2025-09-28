@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
 import { buses as allBuses, routes as allRoutes, type Bus, type Stop } from '@/lib/data';
 import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const statusColors: { [key: string]: string } = {
@@ -67,15 +67,22 @@ interface InteractiveMapProps {
     optimizedRoute?: OptimizeRouteOutput | null;
 }
 
+interface RouteWithPath {
+    route_id: string;
+    path: [number, number][];
+}
+
 export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
+  const [cityRoutes, setCityRoutes] = useState<RouteWithPath[]>([]);
 
   const cityBuses = useMemo(() => {
     return allBuses.filter(bus => bus.city === organization);
   }, [organization]);
 
+  // Fetch stops in real-time
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
@@ -94,41 +101,68 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
     return () => unsubscribe();
   }, [organization]);
 
+  // Fetch routes and generate paths
+   useEffect(() => {
+    if (!organization) {
+      setCityRoutes([]);
+      return;
+    }
+
+    const fetchRoutes = async () => {
+        const stopsMap = new Map(cityStops.map(s => [s.stop_name, s]));
+        const routeSegments: { [key: string]: any[] } = {};
+
+        const q = query(collection(db, "routes"));
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Filter routes based on whether their stops belong to the current city
+            if (stopsMap.has(data.stop_name)) {
+                if (!routeSegments[data.route_id]) {
+                    routeSegments[data.route_id] = [];
+                }
+                routeSegments[data.route_id].push(data);
+            }
+        });
+        
+        const routePaths: RouteWithPath[] = [];
+        for (const routeId in routeSegments) {
+            const sortedStops = routeSegments[routeId].sort((a, b) => a.stop_sequence - b.stop_sequence);
+            const path: [number, number][] = sortedStops
+                .map(segment => {
+                    const stop = stopsMap.get(segment.stop_name);
+                    return stop ? [stop.lat, stop.lng] as [number, number] : null;
+                })
+                .filter((p): p is [number, number] => p !== null);
+            
+            if (path.length > 1) {
+                // In a real application, you would call a routing service here.
+                // For this simulation, we'll continue to use the AI-generated path if available
+                // or just connect the dots.
+                routePaths.push({ route_id: routeId, path: path });
+            }
+        }
+        setCityRoutes(routePaths);
+    };
+
+    if (cityStops.length > 0) {
+        fetchRoutes();
+    }
+  }, [cityStops, organization]);
+
+
   const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
   const generatedRoutePaths = useMemo(() => {
-    const stopsMap = new Map(cityStops.map(s => [s.stop_name, s]));
-    const routePaths: { [key: string]: [number, number][] } = {};
-    
-    const routesWithStops: { [key: string]: any[] } = {};
-    allRoutes.forEach(routeStop => {
-        if (!routesWithStops[routeStop.route_id!]) {
-            routesWithStops[routeStop.route_id!] = [];
-        }
-        routesWithStops[routeStop.route_id!].push(routeStop);
+    const paths: { [key: string]: [number, number][] } = {};
+    cityRoutes.forEach(route => {
+        paths[route.route_id] = route.path;
     });
+    return paths;
+  }, [cityRoutes]);
 
-    Object.keys(routesWithStops).forEach(routeId => {
-        const sortedStops = routesWithStops[routeId].sort((a, b) => a.stop_sequence - b.stop_sequence);
-        const path: [number, number][] = [];
-        let pathIsValidForCity = true;
-        sortedStops.forEach(routeStop => {
-            const stop = stopsMap.get(routeStop.stop_name);
-            if (stop) {
-                path.push([stop.lat, stop.lng]);
-            } else {
-                pathIsValidForCity = false;
-            }
-        });
-
-        if(pathIsValidForCity && path.length > 0) {
-            routePaths[routeId] = path;
-        }
-    });
-
-    return routePaths;
-  }, [cityStops]);
 
   useEffect(() => {
     const busesWithRoutes = cityBuses.map(bus => {
