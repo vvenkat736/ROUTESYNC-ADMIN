@@ -4,15 +4,14 @@
  * @fileOverview An AI flow for automatically generating bus routes from a list of stops.
  *
  * - generateRoutes - A function that fetches all stops and asks the AI to create logical routes.
- * - GenerateRoutesOutput - The return type for the generateRoutes function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
-import { generatePath } from './path-generator-flow';
-import type { GeneratePathOutput } from './path-generator-flow';
+import { generatePath, GeneratePathOutput } from './path-generator-flow';
+
 
 // Schema for a single point in a route's path
 const PointSchema = z.object({
@@ -20,8 +19,9 @@ const PointSchema = z.object({
   lng: z.number().describe('The longitude of the stop.'),
 });
 
-// Schema for a single generated route
-const GeneratedRouteSchema = z.object({
+// The final output schema containing a list of generated routes
+const GenerateRoutesOutputSchema = z.object({
+  routes: z.array(z.object({
     route_id: z.string().describe("A unique ID for the route (e.g., 'R-01')."),
     routeName: z.string().describe("A descriptive name for the route (e.g., 'Central Bus Stand to Srirangam')."),
     busType: z.string().describe('The type of bus for the route (e.g., Express, Deluxe, Standard).'),
@@ -29,13 +29,10 @@ const GeneratedRouteSchema = z.object({
     path: z.array(PointSchema).describe('An ordered array of coordinates representing the entire route path.'),
     totalDistance: z.number().describe('The total distance of the route in kilometers.'),
     totalTime: z.number().describe('The total estimated run time for the route in minutes.'),
-});
-
-// The final output schema containing a list of generated routes
-const GenerateRoutesOutputSchema = z.object({
-  routes: z.array(GeneratedRouteSchema),
+  })),
 });
 export type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
+
 
 // Helper function to get all available bus stops from Firestore
 async function getStops(city: string): Promise<{ stop_id: string; stop_name: string; lat: number; lng: number; }[]> {
