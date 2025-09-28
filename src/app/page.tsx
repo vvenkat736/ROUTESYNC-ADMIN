@@ -20,8 +20,8 @@ const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveM
 
 export default function Home() {
   const [isClient, setIsClient] = React.useState(false);
-  const { buses } = useBusData();
-  const { routes: allRoutes } = useRoutes();
+  const { routes: allRoutes, isLoading: routesLoading } = useRoutes();
+  const { buses, isLoading: busesLoading } = useBusData(allRoutes); // Pass routes to the bus data hook
   
   const [filteredBuses, setFilteredBuses] = React.useState<Bus[]>([]);
   const [filteredRoutes, setFilteredRoutes] = React.useState<Route[]>([]);

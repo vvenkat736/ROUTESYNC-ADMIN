@@ -12,6 +12,7 @@ import { type Bus, type Stop, type Route as RouteType } from '@/lib/data';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useBusData } from '@/hooks/use-bus-data';
+import { useRoutes } from '@/hooks/use-routes';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
@@ -19,18 +20,18 @@ const statusColors: { [key: string]: string } = {
   Inactive: '#6B7280', // gray-500
 };
 
-const createBusIcon = (status: Bus['status']) => {
-  const color = statusColors[status] || '#6B7280';
+const createBusIcon = () => {
   const busEmoji = '🚍'; 
-
   return L.divIcon({
-    html: `<div class="bus-icon" style="font-size: 24px;">${busEmoji}</div><div style="position: absolute; top: 18px; left: 18px; width: 8px; height: 8px; background-color: ${color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.2);"></div>`,
+    html: `<div class="bus-icon">${busEmoji}</div>`,
     className: 'bg-transparent border-0',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -16],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
   });
 };
+
+const busIcon = createBusIcon();
 
 const createStopIcon = () => {
     return L.divIcon({
@@ -52,17 +53,12 @@ interface InteractiveMapProps {
 export default function InteractiveMap({ liveBuses, displayRoutes }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
-  const { buses: allCityBuses } = useBusData();
+  const { routes: allRoutes, isLoading: routesLoading } = useRoutes();
+  const { buses: allCityBuses } = useBusData(allRoutes);
   const [cityStops, setCityStops] = useState<Stop[]>([]);
   
   const cityBuses = liveBuses ?? allCityBuses;
-  const cityRoutes = displayRoutes ?? [];
-
-  const busIcons = useMemo(() => ({
-    Active: createBusIcon('Active'),
-    Delayed: createBusIcon('Delayed'),
-    Inactive: createBusIcon('Inactive'),
-  }), []);
+  const cityRoutes = displayRoutes ?? allRoutes;
 
   useEffect(() => {
     if (!organization) {
@@ -99,13 +95,6 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   }, [cityRoutes]);
   
   const mapCenter = useMemo<[number, number]>(() => {
-    if (cityBuses.length > 0) {
-      const avgLat = cityBuses.reduce((sum, bus) => sum + bus.lat, 0) / cityBuses.length;
-      const avgLng = cityBuses.reduce((sum, bus) => sum + bus.lng, 0) / cityBuses.length;
-      if (avgLat && avgLng) {
-        return [avgLat, avgLng];
-      }
-    }
     if (cityStops.length > 0) {
         const avgLat = cityStops.reduce((sum, stop) => sum + stop.lat, 0) / cityStops.length;
         const avgLng = cityStops.reduce((sum, stop) => sum + stop.lng, 0) / cityStops.length;
@@ -113,15 +102,17 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
             return [avgLat, avgLng];
         }
     }
+    // Default fallback center
     return [10.80, 78.69];
-  }, [cityBuses, cityStops]);
+  }, [cityStops]); // Only depends on stops, which are static. This stabilizes the map.
   
-  
+  const mapKey = useMemo(() => `${organization}-${mapCenter.join(',')}`, [organization, mapCenter]);
+
   return (
     <Card className="h-full overflow-hidden border-0 shadow-none rounded-none">
       <CardContent className="p-0 h-full">
           <div className="h-full w-full relative">
-            <MapContainer key={mapCenter.join(',')} center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
+            <MapContainer key={mapKey} center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
                <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name="Streets">
                     <TileLayer
@@ -157,7 +148,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
                       <Marker
                         key={bus.id}
                         position={[bus.lat, bus.lng]}
-                        icon={busIcons[bus.status]}
+                        icon={busIcon}
                       >
                         <Popup>
                           <div className="w-56 p-1 font-sans">
@@ -203,4 +194,3 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     </Card>
   );
 }
-    

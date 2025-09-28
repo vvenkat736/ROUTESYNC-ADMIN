@@ -100,8 +100,6 @@ export default function RouteGeneratorPage() {
 
         generatedRoutes.routes.forEach((route) => {
             const docRef = doc(routesCollection); // Let Firestore auto-generate the document ID
-            // The 'route' object already contains the AI-generated 'path'.
-            // We just need to save it directly.
             batch.set(docRef, {
                 ...route,
                 city: organization, // Tag the route with the current city
@@ -111,6 +109,7 @@ export default function RouteGeneratorPage() {
         await batch.commit();
         toast({
             title: t('routes_saved_success'),
+            description: "The new routes are now active.",
         });
         setGeneratedRoutes(null);
         router.push('/'); // Redirect to the main dashboard
@@ -118,6 +117,7 @@ export default function RouteGeneratorPage() {
         console.error("Error saving routes:", error);
         toast({
             title: t('routes_saved_error'),
+            description: "Could not save the generated routes to the database.",
             variant: "destructive",
         });
     } finally {
