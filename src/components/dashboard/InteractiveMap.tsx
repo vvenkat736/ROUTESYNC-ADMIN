@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
-import { Waypoints, User, Clock, Users, AlertCircle, BusFront } from 'lucide-react';
+import { Waypoints, User, Clock, Users, BusFront } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Bus, type Stop, type Route as RouteType } from '@/lib/data';
@@ -15,40 +15,18 @@ import { useBusData } from '@/hooks/use-bus-data';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
-  Delayed: '#EF4444', // red-500
+  Delayed: '#F97316', // orange-500
   Inactive: '#6B7280', // gray-500
 };
-
-const occupancyColors: { [key: string]: string } = {
-    Empty: 'text-green-500',
-    Full: 'text-orange-500',
-    Overcrowded: 'text-red-500',
-};
-
-const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
 
 const createBusIcon = (status: Bus['status']) => {
     const color = statusColors[status] || '#6B7280';
     return L.divIcon({
-      html: `
-        <div style="
-          background-color: ${color};
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          border: 2px solid white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        ">
-          <div style="font-size: 16px;">🚍</div>
-        </div>
-      `,
+      html: `<div style="background-color: ${color}; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></div>`,
       className: 'bg-transparent border-0',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -15],
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12],
     });
 };
 
@@ -61,11 +39,8 @@ const createStopIcon = () => {
     });
 };
 
-interface AnimatedBus extends Bus {
-  routePath: [number, number][];
-  currentSegment: number;
-  segmentProgress: number;
-}
+const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
+
 
 interface InteractiveMapProps {
     liveBuses?: Bus[];
@@ -80,8 +55,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   
   const cityBuses = liveBuses ?? allCityBuses;
   const cityRoutes = displayRoutes ?? [];
-  const animationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
+  
   // Fetch stops in real-time
   useEffect(() => {
     if (!organization) {
@@ -104,12 +78,9 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
       setCityStops(stopsData);
     });
     
-    return () => {
-        stopsUnsubscribe();
-    };
+    return () => stopsUnsubscribe();
   }, [organization]);
 
-  const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.80, 78.69]);
 
   const routePaths = useMemo(() => {
@@ -122,58 +93,6 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     return paths;
   }, [cityRoutes]);
 
-
-  // Effect for initializing and updating bus states from props/db
-  useEffect(() => {
-    setAnimatedBuses(currentAnimatedBuses => {
-        return cityBuses.map(bus => {
-            const existingAnimatedBus = currentAnimatedBuses.find(ab => ab.id === bus.id);
-            const routePath = routePaths[bus.route] || [];
-
-            // If bus is inactive or delayed, just update its static position from db data
-            if (bus.status !== 'Active') {
-                return {
-                    ...bus,
-                    routePath,
-                    lat: bus.lat,
-                    lng: bus.lng,
-                    currentSegment: 0,
-                    segmentProgress: 0,
-                };
-            }
-
-            // If we are already animating this bus, just update its data, keep animation state
-            if (existingAnimatedBus) {
-                return { ...existingAnimatedBus, ...bus, routePath };
-            }
-
-            // If it's a new bus, initialize its animation state
-            const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
-            const segmentProgress = Math.random();
-            let initialLat = bus.lat;
-            let initialLng = bus.lng;
-
-            if (routePath.length > 1 && routePath[currentSegment] && routePath[currentSegment + 1]) {
-                const startPoint = routePath[currentSegment];
-                const endPoint = routePath[currentSegment + 1];
-                initialLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
-                initialLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
-            }
-
-            return {
-                ...bus,
-                lat: initialLat,
-                lng: initialLng,
-                routePath: routePath,
-                currentSegment: currentSegment,
-                segmentProgress: segmentProgress,
-            };
-        });
-    });
-
-  }, [cityBuses, routePaths]);
-
-  // Effect for setting map center
   useEffect(() => {
     if (cityBuses.length > 0) {
       const avgLat = cityBuses.reduce((sum, bus) => sum + bus.lat, 0) / cityBuses.length;
@@ -190,50 +109,6 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     }
   }, [cityBuses, cityStops]);
   
-  // Effect for animation interval only
-  useEffect(() => {
-    animationIntervalRef.current = setInterval(() => {
-      setAnimatedBuses(currentBuses => 
-        currentBuses.map(bus => {
-          if (bus.status !== 'Active' || !bus.routePath || bus.routePath.length < 2) {
-              return bus; // Return bus as is if not animatable
-          }
-          
-          let { currentSegment, segmentProgress } = bus;
-          const speed = 0.02; // Adjusted for a ~30km/h feel
-          segmentProgress += speed;
-
-          if (segmentProgress >= 1.0) {
-            segmentProgress = 0;
-            currentSegment = (currentSegment + 1) % (bus.routePath.length - 1);
-          }
-
-          const startPoint = bus.routePath[currentSegment];
-          const endPoint = bus.routePath[currentSegment + 1];
-
-          if (!startPoint || !endPoint) return bus;
-
-          const newLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
-          const newLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
-
-          return {
-            ...bus,
-            lat: newLat,
-            lng: newLng,
-            currentSegment,
-            segmentProgress,
-          };
-        })
-      );
-    }, 1000);
-
-    return () => {
-        if(animationIntervalRef.current) {
-            clearInterval(animationIntervalRef.current);
-        }
-    };
-  }, []); // Empty dependency array means this effect runs only once on mount
-
   return (
     <Card className="h-full overflow-hidden">
       <CardContent className="p-0 h-full">
@@ -274,40 +149,18 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
 
                 <LayersControl.Overlay checked name="Buses">
                   <LayerGroup>
-                    {animatedBuses.map((bus) => (
+                    {cityBuses.map((bus) => (
                       <Marker
                         key={bus.id}
                         position={[bus.lat, bus.lng]}
                         icon={createBusIcon(bus.status)}
                       >
                         <Popup>
-                          <div className="w-64 p-1 font-sans">
-                             <div className="flex justify-between items-center mb-2">
-                                <h3 className="font-bold text-lg text-primary">{bus.busNumber}</h3>
-                                <div className="text-sm font-semibold rounded-full px-2 py-0.5" style={{backgroundColor: statusColors[bus.status], color: 'white'}}>
-                                  {t(bus.status.toLowerCase() as any)}
-                                </div>
-                             </div>
-
-                            <div className="space-y-2 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <BusFront className="w-4 h-4 text-muted-foreground" />
-                                    <span><span className="font-semibold">Route:</span> {bus.route}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-muted-foreground" />
-                                    <span><span className="font-semibold">Driver:</span> {bus.driver}</span>
-                                </div>
-                                <hr className="my-2" />
-                                <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-muted-foreground" />
-                                    <span><span className="font-semibold">Next Stop:</span> {bus.nextStop} ({bus.nextStopETA})</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-muted-foreground" />
-                                    <span className={occupancyColors[bus.occupancy]}><span className="font-semibold text-foreground">Occupancy:</span> {bus.occupancy}</span>
-                                </div>
-                            </div>
+                          <div className="w-48 p-1 font-sans">
+                             <h3 className="font-bold text-lg">{bus.busNumber}</h3>
+                             <p><span className="font-semibold">Route:</span> {bus.route}</p>
+                             <p><span className="font-semibold">Driver:</span> {bus.driver}</p>
+                             <p><span className="font-semibold">Status:</span> {bus.status}</p>
                           </div>
                         </Popup>
                       </Marker>
@@ -339,7 +192,3 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     </Card>
   );
 }
-
-    
-
-    
