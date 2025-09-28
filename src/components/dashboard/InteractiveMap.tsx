@@ -20,18 +20,33 @@ const statusColors: { [key: string]: string } = {
   Inactive: '#6B7280', // gray-500
 };
 
-const createBusIcon = () => {
-  const busEmoji = '🚍'; 
-  return L.divIcon({
-    html: `<div class="bus-icon">${busEmoji}</div>`,
-    className: 'bg-transparent border-0',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
-  });
+const createBusIcon = (status: Bus['status']) => {
+    const color = statusColors[status] || statusColors.Inactive;
+    const busEmoji = '🚍';
+    return L.divIcon({
+      html: `
+        <div style="
+          background-color: ${color};
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 16px;
+          border: 2px solid white;
+          box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        ">
+          ${busEmoji}
+        </div>
+      `,
+      className: 'bg-transparent border-0',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -14],
+    });
 };
 
-const busIcon = createBusIcon();
 
 const createStopIcon = () => {
     return L.divIcon({
@@ -148,7 +163,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
                       <Marker
                         key={bus.id}
                         position={[bus.lat, bus.lng]}
-                        icon={busIcon}
+                        icon={createBusIcon(bus.status)}
                       >
                         <Popup>
                           <div className="w-56 p-1 font-sans">
