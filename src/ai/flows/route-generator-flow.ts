@@ -75,92 +75,128 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
   }
 }
 
-// K-Means Clustering and Nearest Neighbor Algorithm
+// Hub-and-Spoke Route Generation Algorithm
 async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     const averageSpeedKmh = 25;
-    const numRoutes = Math.min(5, Math.floor(stops.length / 3)); // Aim for 5 routes, or fewer if not enough stops
-
-    if (numRoutes < 1) {
-        return { routes: [] };
-    }
-
-    // 1. K-Means Clustering to group stops
-    let centroids = stops.slice(0, numRoutes).map(stop => ({ lat: stop.lat, lng: stop.lng }));
-    let clusters: StopInfo[][] = Array.from({ length: numRoutes }, () => []);
-
-    for (let i = 0; i < 10; i++) { // Iterate a few times for convergence
-        clusters = Array.from({ length: numRoutes }, () => []);
-        stops.forEach(stop => {
-            let minDistance = Infinity;
-            let closestCentroidIndex = 0;
-            centroids.forEach((centroid, index) => {
-                const distance = getDistance(stop, centroid);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCentroidIndex = index;
-                }
-            });
-            clusters[closestCentroidIndex].push(stop);
-        });
-
-        centroids = clusters.map(cluster => {
-            if (cluster.length === 0) return { lat: 0, lng: 0 };
-            const sumLat = cluster.reduce((sum, stop) => sum + stop.lat, 0);
-            const sumLng = cluster.reduce((sum, stop) => sum + stop.lng, 0);
-            return { lat: sumLat / cluster.length, lng: sumLng / cluster.length };
-        }).filter(c => c.lat !== 0);
-    }
     
-    // 2. Nearest Neighbor within each cluster to form a path
-    let routeCounter = 1;
-    const routes = clusters.map((cluster, index) => {
-        if (cluster.length < 2) return null;
+    const hubNames: { [key: string]: string[] } = {
+        trichy: ['Central Bus Stand', 'Panjapur'],
+        tanjavur: ['Tanjavur Old Bus Stand', 'Tanjavur New Bus Stand'],
+        erode: ['Erode Central Bus Terminus', 'Erode Junction'],
+        salem: ['Salem New Bus Stand', 'Salem Old Bus Stand'],
+    };
 
-        let unvisited = [...cluster];
-        let orderedStops: StopInfo[] = [];
-        let currentStop = unvisited.splice(0, 1)[0]; // Start with the first stop
-        orderedStops.push(currentStop);
+    const mainHubNames = hubNames[city] || (stops.length > 1 ? [stops[0].stop_name, stops[1].stop_name] : []);
+    const mainHubs = stops.filter(s => mainHubNames.includes(s.stop_name));
 
-        while (unvisited.length > 0) {
-            let nearestStop: StopInfo | null = null;
-            let minDistance = Infinity;
-            let nearestIndex = -1;
+    if (mainHubs.length < 2) {
+        throw new Error(`Could not find the two main bus stands for ${city}. Please ensure they are present in the stops data.`);
+    }
 
-            unvisited.forEach((stop, idx) => {
-                const distance = getDistance(currentStop, stop);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestStop = stop;
-                    nearestIndex = idx;
-                }
-            });
-            
-            if (nearestStop && nearestIndex > -1) {
-                orderedStops.push(nearestStop);
-                currentStop = unvisited.splice(nearestIndex, 1)[0];
-            } else {
-                break; // Should not happen if unvisited is not empty
+    const otherStops = stops.filter(s => !mainHubNames.includes(s.stop_name));
+    
+    // Assign each stop to the nearest hub
+    const hubZones: { [key: string]: StopInfo[] } = {};
+    mainHubs.forEach(hub => hubZones[hub.stop_name] = []);
+    
+    otherStops.forEach(stop => {
+        let closestHub: StopInfo | null = null;
+        let minDistance = Infinity;
+        mainHubs.forEach(hub => {
+            const distance = getDistance(stop, hub);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestHub = hub;
             }
+        });
+        if (closestHub) {
+            hubZones[closestHub.stop_name].push(stop);
         }
-        
-        // Calculate total distance and time for the ordered route
-        let totalDistance = 0;
-        for (let i = 0; i < orderedStops.length - 1; i++) {
-            totalDistance += getDistance(orderedStops[i], orderedStops[i + 1]);
-        }
-        const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
+    });
 
-        return {
-            route_id: `R-${city.substring(0,2).toUpperCase()}-${routeCounter++}`,
-            routeName: `Route Cluster ${index + 1}`,
-            busType: "Standard",
-            stops: orderedStops.map(s => s.stop_name),
-            totalDistance: parseFloat(totalDistance.toFixed(2)),
-            totalTime: totalTime,
-        };
-    }).filter((r): r is NonNullable<typeof r> => r !== null);
+    let routeCounter = 1;
+    const finalRoutes: any[] = [];
+
+    for (const hub of mainHubs) {
+        const zoneStops = hubZones[hub.stop_name];
+        if (zoneStops.length === 0) continue;
+
+        // Sub-cluster the stops in this hub's zone
+        const numSubRoutes = Math.max(1, Math.floor(zoneStops.length / 5)); // 5 stops per sub-route
+        let centroids = zoneStops.slice(0, numSubRoutes).map(stop => ({ lat: stop.lat, lng: stop.lng }));
+        let clusters: StopInfo[][] = Array.from({ length: numSubRoutes }, () => []);
+
+        for (let i = 0; i < 5; i++) { // Iterate a few times for convergence
+            clusters = Array.from({ length: numSubRoutes }, () => []);
+            zoneStops.forEach(stop => {
+                let minDistance = Infinity;
+                let closestCentroidIndex = 0;
+                centroids.forEach((centroid, index) => {
+                    const distance = getDistance(stop, centroid);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestCentroidIndex = index;
+                    }
+                });
+                clusters[closestCentroidIndex].push(stop);
+            });
+            centroids = clusters.map(cluster => {
+                if (cluster.length === 0) return { lat: 0, lng: 0 };
+                const sumLat = cluster.reduce((sum, stop) => sum + stop.lat, 0);
+                const sumLng = cluster.reduce((sum, stop) => sum + stop.lng, 0);
+                return { lat: sumLat / cluster.length, lng: sumLng / cluster.length };
+            }).filter(c => c.lat !== 0);
+        }
+
+        // Create a route for each sub-cluster, starting from the main hub
+        clusters.filter(c => c.length > 0).forEach((cluster, index) => {
+            const routeStops = [hub, ...cluster];
+            let orderedStops: StopInfo[] = [];
+            let unvisited = [...routeStops];
+            let currentStop = unvisited.find(s => s.stop_name === hub.stop_name)!;
+            unvisited = unvisited.filter(s => s.stop_name !== hub.stop_name);
+            orderedStops.push(currentStop);
+
+            while (unvisited.length > 0) {
+                let nearestStop: StopInfo | null = null;
+                let minDistance = Infinity;
+                let nearestIndex = -1;
+
+                unvisited.forEach((stop, idx) => {
+                    const distance = getDistance(currentStop, stop);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestStop = stop;
+                        nearestIndex = idx;
+                    }
+                });
+                
+                if (nearestStop && nearestIndex > -1) {
+                    orderedStops.push(nearestStop);
+                    currentStop = unvisited.splice(nearestIndex, 1)[0];
+                } else {
+                    break;
+                }
+            }
+
+            let totalDistance = 0;
+            for (let i = 0; i < orderedStops.length - 1; i++) {
+                totalDistance += getDistance(orderedStops[i], orderedStops[i + 1]);
+            }
+            const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
+
+            finalRoutes.push({
+                route_id: `R-${city.substring(0,2).toUpperCase()}-${routeCounter++}`,
+                routeName: `${hub.stop_name} Route ${index + 1}`,
+                busType: "Standard",
+                stops: orderedStops.map(s => s.stop_name),
+                totalDistance: parseFloat(totalDistance.toFixed(2)),
+                totalTime: totalTime,
+            });
+        });
+    }
     
-    return { routes };
+    return { routes: finalRoutes };
 }
 
 
@@ -214,4 +250,3 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
 
     return { routes: finalRoutes };
 };
-
