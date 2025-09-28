@@ -1,10 +1,9 @@
 
 export type Bus = {
-  id: string; // Changed to string to match firestore doc id
+  id: string; // Firestore doc id
   busNumber: string;
   driver: string;
-  driverAvatar: string;
-  route: string; // Changed to string to match new route_id format
+  route: string; // route_id
   status: 'Active' | 'Delayed' | 'Inactive';
   lat: number;
   lng: number;
@@ -106,32 +105,45 @@ export const stops: Stop[] = [
 
 export const buses: Omit<Bus, 'id'>[] = [
     // Trichy
-    { busNumber: 'TN 45 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R-TR-1', status: 'Active', lat: 10.79861, lng: 78.68041, city: 'trichy', occupancy: 'Half-Full', nextStop: 'Heber Road', nextStopETA: 5 },
-    { busNumber: 'TN 45 A 5678', driver: 'R. Suresh', driverAvatar: '2', route: 'R-TR-2', status: 'Active', lat: 10.83178, lng: 78.69323, city: 'trichy', occupancy: 'Full', nextStop: 'Palpannai', nextStopETA: 3 },
-    { busNumber: 'TN 45 D 9012', driver: 'V. Arun', driverAvatar: '3', route: 'R-TR-1', status: 'Delayed', lat: 10.82577, lng: 78.68337, city: 'trichy', occupancy: 'Overcrowded', nextStop: 'Chathiram', nextStopETA: 15 },
+    { busNumber: 'TN 45 C 1234', driver: 'M. Kumar', route: 'R-TR-1', status: 'Active', lat: 10.79861, lng: 78.68041, city: 'trichy', occupancy: 'Half-Full', nextStop: 'Heber Road', nextStopETA: 5 },
+    { busNumber: 'TN 45 A 5678', driver: 'R. Suresh', route: 'R-TR-2', status: 'Active', lat: 10.83178, lng: 78.69323, city: 'trichy', occupancy: 'Full', nextStop: 'Palpannai', nextStopETA: 3 },
+    { busNumber: 'TN 45 D 9012', driver: 'V. Arun', route: 'R-TR-1', status: 'Delayed', lat: 10.82577, lng: 78.68337, city: 'trichy', occupancy: 'Overcrowded', nextStop: 'Chathiram', nextStopETA: 15 },
+    
     // Tanjavur
-    { busNumber: 'TN 49 F 1122', driver: 'A. Balaji', driverAvatar: '6', route: 'R-TJ-1', status: 'Active', lat: 10.7900, lng: 79.1384, city: 'tanjavur', occupancy: 'Full', nextStop: 'Tanjavur Junction', nextStopETA: 12 },
-    { busNumber: 'TN 49 G 2233', driver: 'K. Vignesh', driverAvatar: '7', route: 'R-TJ-1', status: 'Active', lat: 10.7551, lng: 79.1170, city: 'tanjavur', occupancy: 'Half-Full', nextStop: 'Brihadeeswarar Temple', nextStopETA: 8 },
+    { busNumber: 'TN 49 F 1122', driver: 'A. Balaji', route: 'R-TJ-1', status: 'Active', lat: 10.7900, lng: 79.1384, city: 'tanjavur', occupancy: 'Full', nextStop: 'Tanjavur Junction', nextStopETA: 12 },
+    { busNumber: 'TN 49 G 2233', driver: 'K. Vignesh', route: 'R-TJ-1', status: 'Active', lat: 10.7551, lng: 79.1170, city: 'tanjavur', occupancy: 'Half-Full', nextStop: 'Brihadeeswarar Temple', nextStopETA: 8 },
+    
     // Erode
-    { busNumber: 'TN 33 H 3344', driver: 'N. Senthil', driverAvatar: '1', route: 'R-E-1', status: 'Active', lat: 11.3360, lng: 77.7186, city: 'erode', occupancy: 'Half-Full', nextStop: 'Erode Junction', nextStopETA: 9 },
-    { busNumber: 'TN 33 J 4455', driver: 'T. Saravanan', driverAvatar: '2', route: 'R-E-1', status: 'Inactive', lat: 11.3414, lng: 77.7077, city: 'erode', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
+    { busNumber: 'TN 33 H 3344', driver: 'N. Senthil', route: 'R-E-1', status: 'Active', lat: 11.3360, lng: 77.7186, city: 'erode', occupancy: 'Half-Full', nextStop: 'Erode Junction', nextStopETA: 9 },
+    { busNumber: 'TN 33 J 4455', driver: 'T. Saravanan', route: 'R-E-1', status: 'Inactive', lat: 11.3414, lng: 77.7077, city: 'erode', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
+    
     // Salem
-    { busNumber: 'TN 30 K 5566', driver: 'D. Selvam', driverAvatar: '3', route: 'R-SL-1', status: 'Delayed', lat: 11.6643, lng: 78.1460, city: 'salem', occupancy: 'Full', nextStop: 'Salem Old Bus Stand', nextStopETA: 20 },
-    { busNumber: 'TN 30 L 6677', driver: 'J. Prakash', driverAvatar: '4', route: 'R-SL-1', status: 'Active', lat: 11.6534, lng: 78.1639, city: 'salem', occupancy: 'Empty', nextStop: 'Salem Junction', nextStopETA: 6 },
+    { busNumber: 'TN 30 K 5566', driver: 'D. Selvam', route: 'R-SL-1', status: 'Delayed', lat: 11.6643, lng: 78.1460, city: 'salem', occupancy: 'Full', nextStop: 'Salem Old Bus Stand', nextStopETA: 20 },
+    { busNumber: 'TN 30 L 6677', driver: 'J. Prakash', route: 'R-SL-1', status: 'Active', lat: 11.6534, lng: 78.1639, city: 'salem', occupancy: 'Empty', nextStop: 'Salem Junction', nextStopETA: 6 },
+    
     // Madurai
-    { busNumber: 'TN 58 M 7788', driver: 'P. Pandi', driverAvatar: '5', route: 'R-MD-1', status: 'Active', lat: 9.9463, lng: 78.1583, city: 'madurai', occupancy: 'Half-Full', nextStop: 'Periyar Bus Stand', nextStopETA: 11 },
-    { busNumber: 'TN 58 N 8899', driver: 'M. Muthu', driverAvatar: '6', route: 'R-MD-1', status: 'Active', lat: 9.9145, lng: 78.1143, city: 'madurai', occupancy: 'Full', nextStop: 'Mattuthavani Bus Stand', nextStopETA: 14 },
+    { busNumber: 'TN 58 M 7788', driver: 'P. Pandi', route: 'R-MD-1', status: 'Active', lat: 9.9463, lng: 78.1583, city: 'madurai', occupancy: 'Half-Full', nextStop: 'Periyar Bus Stand', nextStopETA: 11 },
+    { busNumber: 'TN 58 N 8899', driver: 'M. Muthu', route: 'R-MD-1', status: 'Active', lat: 9.9145, lng: 78.1143, city: 'madurai', occupancy: 'Full', nextStop: 'Mattuthavani Bus Stand', nextStopETA: 14 },
+    
     // Dindigul
-    { busNumber: 'TN 57 P 9900', driver: 'R. Baskar', driverAvatar: '7', route: 'R-DG-1', status: 'Active', lat: 10.3683, lng: 77.9607, city: 'dindigul', occupancy: 'Half-Full', nextStop: 'Dindigul Market', nextStopETA: 7 },
+    { busNumber: 'TN 57 P 9900', driver: 'R. Baskar', route: 'R-DG-1', status: 'Active', lat: 10.3683, lng: 77.9607, city: 'dindigul', occupancy: 'Half-Full', nextStop: 'Dindigul Market', nextStopETA: 7 },
+    { busNumber: 'TN 57 R 1111', driver: 'S. Solomon', route: 'R-DG-1', status: 'Active', lat: 10.37, lng: 77.95, city: 'dindigul', occupancy: 'Empty', nextStop: 'Collector Office', nextStopETA: 4 },
+
     // Thindivanam
-    { busNumber: 'TN 16 Q 1212', driver: 'G. Ganesh', driverAvatar: '8', route: 'R-TV-1', status: 'Active', lat: 12.2393, lng: 79.6468, city: 'thindivanam', occupancy: 'Empty', nextStop: 'Tindivanam RTO', nextStopETA: 5 },
+    { busNumber: 'TN 16 Q 1212', driver: 'G. Ganesh', route: 'R-TV-1', status: 'Active', lat: 12.2393, lng: 79.6468, city: 'thindivanam', occupancy: 'Empty', nextStop: 'Tindivanam RTO', nextStopETA: 5 },
+    { busNumber: 'TN 16 S 2222', driver: 'K. Krishnan', route: 'R-TV-1', status: 'Inactive', lat: 12.25, lng: 79.65, city: 'thindivanam', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
+
     // Coimbatore
-    { busNumber: 'TN 66 R 2323', driver: 'P. Palanisamy', driverAvatar: '1', route: 'R-CB-1', status: 'Active', lat: 11.0183, lng: 76.9634, city: 'coimbatore', occupancy: 'Full', nextStop: 'Ukkadam Bus Terminus', nextStopETA: 9 },
-    { busNumber: 'TN 66 S 3434', driver: 'C. Chinnasamy', driverAvatar: '2', route: 'R-CB-1', status: 'Delayed', lat: 10.9922, lng: 76.9641, city: 'coimbatore', occupancy: 'Overcrowded', nextStop: 'Gandhipuram', nextStopETA: 22 },
+    { busNumber: 'TN 66 R 2323', driver: 'P. Palanisamy', route: 'R-CB-1', status: 'Active', lat: 11.0183, lng: 76.9634, city: 'coimbatore', occupancy: 'Full', nextStop: 'Ukkadam Bus Terminus', nextStopETA: 9 },
+    { busNumber: 'TN 66 S 3434', driver: 'C. Chinnasamy', route: 'R-CB-1', status: 'Delayed', lat: 10.9922, lng: 76.9641, city: 'coimbatore', occupancy: 'Overcrowded', nextStop: 'Gandhipuram', nextStopETA: 22 },
+    
     // Kanyakumari
-    { busNumber: 'TN 74 T 4545', driver: 'S. Murugan', driverAvatar: '3', route: 'R-KK-1', status: 'Active', lat: 8.0883, lng: 77.5453, city: 'kanyakumari', occupancy: 'Half-Full', nextStop: 'Vivekananda Rock', nextStopETA: 4 },
+    { busNumber: 'TN 74 T 4545', driver: 'S. Murugan', route: 'R-KK-1', status: 'Active', lat: 8.0883, lng: 77.5453, city: 'kanyakumari', occupancy: 'Half-Full', nextStop: 'Vivekananda Rock', nextStopETA: 4 },
+    { busNumber: 'TN 74 U 5555', driver: 'J. Jeyaraj', route: 'R-KK-1', status: 'Active', lat: 8.09, lng: 77.55, city: 'kanyakumari', occupancy: 'Full', nextStop: 'Sunset Point', nextStopETA: 6 },
+
     // Thirunelveli
-    { busNumber: 'TN 72 U 5656', driver: 'M. Marimuthu', driverAvatar: '4', route: 'R-TVL-1', status: 'Active', lat: 8.7037, lng: 77.7247, city: 'thirunelveli', occupancy: 'Full', nextStop: 'Junction', nextStopETA: 10 },
+    { busNumber: 'TN 72 U 5656', driver: 'M. Marimuthu', route: 'R-TVL-1', status: 'Active', lat: 8.7037, lng: 77.7247, city: 'thirunelveli', occupancy: 'Full', nextStop: 'Junction', nextStopETA: 10 },
+    { busNumber: 'TN 72 V 6767', driver: 'S. Sankaran', route: 'R-TVL-1', status: 'Active', lat: 8.71, lng: 77.73, city: 'thirunelveli', occupancy: 'Half-Full', nextStop: 'Palayamkottai', nextStopETA: 8 },
 ];
 
 
@@ -238,11 +250,3 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
-
-    
-
-    
-
-
-
-    

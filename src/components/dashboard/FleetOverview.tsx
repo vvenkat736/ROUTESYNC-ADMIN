@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Route, type Stop } from "@/lib/data";
-import { collection, query, where, onSnapshot, getCountFromServer } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useBusData } from "@/hooks/use-bus-data";
 
@@ -25,6 +25,7 @@ interface FleetOverviewProps {
   setSelectedRoute: (route: string) => void;
   selectedStatus: string;
   setSelectedStatus: (status: string) => void;
+  routes: Route[];
 }
 
 export function FleetOverview({
@@ -34,18 +35,15 @@ export function FleetOverview({
   setSelectedRoute,
   selectedStatus,
   setSelectedStatus,
+  routes: cityRoutes,
 }: FleetOverviewProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
   const { buses: cityBuses } = useBusData();
-  const [cityStops, setCityStops] = useState<Stop[]>([]);
-  const [cityRoutes, setCityRoutes] = useState<Route[]>([]);
   const [driverCount, setDriverCount] = useState(0);
   
   useEffect(() => {
     if (!organization) {
-      setCityStops([]);
-      setCityRoutes([]);
       setDriverCount(0);
       return;
     }
@@ -55,35 +53,9 @@ export function FleetOverview({
     const unsubscribeDrivers = onSnapshot(driversQuery, (snapshot) => {
         setDriverCount(snapshot.size);
     });
-
-    const stopsQuery = query(collection(db, "stops"), where("city", "==", organization));
-    const stopsUnsubscribe = onSnapshot(stopsQuery, (querySnapshot) => {
-      const stopsData: Stop[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        stopsData.push({
-          stop_id: doc.id,
-          ...data,
-          lat: parseFloat(data.lat),
-          lng: parseFloat(data.lng),
-        } as Stop);
-      });
-      setCityStops(stopsData);
-    });
-
-    const routesQuery = query(collection(db, "routes"), where("city", "==", organization));
-    const routesUnsubscribe = onSnapshot(routesQuery, (querySnapshot) => {
-        const routesData: Route[] = [];
-        querySnapshot.forEach((doc) => {
-            routesData.push({ id: doc.id, ...doc.data() } as Route);
-        });
-        setCityRoutes(routesData);
-    });
-
+    
     return () => {
       unsubscribeDrivers();
-      stopsUnsubscribe();
-      routesUnsubscribe();
     };
   }, [organization]);
 

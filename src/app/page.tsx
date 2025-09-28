@@ -9,10 +9,8 @@ import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { FleetOverview } from "@/components/dashboard/FleetOverview";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBusData } from "@/hooks/use-bus-data";
+import { useRoutes } from "@/hooks/use-routes";
 import type { Bus, Route } from "@/lib/data";
-import { useAuth } from "@/contexts/AuthContext";
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { BusListSidebar } from "@/components/dashboard/BusListSidebar";
 
 const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
@@ -22,9 +20,8 @@ const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveM
 
 export default function Home() {
   const [isClient, setIsClient] = React.useState(false);
-  const { buses, isLoading } = useBusData();
-  const [allRoutes, setAllRoutes] = React.useState<Route[]>([]);
-  const { organization } = useAuth();
+  const { buses } = useBusData();
+  const { routes: allRoutes } = useRoutes();
   
   const [filteredBuses, setFilteredBuses] = React.useState<Bus[]>([]);
   const [filteredRoutes, setFilteredRoutes] = React.useState<Route[]>([]);
@@ -35,23 +32,6 @@ export default function Home() {
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-
-  React.useEffect(() => {
-    if (!organization) {
-      setAllRoutes([]);
-      return;
-    }
-    const routesQuery = query(collection(db, "routes"), where("city", "==", organization));
-    const routesUnsubscribe = onSnapshot(routesQuery, (querySnapshot) => {
-        const routesData: Route[] = [];
-        querySnapshot.forEach((doc) => {
-            routesData.push({ id: doc.id, ...doc.data() } as Route);
-        });
-        setAllRoutes(routesData);
-    });
-
-    return () => routesUnsubscribe();
-  }, [organization]);
   
   React.useEffect(() => {
     const newFilteredBuses = buses.filter(bus => {
@@ -92,6 +72,7 @@ export default function Home() {
                 setSelectedRoute={setSelectedRoute}
                 selectedStatus={selectedStatus}
                 setSelectedStatus={setSelectedStatus}
+                routes={allRoutes}
                 />
             </div>
             <div className="flex-1 relative">
