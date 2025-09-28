@@ -22,6 +22,7 @@ import {
   Bot,
   MapPin,
   LogOut,
+  Users,
 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,7 @@ export function SidebarNav() {
     { href: "/map", icon: <Map />, label: 'live_map' },
     { href: "/analytics", icon: <BarChart2 />, label: 'analytics' },
     { href: "/route-generator", icon: <Bot />, label: 'route_generator' },
+    { href: "/drivers", icon: <Users />, label: 'drivers' },
     { href: "/alerts", icon: <Bell />, label: 'alerts' },
     { href: "/stop-import", icon: <MapPin />, label: 'stop_import' },
   ];

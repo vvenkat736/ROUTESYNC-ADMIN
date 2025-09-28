@@ -19,6 +19,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+const drivers = [
+    { driverId: 'D001', name: 'M. Kumar', phoneNumber: '9876543210', city: 'trichy' },
+    { driverId: 'D002', name: 'S. Priya', phoneNumber: '9876543211', city: 'trichy' },
+    { driverId: 'D003', name: 'R. Suresh', phoneNumber: '9876543212', city: 'trichy' },
+    { driverId: 'D004', name: 'K. Anitha', phoneNumber: '9876543213', city: 'trichy' },
+    { driverId: 'D005', name: 'V. Arun', phoneNumber: '9876543214', city: 'trichy' },
+    { driverId: 'D006', name: 'P. Pandi', phoneNumber: '9876543215', city: 'madurai' },
+    { driverId: 'D007', name: 'L. Lakshmi', phoneNumber: '9876543216', city: 'dindigul' },
+    { driverId: 'D008', name: 'G. Ganesh', phoneNumber: '9876543217', city: 'thindivanam' },
+    { driverId: 'D009', name: 'A. Devi', phoneNumber: '9876543218', city: 'coimbatore' },
+    { driverId: 'D010', name: 'S. Murugan', phoneNumber: '9876543219', city: 'kanyakumari' },
+    { driverId: 'D011', name: 'T. Meena', phoneNumber: '9876543220', city: 'thirunelveli' },
+];
+
 async function seedDatabase() {
   const batch = writeBatch(db);
 
@@ -87,9 +101,18 @@ async function seedDatabase() {
   });
   console.log('Alerts prepared.');
 
+  // Seed drivers
+  const driversCollection = collection(db, 'drivers');
+  console.log('Seeding drivers...');
+  drivers.forEach(driver => {
+    const docRef = doc(driversCollection); // Auto-generate ID
+    batch.set(docRef, { ...driver, createdAt: Timestamp.now() });
+  });
+  console.log('Drivers prepared.');
+
   try {
     await batch.commit();
-    console.log('Database seeded successfully with organizations, stops, routes, buses, and alerts!');
+    console.log('Database seeded successfully with organizations, stops, routes, buses, alerts, and drivers!');
   } catch (error) {
     console.error('Error seeding database:', error);
   } finally {
