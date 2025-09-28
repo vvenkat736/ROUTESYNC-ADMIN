@@ -81,7 +81,9 @@ export default function Home() {
                 ) : (
                     <Skeleton className="h-full w-full" />
                 )}
-                <BusListSidebar buses={filteredBuses} />
+                <div className="absolute top-4 right-4 z-10">
+                    <BusListSidebar buses={filteredBuses} />
+                </div>
             </div>
           </main>
         </div>
