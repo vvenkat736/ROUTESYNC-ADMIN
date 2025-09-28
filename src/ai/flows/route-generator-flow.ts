@@ -12,6 +12,7 @@ import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
+import type { GeneratePathOutput } from './path-generator-flow';
 
 // Schema for a single point in a route's path
 const PointSchema = z.object({
@@ -37,7 +38,7 @@ const GenerateRoutesOutputSchema = z.object({
 export type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
 
 // Helper function to get all available bus stops from Firestore
-async function getStops(city: string) {
+async function getStops(city: string): Promise<{ stop_id: string; stop_name: string; lat: number; lng: number; }[]> {
     const db = getFirestore(app);
     const q = query(collection(db, "stops"), where("city", "==", city));
     const snapshot = await getDocs(q);
@@ -45,10 +46,10 @@ async function getStops(city: string) {
         const data = doc.data();
         return {
             stop_id: doc.id,
-            ...data,
+            stop_name: data.stop_name,
             lat: parseFloat(data.lat),
             lng: parseFloat(data.lng),
-        } as any;
+        };
     });
 }
 
@@ -86,7 +87,7 @@ Based on the list of stops below, you will create between 3 and 5 distinct bus r
 
 Available Stops:
 {{#each stops}}
-- {{stop_name}} (Lat: {{lat}}, Lng: {{lng}})
+- {{stop_name}} (ID: {{stop_id}}, Lat: {{lat}}, Lng: {{lng}})
 {{/each}}
 
 
@@ -138,8 +139,14 @@ const generateRoutesFlow = ai.defineFlow(
             })
             .filter((s): s is { lat: number; lng: number } => s !== null);
 
-        // Generate the detailed, road-accurate path
-        const pathResult = await generatePath({ stops: stopCoordinates });
+        let pathResult: GeneratePathOutput = { path: [] };
+        if (stopCoordinates.length > 1) {
+            // Generate the detailed, road-accurate path
+            pathResult = await generatePath({ stops: stopCoordinates });
+        } else if (stopCoordinates.length === 1) {
+            pathResult = { path: stopCoordinates };
+        }
+
 
         return {
           ...route,
