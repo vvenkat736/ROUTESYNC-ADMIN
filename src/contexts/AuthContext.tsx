@@ -21,11 +21,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const authStatus = localStorage.getItem("isAuthenticated") === "true";
-    const org = localStorage.getItem("organization");
-    setIsAuthenticated(authStatus);
-    setOrganization(org);
-    setIsLoading(false);
+    try {
+      const authStatus = localStorage.getItem("isAuthenticated") === "true";
+      const org = localStorage.getItem("organization");
+      setIsAuthenticated(authStatus);
+      setOrganization(org);
+    } catch (e) {
+      // Local storage is not available or other error
+      console.error("Failed to access localStorage:", e);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = async (email: string, pass: string) => {

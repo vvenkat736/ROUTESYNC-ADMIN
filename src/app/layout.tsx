@@ -12,31 +12,43 @@ import LoadingScreen from '@/components/dashboard/LoadingScreen';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 
 function AppContent({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = React.useState(true);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
   React.useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 4000); 
+    // This timer is for the initial splash screen aesthetic
+    const timer = setTimeout(() => setInitialLoading(false), 4000); 
     return () => clearTimeout(timer);
   }, []);
 
   React.useEffect(() => {
+    // This effect handles redirection based on auth state
     if (!isAuthLoading && !isAuthenticated && pathname !== '/login') {
       router.push('/login');
     }
   }, [isAuthLoading, isAuthenticated, pathname, router]);
 
-  if (isAuthLoading || (loading && pathname !== '/login') || (!isAuthenticated && pathname !== '/login')) {
-      if (pathname === '/login') {
+  // Show a loading screen if auth is still loading, OR if it's the initial splash screen time,
+  // but do not show the splash screen for the login page itself.
+  if (isAuthLoading || (initialLoading && pathname !== '/login')) {
+      // If we are on the login path, and auth is done, we can show the login page.
+      // Otherwise, we might be in a redirect state or initial load.
+      if (pathname === '/login' && !isAuthLoading) {
          return <div className="min-h-screen bg-background">{children}</div>;
       }
       return <LoadingScreen />;
   }
 
+  // After all loading, if we're not authenticated and not on the login page,
+  // we might still be in the process of redirecting. A blank screen is better than a flash of content.
+  if (!isAuthenticated && pathname !== '/login') {
+      return null;
+  }
+
   return (
-    <div style={{ visibility: loading ? 'hidden' : 'visible' }}>
+    <div style={{ visibility: initialLoading && pathname !== '/login' ? 'hidden' : 'visible' }}>
       {children}
     </div>
   );
