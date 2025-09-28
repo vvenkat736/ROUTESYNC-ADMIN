@@ -79,30 +79,59 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
 async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     const averageSpeedKmh = 25;
     
-    const hubNames: { [key: string]: string[] } = {
-        trichy: ['Central Bus Stand', 'Panjapur'],
-        tanjavur: ['Tanjavur Old Bus Stand', 'Tanjavur New Bus Stand'],
-        erode: ['Erode Central Bus Terminus', 'Erode Junction'],
-        salem: ['Salem New Bus Stand', 'Salem Old Bus Stand'],
+    const hubKeywords: { [key: string]: string[] } = {
+        trichy: ['Central', 'Panjapur'],
+        tanjavur: ['Old Bus Stand', 'New Bus Stand'],
+        erode: ['Central Bus Terminus', 'Junction'],
+        salem: ['New Bus Stand', 'Old Bus Stand'],
     };
 
-    const mainHubNames = hubNames[city] || (stops.length > 1 ? [stops[0].stop_name, stops[1].stop_name] : []);
-    const mainHubs = stops.filter(s => mainHubNames.includes(s.stop_name));
+    const cityKeywords = hubKeywords[city] || [];
+    
+    // Find hubs by keyword matching, more flexible than exact names
+    const mainHubs = cityKeywords.map(keyword => 
+        stops.find(s => s.stop_name.toLowerCase().includes(keyword.toLowerCase()))
+    ).filter((s): s is StopInfo => s !== undefined);
+    
+    const uniqueHubs = Array.from(new Map(mainHubs.map(hub => [hub.stop_id, hub])).values());
 
-    if (mainHubs.length < 2) {
-        throw new Error(`Could not find the two main bus stands for ${city}. Please ensure they are present in the stops data.`);
+    if (uniqueHubs.length < 2) {
+        // Fallback if keywords don't match: find the two stops that are farthest apart
+        if (stops.length > 1) {
+            let maxDist = 0;
+            let hub1: StopInfo | null = null;
+            let hub2: StopInfo | null = null;
+            for (let i = 0; i < stops.length; i++) {
+                for (let j = i + 1; j < stops.length; j++) {
+                    const dist = getDistance(stops[i], stops[j]);
+                    if (dist > maxDist) {
+                        maxDist = dist;
+                        hub1 = stops[i];
+                        hub2 = stops[j];
+                    }
+                }
+            }
+            if(hub1 && hub2) {
+                uniqueHubs.push(hub1, hub2);
+            }
+        }
+        
+        if (uniqueHubs.length < 2) {
+             throw new Error(`Could not find at least two main hubs for ${city}. The algorithm requires at least two distinct stops to function as hubs.`);
+        }
     }
-
+    
+    const mainHubNames = uniqueHubs.map(h => h.stop_name);
     const otherStops = stops.filter(s => !mainHubNames.includes(s.stop_name));
     
     // Assign each stop to the nearest hub
     const hubZones: { [key: string]: StopInfo[] } = {};
-    mainHubs.forEach(hub => hubZones[hub.stop_name] = []);
+    uniqueHubs.forEach(hub => hubZones[hub.stop_name] = []);
     
     otherStops.forEach(stop => {
         let closestHub: StopInfo | null = null;
         let minDistance = Infinity;
-        mainHubs.forEach(hub => {
+        uniqueHubs.forEach(hub => {
             const distance = getDistance(stop, hub);
             if (distance < minDistance) {
                 minDistance = distance;
@@ -117,7 +146,7 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     let routeCounter = 1;
     const finalRoutes: any[] = [];
 
-    for (const hub of mainHubs) {
+    for (const hub of uniqueHubs) {
         const zoneStops = hubZones[hub.stop_name];
         if (zoneStops.length === 0) continue;
 
