@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
-import { Waypoints, User, Clock, Users, BusFront } from 'lucide-react';
+import { Waypoints, User, Clock, Users, BusFront, Route as RouteIcon, MapPin as StopIcon } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Bus, type Stop, type Route as RouteType } from '@/lib/data';
@@ -15,7 +15,7 @@ import { useBusData } from '@/hooks/use-bus-data';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
-  Delayed: '#F97316', // orange-500
+  Delayed: '#EF4444', // red-500
   Inactive: '#6B7280', // gray-500
 };
 
@@ -56,7 +56,6 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   const cityBuses = liveBuses ?? allCityBuses;
   const cityRoutes = displayRoutes ?? [];
   
-  // Fetch stops in real-time
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
@@ -86,12 +85,13 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   const routePaths = useMemo(() => {
     const paths: { [key: string]: [number, number][] } = {};
     cityRoutes.forEach(route => {
-        if (route.path) {
+        if (route.path && route.route_id) {
             paths[route.route_id] = route.path.map(p => [p.lat, p.lng]);
         }
     });
     return paths;
   }, [cityRoutes]);
+  
 
   useEffect(() => {
     if (cityBuses.length > 0) {
@@ -110,14 +110,14 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   }, [cityBuses, cityStops]);
   
   return (
-    <Card className="h-full overflow-hidden">
+    <Card className="h-full overflow-hidden border-0 shadow-none rounded-none">
       <CardContent className="p-0 h-full">
           <div className="h-full w-full relative">
             <div className="absolute top-2 left-2 z-[1000] bg-background/80 p-2 rounded-lg shadow-md flex items-center gap-2">
                 <Waypoints className="w-5 h-5 text-primary" />
                 <h2 className="font-semibold text-primary">{t('live_fleet_map')}</h2>
             </div>
-            <MapContainer key={mapCenter.join(',')} center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full">
+            <MapContainer key={mapCenter.join(',')} center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
                <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name="Streets">
                     <TileLayer
@@ -156,11 +156,18 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
                         icon={createBusIcon(bus.status)}
                       >
                         <Popup>
-                          <div className="w-48 p-1 font-sans">
-                             <h3 className="font-bold text-lg">{bus.busNumber}</h3>
-                             <p><span className="font-semibold">Route:</span> {bus.route}</p>
-                             <p><span className="font-semibold">Driver:</span> {bus.driver}</p>
-                             <p><span className="font-semibold">Status:</span> {bus.status}</p>
+                          <div className="w-56 p-1 font-sans">
+                             <div className="flex items-center mb-2">
+                                <BusFront className="w-6 h-6 mr-2 text-primary" />
+                                <h3 className="font-bold text-lg">{bus.busNumber}</h3>
+                             </div>
+                             <div className="space-y-1 text-sm">
+                                <p className="flex items-center"><RouteIcon className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Route:</span> {bus.route}</p>
+                                <p className="flex items-center"><User className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Driver:</span> {bus.driver}</p>
+                                <p className="flex items-center"><Clock className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Status:</span> <span style={{color: statusColors[bus.status]}}>{bus.status}</span></p>
+                                <p className="flex items-center"><StopIcon className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Next:</span> {bus.nextStop} ({bus.nextStopETA} min)</p>
+                                <p className="flex items-center"><Users className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Occupancy:</span> {bus.occupancy}</p>
+                             </div>
                           </div>
                         </Popup>
                       </Marker>

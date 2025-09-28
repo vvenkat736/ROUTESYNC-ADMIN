@@ -81,10 +81,10 @@ export default function Home() {
         <Sidebar className="border-r" side="left" collapsible="offcanvas">
           <SidebarNav />
         </Sidebar>
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col">
           <Header />
-          <main className="relative h-[calc(100vh-4rem)] overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-background/80 backdrop-blur-sm">
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-4 lg:p-6 border-b">
                 <FleetOverview 
                 searchText={searchText}
                 setSearchText={setSearchText}
@@ -94,14 +94,14 @@ export default function Home() {
                 setSelectedStatus={setSelectedStatus}
                 />
             </div>
-            <div className="h-full pt-40">
+            <div className="flex-1 relative">
                 {isClient ? (
                     <InteractiveMap liveBuses={filteredBuses} displayRoutes={filteredRoutes} />
                 ) : (
                     <Skeleton className="h-full w-full" />
                 )}
+                <BusListSidebar buses={filteredBuses} />
             </div>
-            <BusListSidebar buses={filteredBuses} />
           </main>
         </div>
       </div>

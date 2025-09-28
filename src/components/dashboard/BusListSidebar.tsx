@@ -24,7 +24,7 @@ export function BusListSidebar({ buses }: BusListSidebarProps) {
       <SheetTrigger asChild>
         <Button
           variant="secondary"
-          className="absolute top-[180px] right-4 z-10 shadow-lg"
+          className="absolute top-4 right-4 z-[1000] shadow-lg"
         >
           <PanelRight className="mr-2 h-4 w-4" />
           Show Bus List
