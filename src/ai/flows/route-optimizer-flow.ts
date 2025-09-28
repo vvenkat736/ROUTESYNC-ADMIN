@@ -16,13 +16,13 @@ const PointSchema = z.object({
   lng: z.number().describe('The longitude of the location.'),
 });
 
-export const OptimizeRouteInputSchema = z.object({
+const OptimizeRouteInputSchema = z.object({
   start: z.string().describe('The starting point of the route.'),
   stops: z.array(z.string()).describe('An array of destinations or stops.'),
 });
-export type OptimizeRouteInput = z.infer<typeof OptimizeRouteInputSchema>;
+type OptimizeRouteInput = z.infer<typeof OptimizeRouteInputSchema>;
 
-export const OptimizeRouteOutputSchema = z.object({
+const OptimizeRouteOutputSchema = z.object({
     start: PointSchema.describe("The starting point of the optimized route."),
     waypoints: z.array(PointSchema).describe('The optimized sequence of waypoints between the start and end.'),
     end: PointSchema.describe("The final destination of the optimized route."),
