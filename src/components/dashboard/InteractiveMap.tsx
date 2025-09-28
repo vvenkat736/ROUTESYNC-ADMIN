@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, LayersControl, LayerGroup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,6 +80,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   
   const cityBuses = liveBuses ?? allCityBuses;
   const cityRoutes = displayRoutes ?? [];
+  const animationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch stops in real-time
   useEffect(() => {
@@ -122,40 +123,58 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   }, [cityRoutes]);
 
 
+  // Effect for initializing and updating bus states from props/db
   useEffect(() => {
-    const busesWithRoutes = cityBuses.map(bus => {
-        const existingAnimatedBus = animatedBuses.find(ab => ab.id === bus.id);
-        const routePath = routePaths[bus.route] || [];
+    setAnimatedBuses(currentAnimatedBuses => {
+        return cityBuses.map(bus => {
+            const existingAnimatedBus = currentAnimatedBuses.find(ab => ab.id === bus.id);
+            const routePath = routePaths[bus.route] || [];
 
-        if (existingAnimatedBus) {
-            return { ...existingAnimatedBus, ...bus, routePath };
-        }
+            // If bus is inactive or delayed, just update its static position from db data
+            if (bus.status !== 'Active') {
+                return {
+                    ...bus,
+                    routePath,
+                    lat: bus.lat,
+                    lng: bus.lng,
+                    currentSegment: 0,
+                    segmentProgress: 0,
+                };
+            }
 
-        const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
-        const segmentProgress = Math.random();
-        
-        let initialLat = bus.lat;
-        let initialLng = bus.lng;
+            // If we are already animating this bus, just update its data, keep animation state
+            if (existingAnimatedBus) {
+                return { ...existingAnimatedBus, ...bus, routePath };
+            }
 
-        if (bus.status === 'Active' && routePath.length > 1 && routePath[currentSegment] && routePath[currentSegment + 1]) {
-            const startPoint = routePath[currentSegment];
-            const endPoint = routePath[currentSegment + 1];
-            initialLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
-            initialLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
-        }
+            // If it's a new bus, initialize its animation state
+            const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
+            const segmentProgress = Math.random();
+            let initialLat = bus.lat;
+            let initialLng = bus.lng;
 
-        return {
-            ...bus,
-            lat: initialLat,
-            lng: initialLng,
-            routePath: routePath,
-            currentSegment: currentSegment,
-            segmentProgress: segmentProgress,
-        };
+            if (routePath.length > 1 && routePath[currentSegment] && routePath[currentSegment + 1]) {
+                const startPoint = routePath[currentSegment];
+                const endPoint = routePath[currentSegment + 1];
+                initialLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
+                initialLng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
+            }
+
+            return {
+                ...bus,
+                lat: initialLat,
+                lng: initialLng,
+                routePath: routePath,
+                currentSegment: currentSegment,
+                segmentProgress: segmentProgress,
+            };
+        });
     });
 
-    setAnimatedBuses(busesWithRoutes);
+  }, [cityBuses, routePaths]);
 
+  // Effect for setting map center
+  useEffect(() => {
     if (cityBuses.length > 0) {
       const avgLat = cityBuses.reduce((sum, bus) => sum + bus.lat, 0) / cityBuses.length;
       const avgLng = cityBuses.reduce((sum, bus) => sum + bus.lng, 0) / cityBuses.length;
@@ -169,18 +188,15 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
             setMapCenter([avgLat, avgLng]);
         }
     }
-  }, [cityBuses, cityStops, routePaths]);
+  }, [cityBuses, cityStops]);
   
+  // Effect for animation interval only
   useEffect(() => {
-    const interval = setInterval(() => {
+    animationIntervalRef.current = setInterval(() => {
       setAnimatedBuses(currentBuses => 
         currentBuses.map(bus => {
           if (bus.status !== 'Active' || !bus.routePath || bus.routePath.length < 2) {
-              const dbBus = cityBuses.find(b => b.id === bus.id);
-              if (dbBus) {
-                  return { ...bus, lat: dbBus.lat, lng: dbBus.lng };
-              }
-              return bus;
+              return bus; // Return bus as is if not animatable
           }
           
           let { currentSegment, segmentProgress } = bus;
@@ -211,8 +227,12 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
       );
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [cityBuses]); // Depend on cityBuses to handle updates correctly
+    return () => {
+        if(animationIntervalRef.current) {
+            clearInterval(animationIntervalRef.current);
+        }
+    };
+  }, []); // Empty dependency array means this effect runs only once on mount
 
   return (
     <Card className="h-full overflow-hidden">
@@ -318,7 +338,5 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
       </CardContent>
     </Card>
   );
-
-    
-
+ 
     
