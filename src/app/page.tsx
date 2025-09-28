@@ -54,33 +54,29 @@ export default function Home() {
   }, [organization]);
   
   React.useEffect(() => {
-    let newFilteredBuses = buses;
+    // Filter buses based on selections
+    const newFilteredBuses = buses.filter(bus => {
+        const searchMatch = searchText === "" ||
+            bus.busNumber.toLowerCase().includes(searchText.toLowerCase()) ||
+            bus.driver.toLowerCase().includes(searchText.toLowerCase());
+        
+        const routeMatch = selectedRoute === "all" || bus.route === selectedRoute;
 
-    if (searchText) {
-      newFilteredBuses = newFilteredBuses.filter(bus =>
-        bus.busNumber.toLowerCase().includes(searchText.toLowerCase()) ||
-        bus.driver.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
+        const statusMatch = selectedStatus === "all" || bus.status.toLowerCase() === selectedStatus;
 
-    if (selectedRoute !== "all") {
-      newFilteredBuses = newFilteredBuses.filter(bus => bus.route === selectedRoute);
-    }
-
-    if (selectedStatus !== "all") {
-      newFilteredBuses = newFilteredBuses.filter(bus => bus.status.toLowerCase() === selectedStatus);
-    }
-
+        return searchMatch && routeMatch && statusMatch;
+    });
     setFilteredBuses(newFilteredBuses);
 
-    // Now, filter the routes based on the filtered buses
-    const activeRouteIds = new Set(newFilteredBuses.map(bus => bus.route));
-    const newFilteredRoutes = selectedRoute === 'all' 
-      ? allRoutes 
-      : allRoutes.filter(route => activeRouteIds.has(route.route_id));
-      
-    setFilteredRoutes(newFilteredRoutes);
-
+    // Now, filter the routes to display on the map
+    if (selectedRoute === 'all') {
+        // If "All Routes" is selected, show all routes for the city.
+        setFilteredRoutes(allRoutes);
+    } else {
+        // Otherwise, show only the specific route selected.
+        const newFilteredRoutes = allRoutes.filter(route => route.route_id === selectedRoute);
+        setFilteredRoutes(newFilteredRoutes);
+    }
   }, [searchText, selectedRoute, selectedStatus, buses, allRoutes]);
 
 
