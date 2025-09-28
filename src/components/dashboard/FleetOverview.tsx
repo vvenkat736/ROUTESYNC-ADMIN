@@ -124,7 +124,7 @@ export function FleetOverview() {
           </SelectTrigger>
           <SelectContent>
             {cityRoutes.map(route => (
-              <SelectItem key={route.route_id} value={route.route_id!}>{route.routeName}</SelectItem>
+              <SelectItem key={route.id} value={route.route_id!}>{route.routeName}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -145,5 +145,3 @@ export function FleetOverview() {
     </div>
   );
 }
-
-    
