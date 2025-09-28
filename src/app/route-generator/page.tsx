@@ -100,6 +100,8 @@ export default function RouteGeneratorPage() {
 
         generatedRoutes.routes.forEach((route) => {
             const docRef = doc(routesCollection); // Let Firestore auto-generate the document ID
+            // The 'route' object already contains the AI-generated 'path'.
+            // We just need to save it directly.
             batch.set(docRef, {
                 ...route,
                 city: organization, // Tag the route with the current city
