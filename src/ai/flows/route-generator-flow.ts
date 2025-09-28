@@ -75,15 +75,61 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
   }
 }
 
+// Helper to order a list of stops using nearest neighbor approach
+function orderStops(stopsToOrder: StopInfo[], startStop?: StopInfo): StopInfo[] {
+    if (stopsToOrder.length < 2) {
+        return stopsToOrder;
+    }
+    let orderedStops: StopInfo[] = [];
+    let unvisited = [...stopsToOrder];
+    
+    let currentStop: StopInfo;
+    if (startStop) {
+        currentStop = unvisited.find(s => s.stop_id === startStop.stop_id)!;
+        unvisited = unvisited.filter(s => s.stop_id !== startStop.stop_id);
+    } else {
+        currentStop = unvisited.shift()!;
+    }
+    orderedStops.push(currentStop);
+
+    while (unvisited.length > 0) {
+        let nearestStop: StopInfo | null = null;
+        let minDistance = Infinity;
+        let nearestIndex = -1;
+
+        unvisited.forEach((stop, idx) => {
+            const distance = getDistance(currentStop, stop);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestStop = stop;
+                nearestIndex = idx;
+            }
+        });
+        
+        if (nearestStop && nearestIndex > -1) {
+            orderedStops.push(nearestStop);
+            currentStop = unvisited.splice(nearestIndex, 1)[0];
+        } else {
+            break; // Should not happen if unvisited is not empty
+        }
+    }
+    return orderedStops;
+}
+
+
 // Hub-and-Spoke Route Generation Algorithm
 async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     const averageSpeedKmh = 25;
+    const allStopsSet = new Set(stops.map(s => s.stop_id));
+    const assignedStops = new Set<string>();
     
     const hubKeywords: { [key: string]: string[] } = {
         trichy: ['Central', 'Panjapur'],
         tanjavur: ['Old Bus Stand', 'New Bus Stand'],
         erode: ['Central Bus Terminus', 'Junction'],
         salem: ['New Bus Stand', 'Old Bus Stand'],
+        madurai: ['Mattuthavani', 'Periyar'],
+        coimbatore: ['Gandhipuram', 'Ukkadam'],
     };
 
     const cityKeywords = hubKeywords[city.toLowerCase()] || [];
@@ -120,10 +166,9 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
         throw new Error(`Could not determine at least two main hubs for ${city}. The algorithm requires at least two distinct stops to function as hubs.`);
     }
     
-    const mainHubNames = uniqueHubs.map(h => h.stop_name);
-    const otherStops = stops.filter(s => !mainHubNames.includes(s.stop_name));
+    const hubIds = new Set(uniqueHubs.map(h => h.stop_id));
+    const otherStops = stops.filter(s => !hubIds.has(s.stop_id));
     
-    // Assign each stop to the nearest hub
     const hubZones: { [key: string]: StopInfo[] } = {};
     uniqueHubs.forEach(hub => hubZones[hub.stop_name] = []);
     
@@ -149,12 +194,11 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
         const zoneStops = hubZones[hub.stop_name];
         if (zoneStops.length === 0) continue;
 
-        // Sub-cluster the stops in this hub's zone
-        const numSubRoutes = Math.max(1, Math.ceil(zoneStops.length / 5)); // Aim for 5 stops per sub-route
+        const numSubRoutes = Math.max(1, Math.ceil(zoneStops.length / 5));
         let centroids = zoneStops.slice(0, numSubRoutes).map(stop => ({ lat: stop.lat, lng: stop.lng }));
         let clusters: StopInfo[][] = Array.from({ length: numSubRoutes }, () => []);
 
-        for (let i = 0; i < 5; i++) { // Iterate a few times for convergence
+        for (let i = 0; i < 5; i++) {
             clusters = Array.from({ length: numSubRoutes }, () => []);
             zoneStops.forEach(stop => {
                 let minDistance = Infinity;
@@ -176,36 +220,10 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
             }).filter(c => c.lat !== 0);
         }
 
-        // Create a route for each sub-cluster, starting from the main hub
         clusters.filter(c => c.length > 0).forEach((cluster, index) => {
-            const routeStops = [hub, ...cluster];
-            let orderedStops: StopInfo[] = [];
-            let unvisited = [...routeStops];
-            let currentStop = unvisited.find(s => s.stop_id === hub.stop_id)!;
-            unvisited = unvisited.filter(s => s.stop_id !== hub.stop_id);
-            orderedStops.push(currentStop);
-
-            while (unvisited.length > 0) {
-                let nearestStop: StopInfo | null = null;
-                let minDistance = Infinity;
-                let nearestIndex = -1;
-
-                unvisited.forEach((stop, idx) => {
-                    const distance = getDistance(currentStop, stop);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestStop = stop;
-                        nearestIndex = idx;
-                    }
-                });
-                
-                if (nearestStop && nearestIndex > -1) {
-                    orderedStops.push(nearestStop);
-                    currentStop = unvisited.splice(nearestIndex, 1)[0];
-                } else {
-                    break;
-                }
-            }
+            const orderedStops = orderStops([hub, ...cluster], hub);
+            
+            orderedStops.forEach(s => assignedStops.add(s.stop_id));
 
             let totalDistance = 0;
             for (let i = 0; i < orderedStops.length - 1; i++) {
@@ -217,6 +235,39 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
                 route_id: `R-${city.substring(0,2).toUpperCase()}-${routeCounter++}`,
                 routeName: `${hub.stop_name} Route ${index + 1}`,
                 busType: "Standard",
+                stops: orderedStops.map(s => s.stop_name),
+                totalDistance: parseFloat(totalDistance.toFixed(2)),
+                totalTime: totalTime,
+            });
+        });
+    }
+
+    // Catch-all for unassigned stops
+    const unassignedStopIds = [...allStopsSet].filter(id => !assignedStops.has(id));
+    const unassignedStops = stops.filter(s => unassignedStopIds.includes(s.stop_id));
+    
+    if (unassignedStops.length > 0) {
+        console.log(`Found ${unassignedStops.length} unassigned stops. Creating connector routes.`);
+        // Simple clustering for remaining stops
+        const numConnectorRoutes = Math.max(1, Math.ceil(unassignedStops.length / 7));
+        let connectorClusters: StopInfo[][] = Array.from({ length: numConnectorRoutes }, () => []);
+        
+        unassignedStops.forEach((stop, i) => {
+            connectorClusters[i % numConnectorRoutes].push(stop);
+        });
+        
+        connectorClusters.filter(c => c.length > 0).forEach((cluster, index) => {
+            const orderedStops = orderStops(cluster);
+            let totalDistance = 0;
+            for (let i = 0; i < orderedStops.length - 1; i++) {
+                totalDistance += getDistance(orderedStops[i], orderedStops[i + 1]);
+            }
+            const totalTime = Math.round((totalDistance / averageSpeedKmh) * 60);
+
+            finalRoutes.push({
+                route_id: `R-${city.substring(0,2).toUpperCase()}-C${routeCounter++}`,
+                routeName: `Connector Route ${index + 1}`,
+                busType: "Connector",
                 stops: orderedStops.map(s => s.stop_name),
                 totalDistance: parseFloat(totalDistance.toFixed(2)),
                 totalTime: totalTime,
@@ -278,4 +329,5 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
 
     return { routes: finalRoutes };
 };
+
 
