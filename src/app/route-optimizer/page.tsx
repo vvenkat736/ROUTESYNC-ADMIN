@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -20,7 +21,7 @@ import { optimizeRoute, OptimizeRouteOutput } from '@/ai/flows/route-optimizer-f
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 
-const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
+const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
@@ -161,7 +162,7 @@ export default function RouteOptimizerPage() {
               )}
             </div>
             <div className="lg:col-span-2 h-[50vh] lg:h-auto">
-              {isClient && <InteractiveMap optimizedRoute={optimizedRoute} />}
+              {isClient ? <OptimizerMap route={optimizedRoute} /> : <Skeleton className="h-full w-full" />}
             </div>
           </main>
         </div>

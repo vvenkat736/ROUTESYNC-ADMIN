@@ -38,7 +38,7 @@ export default function Home() {
             <FleetOverview />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                {isClient && <InteractiveMap />}
+                {isClient ? <InteractiveMap /> : <Skeleton className="h-[600px] lg:h-full w-full" />}
               </div>
               <div className="lg:col-span-1">
                 <BusList />
@@ -56,5 +56,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
-    

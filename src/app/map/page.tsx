@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -28,7 +29,7 @@ export default function MapPage() {
         <div className="flex-1">
           <Header />
           <main className="h-[calc(100vh-4rem)] p-0">
-            {isClient && <InteractiveMap />}
+            {isClient ? <InteractiveMap /> : <Skeleton className="h-full w-full" />}
           </main>
         </div>
       </div>
