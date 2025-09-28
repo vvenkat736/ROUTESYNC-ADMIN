@@ -16,19 +16,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const VALID_ORGANIZATIONS = [
-    'trichy',
-    'tanjavur',
-    'erode',
-    'salem',
-    'madurai',
-    'dindigul',
-    'thindivanam',
-    'coimbatore',
-    'kanyakumari',
-    'thirunelveli',
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [organization, setOrganization] = useState<string | null>(null);
@@ -50,23 +37,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string) => {
-    const emailRegex = /^admin@([a-zA-Z]+)$/;
+    const emailRegex = /^admin@([a-zA-Z_.-]+)$/;
     const match = email.match(emailRegex);
 
     if (match) {
-      const org = match[1].toLowerCase(); // The city name, normalized to lowercase
+      const org = match[1].toLowerCase();
       
-      // Check if the organization is in the valid list and if the password matches
-      if (VALID_ORGANIZATIONS.includes(org) && pass === org) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("organization", org);
-        setIsAuthenticated(true);
-        setOrganization(org);
-        return Promise.resolve();
+      if (pass !== org) {
+        return Promise.reject(new Error("Invalid credentials."));
+      }
+
+      try {
+        const db = getFirestore(app);
+        const orgDocRef = doc(db, "organizations", org);
+        const orgDoc = await getDoc(orgDocRef);
+
+        if (orgDoc.exists()) {
+          localStorage.setItem("isAuthenticated", "true");
+          localStorage.setItem("organization", org);
+          setIsAuthenticated(true);
+          setOrganization(org);
+          return Promise.resolve();
+        } else {
+          return Promise.reject(new Error("Organization not found."));
+        }
+      } catch (error) {
+        console.error("Error during authentication:", error);
+        return Promise.reject(new Error("An error occurred during login."));
       }
     }
     
-    return Promise.reject(new Error("Invalid credentials or unauthorized city."));
+    return Promise.reject(new Error("Invalid email format."));
   };
 
   const logout = () => {
