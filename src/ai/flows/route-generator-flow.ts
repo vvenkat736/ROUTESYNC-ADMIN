@@ -11,12 +11,12 @@ import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
 
 // Define schemas for types
-export const PointSchema = z.object({
+const PointSchema = z.object({
   lat: z.number().describe('The latitude of the stop.'),
   lng: z.number().describe('The longitude of the stop.'),
 });
 
-export const GenerateRoutesOutputSchema = z.object({
+const GenerateRoutesOutputSchema = z.object({
   routes: z.array(z.object({
     route_id: z.string().describe("A unique ID for the route (e.g., 'R-01')."),
     routeName: z.string().describe("A descriptive name for the route (e.g., 'Central Bus Stand to Srirangam')."),
@@ -27,7 +27,7 @@ export const GenerateRoutesOutputSchema = z.object({
     totalTime: z.number().describe('The total estimated run time for the route in minutes.'),
   })),
 });
-export type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
+type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
 
 type StopInfo = {
     stop_id: string;
