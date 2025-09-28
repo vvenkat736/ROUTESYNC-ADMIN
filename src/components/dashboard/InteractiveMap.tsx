@@ -172,10 +172,10 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
                                 <h3 className="font-bold text-lg">{bus.busNumber}</h3>
                              </div>
                              <div className="space-y-1 text-sm">
-                                <p className="flex items-center"><RouteIcon className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Route:</span> {bus.route}</p>
-                                <p className="flex items-center"><User className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Driver:</span> {bus.driver}</p>
-                                <p className="flex items-center"><Clock className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Status:</span> <span style={{color: statusColors[bus.status]}}>{bus.status}</span></p>
-                                <p className="flex items-center"><StopIcon className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Next:</span> {bus.nextStop} ({bus.nextStopETA} min)</p>
+                                <p className="flex items-center"><RouteIcon className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">{t('route')}:</span> {allRoutes.find(r => r.route_id === bus.route)?.routeName || bus.route}</p>
+                                <p className="flex items-center"><User className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">{t('driver')}:</span> {bus.driver}</p>
+                                <p className="flex items-center"><Clock className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">{t('status')}:</span> <span style={{color: statusColors[bus.status]}}>{t(bus.status.toLowerCase() as any)}</span></p>
+                                <p className="flex items-center"><StopIcon className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Next Stop:</span> {bus.nextStop} ({bus.nextStopETA} min)</p>
                                 <p className="flex items-center"><Users className="w-4 h-4 mr-2 text-muted-foreground" /><span className="font-semibold mr-1">Occupancy:</span> {bus.occupancy}</p>
                              </div>
                           </div>
