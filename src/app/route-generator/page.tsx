@@ -18,7 +18,7 @@ import { Bot, Loader, Save, AlertTriangle } from 'lucide-react';
 import { generateRoutes, GenerateRoutesOutput } from '@/ai/flows/route-generator-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc, getDocs, query } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,
@@ -52,11 +52,17 @@ export default function RouteGeneratorPage() {
   React.useEffect(() => {
     setIsClient(true);
     if (!organization) return;
-    const q = query(collection(db, "stops"), "where", "city", "==", organization);
+    const q = query(collection(db, "stops"), where("city", "==", organization));
     getDocs(q).then((querySnapshot) => {
       const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
-        stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
+        const data = doc.data();
+        stopsData.push({
+          stop_id: doc.id,
+          ...data,
+          lat: parseFloat(data.lat),
+          lng: parseFloat(data.lng),
+        } as Stop);
       });
       setStops(stopsData);
     });
@@ -210,3 +216,5 @@ export default function RouteGeneratorPage() {
     </SidebarProvider>
   );
 }
+
+    

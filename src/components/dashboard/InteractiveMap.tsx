@@ -89,7 +89,13 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
     const stopsUnsubscribe = onSnapshot(stopsQuery, (querySnapshot) => {
       const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
-        stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
+        const data = doc.data();
+        stopsData.push({ 
+            stop_id: doc.id,
+            ...data,
+            lat: parseFloat(data.lat),
+            lng: parseFloat(data.lng),
+        } as Stop);
       });
       setCityStops(stopsData);
     });
@@ -328,3 +334,5 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
     </Card>
   );
 }
+
+    
