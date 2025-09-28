@@ -32,6 +32,7 @@ import {
 import dynamic from 'next/dynamic';
 import type { Stop } from '@/lib/data';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 
 const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap'), {
@@ -43,6 +44,7 @@ const OptimizerMap = dynamic(() => import('@/components/dashboard/OptimizerMap')
 export default function RouteGeneratorPage() {
   const { t } = useLanguage();
   const { organization } = useAuth();
+  const router = useRouter();
   const [generatedRoutes, setGeneratedRoutes] = React.useState<GenerateRoutesOutput | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -109,6 +111,7 @@ export default function RouteGeneratorPage() {
             title: t('routes_saved_success'),
         });
         setGeneratedRoutes(null);
+        router.push('/'); // Redirect to the main dashboard
     } catch (error) {
         console.error("Error saving routes:", error);
         toast({
