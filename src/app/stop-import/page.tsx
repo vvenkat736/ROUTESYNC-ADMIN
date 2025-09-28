@@ -170,7 +170,7 @@ export default function StopImportPage() {
   };
   
   const handleDeleteStop = async (stopId: string) => {
-    if (!confirm('Are you sure you want to delete this stop?')) {
+    if (!confirm('Are you sure you want to delete this stop? This action cannot be undone.')) {
         return;
     }
     try {
