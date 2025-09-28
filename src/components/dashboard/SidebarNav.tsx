@@ -18,7 +18,6 @@ import {
   Map,
   BarChart2,
   Bell,
-  Settings,
   CircleUser,
   Bot,
   MapPin,
@@ -46,7 +45,6 @@ export function SidebarNav() {
   ];
 
   const footerMenuItems = [
-    { href: "/settings", icon: <Settings />, label: 'settings' },
     { href: "/profile", icon: <CircleUser />, label: 'profile' },
   ];
 
