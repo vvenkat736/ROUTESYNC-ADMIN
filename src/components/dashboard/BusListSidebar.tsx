@@ -24,13 +24,16 @@ export function BusListSidebar({ buses }: BusListSidebarProps) {
       <SheetTrigger asChild>
         <Button
           variant="secondary"
-          className="absolute top-4 right-4 z-[1000] shadow-lg"
+          className="shadow-lg"
         >
           <PanelRight className="mr-2 h-4 w-4" />
           Show Bus List
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:w-[540px] p-0 flex flex-col">
+        <SheetHeader className="p-6 pb-0 sr-only">
+            <SheetTitle>Bus List</SheetTitle>
+        </SheetHeader>
         <BusList buses={buses} />
       </SheetContent>
     </Sheet>
