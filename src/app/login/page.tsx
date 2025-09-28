@@ -17,7 +17,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("admin@trichy");
-  const [password, setPassword] = useState("trichyrs");
+  const [password, setPassword] = useState("trichy");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -71,7 +71,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="trichyrs"
+                placeholder="yourcityname"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

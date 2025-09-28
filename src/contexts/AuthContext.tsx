@@ -32,16 +32,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const emailRegex = /^admin@([a-zA-Z]+)$/;
     const match = email.match(emailRegex);
 
-    if (match && pass === "trichyrs") {
+    if (match) {
       const org = match[1].toLowerCase(); // The city name, normalized to lowercase
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("organization", org);
-      setIsAuthenticated(true);
-      setOrganization(org);
-      return Promise.resolve();
-    } else {
-      return Promise.reject(new Error("Invalid credentials or email format. Use 'admin@[city]'."));
+      if (pass === org) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("organization", org);
+        setIsAuthenticated(true);
+        setOrganization(org);
+        return Promise.resolve();
+      }
     }
+    
+    return Promise.reject(new Error("Invalid credentials. Use 'admin@[city]' and the city name as the password."));
   };
 
   const logout = () => {
