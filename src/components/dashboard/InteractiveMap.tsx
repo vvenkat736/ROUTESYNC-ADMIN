@@ -13,12 +13,6 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useBusData } from '@/hooks/use-bus-data';
 
-// Add a type for the animated bus which includes its route path and current position index
-type AnimatedBus = Bus & {
-  routePath?: { lat: number, lng: number }[];
-  currentPathIndex?: number;
-};
-
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
   Delayed: '#EF4444', // red-500
@@ -27,12 +21,14 @@ const statusColors: { [key: string]: string } = {
 
 const createBusIcon = (status: Bus['status']) => {
   const color = statusColors[status] || '#6B7280';
+  const busEmoji = '🚍'; 
+
   return L.divIcon({
-    html: `<div style="transform: rotate(270deg) scale(1.5); font-size: 16px;">🚌</div><div style="position: absolute; top: 12px; left: 12px; width: 8px; height: 8px; background-color: ${color}; border-radius: 50%; border: 1px solid white;"></div>`,
+    html: `<div style="font-size: 24px; transform: rotate(-45deg);">${busEmoji}</div><div style="position: absolute; top: 18px; left: 18px; width: 8px; height: 8px; background-color: ${color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.2);"></div>`,
     className: 'bg-transparent border-0',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
   });
 };
 
@@ -58,13 +54,10 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   const { organization } = useAuth();
   const { buses: allCityBuses } = useBusData();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
-  const animationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const cityBuses = liveBuses ?? allCityBuses;
   const cityRoutes = displayRoutes ?? [];
 
-  const [animatedBuses, setAnimatedBuses] = useState<AnimatedBus[]>([]);
-  
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
@@ -99,59 +92,6 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     return paths;
   }, [cityRoutes]);
   
-
-  useEffect(() => {
-    // Initialize animated buses state
-    const initialAnimatedBuses: AnimatedBus[] = cityBuses.map(bus => {
-        const routePath = routePaths[bus.route];
-        return {
-            ...bus,
-            routePath,
-            currentPathIndex: 0
-        };
-    });
-    setAnimatedBuses(initialAnimatedBuses);
-  }, [cityBuses, routePaths]);
-
-
-  useEffect(() => {
-    // Animation loop
-    const moveBuses = () => {
-      setAnimatedBuses(currentBuses => 
-        currentBuses.map(bus => {
-          if (bus.status !== 'Active' || !bus.routePath || bus.routePath.length < 2) {
-              return bus; // Return bus as is if not animatable
-          }
-          
-          let nextIndex = (bus.currentPathIndex ?? 0) + 1;
-          if (nextIndex >= bus.routePath.length) {
-              nextIndex = 0; // Loop back to the start of the route
-          }
-          
-          const nextPosition = bus.routePath[nextIndex];
-
-          return {
-              ...bus,
-              lat: nextPosition.lat,
-              lng: nextPosition.lng,
-              currentPathIndex: nextIndex
-          };
-        })
-      );
-    };
-
-    if (animationIntervalRef.current) {
-      clearInterval(animationIntervalRef.current);
-    }
-    animationIntervalRef.current = setInterval(moveBuses, 2000); // Move every 2 seconds
-
-    return () => {
-      if (animationIntervalRef.current) {
-        clearInterval(animationIntervalRef.current);
-      }
-    };
-  }, []); // Run only once
-
   const mapCenter = useMemo<[number, number]>(() => {
     if (cityBuses.length > 0) {
       const avgLat = cityBuses.reduce((sum, bus) => sum + bus.lat, 0) / cityBuses.length;
@@ -207,7 +147,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
 
                 <LayersControl.Overlay checked name="Buses">
                   <LayerGroup>
-                    {animatedBuses.map((bus) => (
+                    {cityBuses.map((bus) => (
                       <Marker
                         key={bus.id}
                         position={[bus.lat, bus.lng]}
@@ -257,5 +197,4 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     </Card>
   );
 }
-
     
