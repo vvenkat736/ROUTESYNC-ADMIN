@@ -9,11 +9,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, collection, doc, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, doc, writeBatch, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
-import { getStopsTool } from './route-generator-flow';
-
 
 // Define the input schema for the flow
 const ProcessRoutesInputSchema = z.object({
@@ -37,6 +35,34 @@ const AiRouteSchema = z.object({
     totalDistance: z.number().describe('The total distance of the route in kilometers.'),
     totalTime: z.number().describe('The total estimated run time for the route in minutes.'),
 });
+
+const getStopsTool = ai.defineTool(
+    {
+      name: 'getStops',
+      description: 'Get the list of all available bus stops and their locations for a specific city.',
+      inputSchema: z.object({ city: z.string() }),
+      outputSchema: z.array(z.object({
+          stop_id: z.string(),
+          stop_name: z.string(),
+          lat: z.number(),
+          lng: z.number(),
+      })),
+    },
+    async ({city}) => {
+        const db = getFirestore(app);
+        const q = query(collection(db, "stops"), where("city", "==", city));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                stop_id: doc.id,
+                ...data,
+                lat: parseFloat(data.lat),
+                lng: parseFloat(data.lng),
+            } as any;
+        });
+    }
+);
 
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
