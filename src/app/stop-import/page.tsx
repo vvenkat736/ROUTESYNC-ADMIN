@@ -53,23 +53,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AddStopDialog } from "@/components/dashboard/AddStopDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { EditStopDialog } from "@/components/dashboard/EditStopDialog";
-
-
-// Simple CSV to JSON parser
-const parseCSV = (content: string): any[] => {
-  const lines = content.split('\n').filter(line => line.trim() !== '');
-  if (lines.length < 2) return [];
-  
-  const header = lines[0].split(',').map(h => h.trim());
-  
-  return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim());
-    return header.reduce((obj, nextKey, index) => {
-      (obj as any)[nextKey] = values[index];
-      return obj;
-    }, {});
-  });
-};
+import { processAndStoreStops } from "@/ai/flows/stop-importer-flow";
 
 export default function StopImportPage() {
   const { t } = useLanguage();
@@ -147,42 +131,18 @@ export default function StopImportPage() {
     reader.onload = async (e) => {
         const content = e.target?.result as string;
         try {
-            const parsedStops = parseCSV(content);
-            if (parsedStops.length === 0) {
-              throw new Error("CSV is empty or invalid.");
-            }
-
-            const batch = writeBatch(db);
-            const stopsCollection = collection(db, 'stops');
-
-            parsedStops.forEach(stop => {
-                if (!stop.stop_id) {
-                    console.warn("Skipping row, missing stop_id:", stop);
-                    return;
-                }
-                const docRef = doc(stopsCollection, stop.stop_id);
-                batch.set(docRef, {
-                  stop_name: stop.stop_name || '',
-                  lat: parseFloat(stop.lat) || 0,
-                  lng: parseFloat(stop.lng) || 0,
-                  note: stop.note || '',
-                  city: organization, // Tag stop with current city
-                });
-            });
-
-            await batch.commit();
-
+            const result = await processAndStoreStops({ csvContent: content, city: organization });
             toast({
                 title: "Import Successful",
-                description: `${parsedStops.length} stops have been imported and stored for ${organization}.`,
+                description: `${result.count} stops have been imported for ${organization}.`,
             });
             setImportDialogOpen(false);
-            fetchStops(); // Re-fetch after import
         } catch (error) {
             console.error("Error importing stops:", error);
+            const errorMessage = (error as Error).message || "There was an error processing your file.";
             toast({
                 title: "Import Failed",
-                description: "There was an error processing your file. Please check the file format and content.",
+                description: errorMessage,
                 variant: "destructive",
             });
         } finally {
