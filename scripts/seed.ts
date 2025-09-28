@@ -22,6 +22,28 @@ const db = getFirestore(app);
 async function seedDatabase() {
   const batch = writeBatch(db);
 
+  // Seed organizations
+  const organizations = [
+    'trichy',
+    'tanjavur',
+    'erode',
+    'salem',
+    'madurai',
+    'dindigul',
+    'thindivanam',
+    'coimbatore',
+    'kanyakumari',
+    'thirunelveli',
+  ];
+  const organizationsCollection = collection(db, 'organizations');
+  console.log('Seeding organizations...');
+  organizations.forEach(org => {
+    const docRef = doc(organizationsCollection, org);
+    batch.set(docRef, { name: org, createdAt: Timestamp.now() });
+  });
+  console.log('Organizations prepared.');
+
+
   // Seed stops
   const stopsCollection = collection(db, 'stops');
   console.log('Seeding stops...');
@@ -67,7 +89,7 @@ async function seedDatabase() {
 
   try {
     await batch.commit();
-    console.log('Database seeded successfully with stops, routes, buses, and alerts!');
+    console.log('Database seeded successfully with organizations, stops, routes, buses, and alerts!');
   } catch (error) {
     console.error('Error seeding database:', error);
   } finally {

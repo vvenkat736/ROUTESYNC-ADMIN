@@ -3,6 +3,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { app } from "@/lib/firebase";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -41,15 +43,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (match) {
       const org = match[1].toLowerCase(); // The city name, normalized to lowercase
       if (pass === org) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("organization", org);
-        setIsAuthenticated(true);
-        setOrganization(org);
-        return Promise.resolve();
+        // Verify organization exists in Firestore
+        const db = getFirestore(app);
+        const orgDocRef = doc(db, 'organizations', org);
+        const orgDoc = await getDoc(orgDocRef);
+
+        if (orgDoc.exists()) {
+            localStorage.setItem("isAuthenticated", "true");
+            localStorage.setItem("organization", org);
+            setIsAuthenticated(true);
+            setOrganization(org);
+            return Promise.resolve();
+        }
       }
     }
     
-    return Promise.reject(new Error("Invalid credentials. Use 'admin@[city]' and the city name as the password."));
+    return Promise.reject(new Error("Invalid credentials or unauthorized city."));
   };
 
   const logout = () => {
