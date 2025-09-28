@@ -5,29 +5,27 @@
  *
  * - generateRoutes - A function that fetches all stops and asks the AI to create logical routes.
  */
-import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
 
 // Define schemas for types
-const PointSchema = z.object({
-  lat: z.number().describe('The latitude of the stop.'),
-  lng: z.number().describe('The longitude of the stop.'),
-});
+type Point = {
+  lat: number;
+  lng: number;
+};
 
-const GenerateRoutesOutputSchema = z.object({
-  routes: z.array(z.object({
-    route_id: z.string().describe("A unique ID for the route (e.g., 'R-01')."),
-    routeName: z.string().describe("A descriptive name for the route (e.g., 'Central Bus Stand to Srirangam')."),
-    busType: z.string().describe('The type of bus for the route (e.g., Express, Deluxe, Standard).'),
-    stops: z.array(z.string()).describe('An ordered list of stop names that make up the route.'),
-    path: z.array(PointSchema).describe('An ordered array of coordinates representing the entire route path.'),
-    totalDistance: z.number().describe('The total distance of the route in kilometers.'),
-    totalTime: z.number().describe('The total estimated run time for the route in minutes.'),
-  })),
-});
-type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
+type GenerateRoutesOutput = {
+  routes: {
+    route_id: string;
+    routeName: string;
+    busType: string;
+    stops: string[];
+    path: Point[];
+    totalDistance: number;
+    totalTime: number;
+  }[];
+};
 
 type StopInfo = {
     stop_id: string;
@@ -84,14 +82,31 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
     const averageSpeedKmh = 25;
     let routeCounter = 1;
 
-    // Define route structures with stop names
-    const routeDefinitions = [
-        { routeName: "Central Bus Stand Circle", busType: "Express", stops: ["Central Bus Stand", "Heber Road", "Puthur", "Thillai Nagar", "Chathiram", "Rockfort", "Central Bus Stand"] },
-        { routeName: "Outer Ring Connector", busType: "Deluxe", stops: ["Chathiram", "Palpannai", "Melapudur", "NN Road", "Thiruverumbur", "BHEL / Kailasapuram"] },
-        { routeName: "North-South Express", busType: "Standard", stops: ["Samayapuram", "No.1 Toll Gate", "Srirangam", "Chathiram", "Central Bus Stand", "Mannarpuram", "Trichy Airport"] },
-        { routeName: "West-East Connector", busType: "Express", stops: ["Mutharasanallur", "Woraiyur", "Chathiram", "Sanjeevi Nagar", "Palpannai", "KKBT terminus"] },
-        { routeName: "City Core Loop", busType: "Deluxe", stops: ["Panjapur", "Iluppur Road", "Bharathi Nagar", "Sastri Road", "Central Bus Stand", "Panjapur"] },
-    ];
+    let routeDefinitions: { routeName: string, busType: string, stops: string[] }[] = [];
+
+    // Define route structures with stop names based on the city
+    if (city === 'trichy') {
+        routeDefinitions = [
+            { routeName: "Central Bus Stand Circle", busType: "Express", stops: ["Central Bus Stand", "Heber Road", "Puthur", "Thillai Nagar", "Chathiram", "Rockfort", "Central Bus Stand"] },
+            { routeName: "Outer Ring Connector", busType: "Deluxe", stops: ["Chathiram", "Palpannai", "Melapudur", "NN Road", "Thiruverumbur", "BHEL / Kailasapuram"] },
+            { routeName: "North-South Express", busType: "Standard", stops: ["Samayapuram", "No.1 Toll Gate", "Srirangam", "Chathiram", "Central Bus Stand", "Mannarpuram", "Trichy Airport"] },
+            { routeName: "West-East Connector", busType: "Express", stops: ["Mutharasanallur", "Woraiyur", "Chathiram", "Sanjeevi Nagar", "Palpannai", "KKBT terminus"] },
+            { routeName: "City Core Loop", busType: "Deluxe", stops: ["Panjapur", "Iluppur Road", "Bharathi Nagar", "Sastri Road", "Central Bus Stand", "Panjapur"] },
+        ];
+    } else if (city === 'tanjavur') {
+        routeDefinitions = [
+            { routeName: "Tanjavur Main Route", busType: "Express", stops: ["Tanjavur New Bus Stand", "Tanjavur Junction", "Brihadeeswarar Temple", "Tanjavur Old Bus Stand", "Tanjavur New Bus Stand"] }
+        ];
+    } else if (city === 'erode') {
+        routeDefinitions = [
+            { routeName: "Erode City Ring", busType: "Deluxe", stops: ["Erode Central Bus Terminus", "Erode Junction", "Moolapalayam", "Perundurai", "Erode Central Bus Terminus"] }
+        ];
+    } else if (city === 'salem') {
+        routeDefinitions = [
+            { routeName: "Salem City Express", busType: "Express", stops: ["Salem New Bus Stand", "Hasthampatti", "Salem Old Bus Stand", "Salem Junction", "Salem New Bus Stand"] }
+        ];
+    }
+
 
     const routes = routeDefinitions.map(routeDef => {
         const validStops = routeDef.stops.map(name => stopsMap.get(name)).filter((s): s is StopInfo => !!s);
