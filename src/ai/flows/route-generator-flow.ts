@@ -86,39 +86,38 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
         salem: ['New Bus Stand', 'Old Bus Stand'],
     };
 
-    const cityKeywords = hubKeywords[city] || [];
+    const cityKeywords = hubKeywords[city.toLowerCase()] || [];
     
     // Find hubs by keyword matching, more flexible than exact names
     const mainHubs = cityKeywords.map(keyword => 
         stops.find(s => s.stop_name.toLowerCase().includes(keyword.toLowerCase()))
     ).filter((s): s is StopInfo => s !== undefined);
     
-    const uniqueHubs = Array.from(new Map(mainHubs.map(hub => [hub.stop_id, hub])).values());
+    let uniqueHubs = Array.from(new Map(mainHubs.map(hub => [hub.stop_id, hub])).values());
 
-    if (uniqueHubs.length < 2) {
-        // Fallback if keywords don't match: find the two stops that are farthest apart
-        if (stops.length > 1) {
-            let maxDist = 0;
-            let hub1: StopInfo | null = null;
-            let hub2: StopInfo | null = null;
-            for (let i = 0; i < stops.length; i++) {
-                for (let j = i + 1; j < stops.length; j++) {
-                    const dist = getDistance(stops[i], stops[j]);
-                    if (dist > maxDist) {
-                        maxDist = dist;
-                        hub1 = stops[i];
-                        hub2 = stops[j];
-                    }
+    // Fallback: If hubs are not found via keywords, find the two stops that are farthest apart.
+    if (uniqueHubs.length < 2 && stops.length >= 2) {
+        console.log(`Could not find keyword hubs for ${city}. Falling back to farthest points.`);
+        let maxDist = 0;
+        let hub1: StopInfo | null = null;
+        let hub2: StopInfo | null = null;
+        for (let i = 0; i < stops.length; i++) {
+            for (let j = i + 1; j < stops.length; j++) {
+                const dist = getDistance(stops[i], stops[j]);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    hub1 = stops[i];
+                    hub2 = stops[j];
                 }
             }
-            if(hub1 && hub2) {
-                uniqueHubs.push(hub1, hub2);
-            }
         }
-        
-        if (uniqueHubs.length < 2) {
-             throw new Error(`Could not find at least two main hubs for ${city}. The algorithm requires at least two distinct stops to function as hubs.`);
+        if(hub1 && hub2) {
+            uniqueHubs = [hub1, hub2];
         }
+    }
+
+    if (uniqueHubs.length < 2) {
+        throw new Error(`Could not determine at least two main hubs for ${city}. The algorithm requires at least two distinct stops to function as hubs.`);
     }
     
     const mainHubNames = uniqueHubs.map(h => h.stop_name);
@@ -151,7 +150,7 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
         if (zoneStops.length === 0) continue;
 
         // Sub-cluster the stops in this hub's zone
-        const numSubRoutes = Math.max(1, Math.floor(zoneStops.length / 5)); // 5 stops per sub-route
+        const numSubRoutes = Math.max(1, Math.ceil(zoneStops.length / 5)); // Aim for 5 stops per sub-route
         let centroids = zoneStops.slice(0, numSubRoutes).map(stop => ({ lat: stop.lat, lng: stop.lng }));
         let clusters: StopInfo[][] = Array.from({ length: numSubRoutes }, () => []);
 
@@ -182,8 +181,8 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string) {
             const routeStops = [hub, ...cluster];
             let orderedStops: StopInfo[] = [];
             let unvisited = [...routeStops];
-            let currentStop = unvisited.find(s => s.stop_name === hub.stop_name)!;
-            unvisited = unvisited.filter(s => s.stop_name !== hub.stop_name);
+            let currentStop = unvisited.find(s => s.stop_id === hub.stop_id)!;
+            unvisited = unvisited.filter(s => s.stop_id !== hub.stop_id);
             orderedStops.push(currentStop);
 
             while (unvisited.length > 0) {
@@ -279,3 +278,4 @@ const generateRoutesFlow = async (city: string): Promise<GenerateRoutesOutput> =
 
     return { routes: finalRoutes };
 };
+
