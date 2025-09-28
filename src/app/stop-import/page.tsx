@@ -47,13 +47,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, writeBatch, doc, deleteDoc, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, where, writeBatch, doc, deleteDoc, getDocs, setDoc } from "firebase/firestore";
 import type { Stop } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { AddStopDialog } from "@/components/dashboard/AddStopDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { EditStopDialog } from "@/components/dashboard/EditStopDialog";
-import { processAndStoreStops } from "@/ai/flows/stop-importer-flow";
 
 export default function StopImportPage() {
   const { t } = useLanguage();
@@ -118,8 +117,8 @@ export default function StopImportPage() {
   const handleImport = async () => {
     if (!selectedFile || !organization) {
         toast({
-            title: "No file selected or not logged in",
-            description: "Please select a CSV file to import and ensure you are logged in.",
+            title: "No file or organization",
+            description: "Please select a CSV file and ensure you are logged in.",
             variant: "destructive",
         });
         return;
@@ -129,20 +128,66 @@ export default function StopImportPage() {
     
     const reader = new FileReader();
     reader.onload = async (e) => {
-        const content = e.target?.result as string;
+        const text = e.target?.result as string;
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        if (lines.length < 2) {
+            toast({ title: "Invalid CSV", description: "File must have a header and at least one data row.", variant: "destructive" });
+            setIsImporting(false);
+            return;
+        }
+
+        const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        const stopIdIndex = header.indexOf('stop_id');
+        const stopNameIndex = header.indexOf('stop_name');
+        const latIndex = header.indexOf('lat');
+        const lngIndex = header.indexOf('lng');
+        const noteIndex = header.indexOf('note');
+
+        if ([stopIdIndex, stopNameIndex, latIndex, lngIndex].some(i => i === -1)) {
+            toast({ title: "Invalid CSV Header", description: "CSV must contain 'stop_id', 'stop_name', 'lat', and 'lng' columns.", variant: "destructive" });
+            setIsImporting(false);
+            return;
+        }
+
         try {
-            const result = await processAndStoreStops({ csvContent: content, city: organization });
+            const batch = writeBatch(db);
+            let importedCount = 0;
+
+            for (let i = 1; i < lines.length; i++) {
+                const data = lines[i].split(',').map(d => d.trim().replace(/"/g, ''));
+                const stopId = data[stopIdIndex];
+                if (!stopId) continue; // Skip rows without a stop_id
+
+                const stopData = {
+                    stop_name: data[stopNameIndex] || '',
+                    lat: parseFloat(data[latIndex]),
+                    lng: parseFloat(data[lngIndex]),
+                    note: data[noteIndex] || '',
+                    city: organization,
+                };
+                
+                if (isNaN(stopData.lat) || isNaN(stopData.lng)) {
+                    console.warn(`Skipping row with invalid lat/lng: ${lines[i]}`);
+                    continue;
+                }
+
+                const docRef = doc(db, "stops", stopId);
+                batch.set(docRef, stopData);
+                importedCount++;
+            }
+
+            await batch.commit();
             toast({
                 title: "Import Successful",
-                description: `${result.count} stops have been imported for ${organization}.`,
+                description: `${importedCount} stops have been imported/updated.`,
             });
             setImportDialogOpen(false);
+
         } catch (error) {
             console.error("Error importing stops:", error);
-            const errorMessage = (error as Error).message || "There was an error processing your file.";
             toast({
                 title: "Import Failed",
-                description: errorMessage,
+                description: "An error occurred while writing to the database.",
                 variant: "destructive",
             });
         } finally {
