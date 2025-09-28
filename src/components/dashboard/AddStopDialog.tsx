@@ -16,8 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { geocodeLocation, GeocodeOutput } from '@/ai/flows/geocode-flow';
 import { Loader2, Search } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection } from 'firebase/firestore';
 import { useLanguage } from '@/hooks/use-language';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddStopDialogProps {
   onSuccess: () => void;
@@ -25,6 +26,7 @@ interface AddStopDialogProps {
 
 export function AddStopDialog({ onSuccess }: AddStopDialogProps) {
   const { t } = useLanguage();
+  const { organization } = useAuth();
   const [stopId, setStopId] = React.useState('');
   const [stopName, setStopName] = React.useState('');
   const [lat, setLat] = React.useState('');
@@ -57,7 +59,7 @@ export function AddStopDialog({ onSuccess }: AddStopDialogProps) {
   };
 
   const handleSave = async () => {
-    if (!stopId || !stopName || !lat || !lng) {
+    if (!stopId || !stopName || !lat || !lng || !organization) {
       toast({ title: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
@@ -69,6 +71,7 @@ export function AddStopDialog({ onSuccess }: AddStopDialogProps) {
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         note: note,
+        city: organization,
       });
 
       toast({ title: 'Stop Saved', description: 'The new stop has been added.' });

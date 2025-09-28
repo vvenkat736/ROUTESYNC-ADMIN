@@ -35,10 +35,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, writeBatch, doc, addDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, where, writeBatch, doc, deleteDoc, getDocs } from "firebase/firestore";
 import type { Stop } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { AddStopDialog } from "@/components/dashboard/AddStopDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 // Simple CSV to JSON parser
@@ -59,6 +60,7 @@ const parseCSV = (content: string): any[] => {
 
 export default function StopImportPage() {
   const { t } = useLanguage();
+  const { organization } = useAuth();
   const [stops, setStops] = React.useState<Stop[]>([]);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
@@ -68,7 +70,8 @@ export default function StopImportPage() {
   const { toast } = useToast();
 
   const fetchStops = async () => {
-    const q = query(collection(db, "stops"));
+    if (!organization) return;
+    const q = query(collection(db, "stops"), where("city", "==", organization));
     const querySnapshot = await getDocs(q);
     const stopsData: Stop[] = [];
     querySnapshot.forEach((doc) => {
@@ -78,7 +81,12 @@ export default function StopImportPage() {
   };
 
   React.useEffect(() => {
-    const q = query(collection(db, "stops"));
+    if (!organization) {
+      setStops([]);
+      return;
+    };
+
+    const q = query(collection(db, "stops"), where("city", "==", organization));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
@@ -88,7 +96,7 @@ export default function StopImportPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [organization]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -97,10 +105,10 @@ export default function StopImportPage() {
   };
 
   const handleImport = async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !organization) {
         toast({
-            title: "No file selected",
-            description: "Please select a CSV file to import.",
+            title: "No file selected or not logged in",
+            description: "Please select a CSV file to import and ensure you are logged in.",
             variant: "destructive",
         });
         return;
@@ -130,7 +138,8 @@ export default function StopImportPage() {
                   stop_name: stop.stop_name || '',
                   lat: parseFloat(stop.lat) || 0,
                   lng: parseFloat(stop.lng) || 0,
-                  note: stop.note || ''
+                  note: stop.note || '',
+                  city: organization, // Tag stop with current city
                 });
             });
 
@@ -138,7 +147,7 @@ export default function StopImportPage() {
 
             toast({
                 title: "Import Successful",
-                description: `${parsedStops.length} stops have been imported and stored.`,
+                description: `${parsedStops.length} stops have been imported and stored for ${organization}.`,
             });
             setImportDialogOpen(false);
             fetchStops(); // Re-fetch after import
