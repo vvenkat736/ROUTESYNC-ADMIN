@@ -12,7 +12,6 @@ import { z } from 'genkit';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
-import { useAuth } from '@/contexts/AuthContext';
 
 // Schema for a single point in a route's path
 const PointSchema = z.object({

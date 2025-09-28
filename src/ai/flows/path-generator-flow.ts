@@ -18,13 +18,13 @@ const PointSchema = z.object({
 });
 
 // Input schema: a list of stops to connect
-export const GeneratePathInputSchema = z.object({
+const GeneratePathInputSchema = z.object({
   stops: z.array(PointSchema).describe('An ordered list of stops (points) to connect with a road path.'),
 });
 export type GeneratePathInput = z.infer<typeof GeneratePathInputSchema>;
 
 // Output schema: a single, detailed path
-export const GeneratePathOutputSchema = z.object({
+const GeneratePathOutputSchema = z.object({
   path: z.array(PointSchema).describe('An ordered array of coordinates representing the entire road path.'),
 });
 export type GeneratePathOutput = z.infer<typeof GeneratePathOutputSchema>;

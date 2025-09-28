@@ -68,7 +68,7 @@ const getStopsTool = ai.defineTool(
 
 export async function processAndStoreRoutes(input: ProcessRoutesInput): Promise<void> {
     const db = getFirestore(app);
-    const stopsMap = new Map((await getStopsTool(input)).map(stop => [stop.stop_name, stop]));
+    const stopsMap = new Map((await getStopsTool({city: input.city})).map(stop => [stop.stop_name, stop]));
     
     const { output: aiOutput } = await prompt(input);
     
@@ -117,7 +117,7 @@ The 'distances_km' and 'e_run_time' columns represent the value for each segment
 
 For each route, compile an ordered list of 'stop_name' based on 'stop_sequence'.
 
-The 'city' for these routes is: {{{city}}}.
+The 'city' for these routes is: {{{city}}}. You must use the getStops tool to look up the available stops for this city to validate the stop names. If a stop_name from the CSV does not exist in the tool's output, you must exclude it from the route's stop list.
 
 The final output must be a JSON object containing a "routes" key, which is a list of route objects. Each object should have:
 - route_id
@@ -127,7 +127,7 @@ The final output must be a JSON object containing a "routes" key, which is a lis
 - totalDistance (sum for the route)
 - totalTime (sum for the route)
 
-Do NOT use any tools. You are only responsible for parsing the CSV and structuring the route data. Path generation will happen later.
+Do NOT use any tools other than getStops. You are only responsible for parsing the CSV and structuring the route data. Path generation will happen later.
 
 CSV Content:
 {{{csvContent}}}

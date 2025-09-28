@@ -15,7 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/use-language';
 import { Bot, Loader, Save, AlertTriangle } from 'lucide-react';
-import { generateRoutes, GenerateRoutesOutput } from '@/ai/flows/route-generator-flow';
+import { generateRoutes } from '@/ai/flows/route-generator-flow';
+import type { GenerateRoutesOutput } from '@/ai/flows/route-generator-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where } from 'firebase/firestore';
@@ -149,7 +150,7 @@ export default function RouteGeneratorPage() {
                             <AlertTriangle className="w-8 h-8 text-amber-500" />
                             <div>
                                 <CardTitle className="text-amber-700 dark:text-amber-400">{t('no_stops_found')}</CardTitle>
-                                <CardDescription className="text-amber-600 dark:text-amber-500">{t('no_stops_desc')}</CardDescription>
+                                <CardDescription className="text-amber-600 darktext-amber-500">{t('no_stops_desc')}</CardDescription>
                             </div>
                         </CardHeader>
                     </Card>
@@ -216,5 +217,3 @@ export default function RouteGeneratorPage() {
     </SidebarProvider>
   );
 }
-
-    
