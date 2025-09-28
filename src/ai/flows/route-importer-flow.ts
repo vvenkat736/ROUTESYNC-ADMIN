@@ -53,7 +53,15 @@ const getStopsTool = ai.defineTool(
         const db = getFirestore(app);
         const q = query(collection(db, "stops"), where("city", "==", city));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                stop_id: doc.id,
+                ...data,
+                lat: parseFloat(data.lat),
+                lng: parseFloat(data.lng),
+            } as any;
+        });
     }
 );
 

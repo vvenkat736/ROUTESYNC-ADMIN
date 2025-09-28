@@ -78,7 +78,13 @@ export default function StopImportPage() {
     const querySnapshot = await getDocs(q);
     const stopsData: Stop[] = [];
     querySnapshot.forEach((doc) => {
-      stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
+      const data = doc.data();
+      stopsData.push({ 
+          stop_id: doc.id,
+          ...data,
+          lat: parseFloat(data.lat),
+          lng: parseFloat(data.lng),
+      } as Stop);
     });
     setStops(stopsData);
   };
@@ -93,7 +99,13 @@ export default function StopImportPage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const stopsData: Stop[] = [];
       querySnapshot.forEach((doc) => {
-        stopsData.push({ stop_id: doc.id, ...doc.data() } as Stop);
+        const data = doc.data();
+        stopsData.push({ 
+            stop_id: doc.id,
+            ...data,
+            lat: parseFloat(data.lat),
+            lng: parseFloat(data.lng),
+        } as Stop);
       });
       setStops(stopsData);
     });

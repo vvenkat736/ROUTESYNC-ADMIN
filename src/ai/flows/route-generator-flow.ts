@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,10 +40,17 @@ export type GenerateRoutesOutput = z.infer<typeof GenerateRoutesOutputSchema>;
 // Helper function to get all available bus stops from Firestore
 async function getStops(city: string) {
     const db = getFirestore(app);
-    const stopsCollection = collection(db, 'stops');
-    const q = collection(db, "stops", "where", "city", "==", city)
-    const snapshot = await getDocs(stopsCollection);
-    return snapshot.docs.map(doc => ({ stop_id: doc.id, ...doc.data() } as any));
+    const q = query(collection(db, "stops"), where("city", "==", city));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            stop_id: doc.id,
+            ...data,
+            lat: parseFloat(data.lat),
+            lng: parseFloat(data.lng),
+        } as any;
+    });
 }
 
 // The main exported function that the UI will call
