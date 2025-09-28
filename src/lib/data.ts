@@ -36,13 +36,6 @@ export type Stop = {
 };
 
 // Static data for charts - not intended to be in Firestore
-export const alerts = [
-  { id: 'alert_1', type: 'SOS', busNumber: 'TN 45 D 9012', message: 'Mechanical issue reported.', timestamp: new Date() },
-  { id: 'alert_2', type: 'Delayed', busNumber: 'TN 45 G 4567', message: 'Heavy traffic on Gandhipuram flyover.', timestamp: new Date() },
-  { id: 'alert_3', type: 'Inactive', busNumber: 'TN 33 B 4444', message: 'Bus offline for 30 minutes.', timestamp: new Date() },
-  { id: 'alert_4', type: 'Delayed', busNumber: 'TN 30 E 5555', message: 'Tyre puncture reported.', timestamp: new Date() },
-];
-
 export const tripsPerDayData = [
   { day: 'Mon', trips: 220 },
   { day: 'Tue', trips: 250 },
