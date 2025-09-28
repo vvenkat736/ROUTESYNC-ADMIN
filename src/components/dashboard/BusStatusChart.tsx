@@ -3,21 +3,16 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { busStatusData as getBusStatusData, buses as allBuses } from "@/lib/data";
+import { busStatusData as getBusStatusData } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
-import React, { useState, useEffect, useMemo } from "react";
-import type { Bus } from "@/lib/data";
-import { useAuth } from "@/contexts/AuthContext";
+import React, { useMemo } from "react";
+import { useBusData } from "@/hooks/use-bus-data";
 
 
 export function BusStatusChart() {
   const { t } = useLanguage();
-  const { organization } = useAuth();
+  const { buses: cityBuses } = useBusData();
   
-  const cityBuses = useMemo(() => {
-    return allBuses.filter(bus => bus.city === organization).map((b, i) => ({ id: `bus_${i}`, ...b }));
-  }, [organization]);
-
   const busStatusData = getBusStatusData(cityBuses);
 
   const translatedData = busStatusData.map(item => ({

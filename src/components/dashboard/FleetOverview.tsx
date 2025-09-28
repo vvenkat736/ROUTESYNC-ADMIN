@@ -13,13 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/contexts/AuthContext";
-import { buses as allBuses, type Route, type Stop } from "@/lib/data";
+import { type Route, type Stop } from "@/lib/data";
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useBusData } from "@/hooks/use-bus-data";
 
 export function FleetOverview() {
   const { t } = useLanguage();
   const { organization } = useAuth();
+  const { buses: cityBuses } = useBusData();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
   const [cityRoutes, setCityRoutes] = useState<Route[]>([]);
   
@@ -58,10 +60,6 @@ export function FleetOverview() {
       stopsUnsubscribe();
       routesUnsubscribe();
     };
-  }, [organization]);
-
-  const cityBuses = useMemo(() => {
-    return allBuses.filter(bus => bus.city === organization).map((b, i) => ({ id: `bus_${i}`, ...b }));
   }, [organization]);
 
   const totalBuses = cityBuses.length;

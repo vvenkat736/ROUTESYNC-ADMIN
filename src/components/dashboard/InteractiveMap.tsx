@@ -8,10 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Waypoints } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/AuthContext';
-import { buses as allBuses, type Bus, type Stop, type Route as RouteType } from '@/lib/data';
+import { type Bus, type Stop, type Route as RouteType } from '@/lib/data';
 import type { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useBusData } from '@/hooks/use-bus-data';
 
 const statusColors: { [key: string]: string } = {
   Active: '#22C55E', // green-500
@@ -70,12 +71,9 @@ interface InteractiveMapProps {
 export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
+  const { buses: cityBuses } = useBusData();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
   const [cityRoutes, setCityRoutes] = useState<RouteType[]>([]);
-
-  const cityBuses = useMemo(() => {
-    return allBuses.filter(bus => bus.city === organization);
-  }, [organization]);
 
   // Fetch stops and routes in real-time
   useEffect(() => {
@@ -130,7 +128,17 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
 
 
   useEffect(() => {
+    // This effect initializes the buses for animation ONLY when they change.
+    // It shouldn't run every frame.
     const busesWithRoutes = cityBuses.map(bus => {
+        const existingAnimatedBus = animatedBuses.find(ab => ab.id === bus.id);
+
+        if (existingAnimatedBus) {
+            // If bus already exists, just update its static data
+            return { ...existingAnimatedBus, ...bus };
+        }
+
+        // If it's a new bus, initialize its animation state
         const routePath = routePaths[bus.route] || [];
         const currentSegment = routePath.length > 1 ? Math.floor(Math.random() * (routePath.length - 1)) : 0;
         const segmentProgress = Math.random();
@@ -147,7 +155,6 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
 
         return {
             ...bus,
-            id: bus.busNumber, // ensure unique id for key
             lat: initialLat,
             lng: initialLng,
             routePath: routePath,
@@ -158,9 +165,10 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
 
     setAnimatedBuses(busesWithRoutes);
 
-    if (busesWithRoutes.length > 0) {
-      const avgLat = busesWithRoutes.reduce((sum, bus) => sum + bus.lat, 0) / busesWithRoutes.length;
-      const avgLng = busesWithRoutes.reduce((sum, bus) => sum + bus.lng, 0) / busesWithRoutes.length;
+    // Set map center based on initial data
+    if (cityBuses.length > 0) {
+      const avgLat = cityBuses.reduce((sum, bus) => sum + bus.lat, 0) / cityBuses.length;
+      const avgLng = cityBuses.reduce((sum, bus) => sum + bus.lng, 0) / cityBuses.length;
       if (avgLat && avgLng) {
         setMapCenter([avgLat, avgLng]);
       }
@@ -171,13 +179,22 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
             setMapCenter([avgLat, avgLng]);
         }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityBuses, cityStops, routePaths]);
   
   useEffect(() => {
+    // This effect runs the animation loop
     const interval = setInterval(() => {
       setAnimatedBuses(currentBuses => 
         currentBuses.map(bus => {
-          if (bus.status !== 'Active' || bus.routePath.length < 2) return bus;
+          if (bus.status !== 'Active' || bus.routePath.length < 2) {
+              // For non-active buses, just ensure their position is the one from the database
+              const dbBus = cityBuses.find(b => b.id === bus.id);
+              if (dbBus) {
+                  return { ...bus, lat: dbBus.lat, lng: dbBus.lng };
+              }
+              return bus;
+          }
           
           let { currentSegment, segmentProgress } = bus;
           const speed = 0.05; // Adjust for faster/slower animation
@@ -208,7 +225,7 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
     }, 1000); // Update every second
 
     return () => clearInterval(interval);
-  }, []);
+  }, [cityBuses]); // Depend on cityBuses to update positions for non-active buses
 
   const optimizedWaypoints = useMemo(() => {
     if (!optimizedRoute) return [];
@@ -334,5 +351,3 @@ export default function InteractiveMap({ optimizedRoute = null }: InteractiveMap
     </Card>
   );
 }
-
-    

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -18,19 +18,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { buses as allBuses } from "@/lib/data";
 import type { Bus } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
-import { useAuth } from "@/contexts/AuthContext";
 import { ScrollArea } from "../ui/scroll-area";
+import { useBusData } from "@/hooks/use-bus-data";
 
 export function BusList() {
   const { t } = useLanguage();
-  const { organization } = useAuth();
-
-  const buses = useMemo(() => {
-    return allBuses.filter(bus => bus.city === organization).map((b, i) => ({ id: `bus_${i}`, ...b }));
-  }, [organization]);
+  const { buses } = useBusData();
 
   const getStatusVariant = (status: Bus['status']) => {
     if (status === 'Active') return 'bg-green-500 hover:bg-green-500/80';
