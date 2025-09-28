@@ -24,7 +24,7 @@ const createBusIcon = (status: Bus['status']) => {
   const busEmoji = '🚍'; 
 
   return L.divIcon({
-    html: `<div style="font-size: 24px; transform: rotate(-45deg);">${busEmoji}</div><div style="position: absolute; top: 18px; left: 18px; width: 8px; height: 8px; background-color: ${color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.2);"></div>`,
+    html: `<div class="bus-icon" style="font-size: 24px;">${busEmoji}</div><div style="position: absolute; top: 18px; left: 18px; width: 8px; height: 8px; background-color: ${color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.2);"></div>`,
     className: 'bg-transparent border-0',
     iconSize: [32, 32],
     iconAnchor: [16, 16],

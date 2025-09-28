@@ -84,3 +84,12 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .leaflet-marker-icon {
+    transition: transform 1s linear;
+  }
+  .bus-icon {
+    transform: rotate(-45deg);
+  }
+}
