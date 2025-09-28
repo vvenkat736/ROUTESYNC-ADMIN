@@ -1,4 +1,5 @@
 
+
 // A script to seed the Firestore database with initial data.
 // To run this script, ensure you have ts-node installed (npm install -g ts-node)
 // and your Firebase project is initialized.
@@ -133,9 +134,11 @@ async function seedDatabase() {
   const busesCollection = collection(db, 'buses');
   console.log('Seeding buses...');
   buses.forEach((bus, index) => {
-    const { id, ...busData } = bus;
+    // The 'id' property is not part of the bus data we want to seed.
+    // Firestore will auto-generate an ID if we don't specify one, 
+    // but for consistency with existing data, we create a custom ID.
     const docRef = doc(busesCollection, `bus_${index + 1}`);
-    batch.set(docRef, busData);
+    batch.set(docRef, bus);
   });
   console.log('Buses prepared.');
 
@@ -173,4 +176,5 @@ async function seedDatabase() {
 
 seedDatabase();
 
+    
     
