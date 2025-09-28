@@ -1,56 +1,57 @@
+
 'use client';
 
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { useMemo } from 'react';
-import { OptimizeRouteOutput } from '@/ai/flows/route-optimizer-flow';
+import { GenerateRoutesOutput } from '@/ai/flows/route-generator-flow';
 
-const createNumberedIcon = (number: number | string, color: string) => {
-  return L.divIcon({
-    html: `<div style="background-color: ${color}; color: white; border-radius: 50%; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white;">${number}</div>`,
-    className: 'bg-transparent border-0',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
+const createStopIcon = () => {
+    return L.divIcon({
+      html: `<div style="font-size: 20px;">📍</div>`,
+      className: 'bg-transparent border-0',
+      iconSize: [20, 20],
+      iconAnchor: [10, 20],
+    });
 };
 
+const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
+
+
 interface OptimizerMapProps {
-  route: OptimizeRouteOutput | null;
+  routes: GenerateRoutesOutput | null;
 }
 
-export default function OptimizerMap({ route }: OptimizerMapProps) {
+export default function OptimizerMap({ routes }: OptimizerMapProps) {
   const defaultCenter: [number, number] = [10.80, 78.69];
 
-  const waypoints = useMemo(() => {
-    if (!route) return [];
-    return [
-      { ...route.start, type: 'start', color: '#22c55e' },
-      ...route.waypoints.map(wp => ({ ...wp, type: 'waypoint', color: '#3b82f6' })),
-      { ...route.end, type: 'end', color: '#ef4444' },
-    ];
-  }, [route]);
-
-  const polyline = useMemo(() => {
-    if (!route) return [];
-    return [
-      [route.start.lat, route.start.lng],
-      ...route.waypoints.map(wp => [wp.lat, wp.lng] as [number, number]),
-      [route.end.lat, route.end.lng],
-    ];
-  }, [route]);
+  const allStops = useMemo(() => {
+    if (!routes) return [];
+    const stopMap = new Map<string, { lat: number, lng: number }>();
+    routes.routes.forEach(route => {
+        route.path.forEach(point => {
+            // A simple way to get unique stops for markers
+            const key = `${point.lat},${point.lng}`;
+            if(!stopMap.has(key)) {
+                stopMap.set(key, point);
+            }
+        })
+    });
+    return Array.from(stopMap.values());
+  }, [routes]);
 
   const mapCenter = useMemo(() => {
-    if (waypoints.length > 0) {
-      const avgLat = waypoints.reduce((sum, p) => sum + p.lat, 0) / waypoints.length;
-      const avgLng = waypoints.reduce((sum, p) => sum + p.lng, 0) / waypoints.length;
+    if (allStops.length > 0) {
+      const avgLat = allStops.reduce((sum, p) => sum + p.lat, 0) / allStops.length;
+      const avgLng = allStops.reduce((sum, p) => sum + p.lng, 0) / allStops.length;
       return [avgLat, avgLng] as [number, number];
     }
     return defaultCenter;
-  }, [waypoints, defaultCenter]);
+  }, [allStops, defaultCenter]);
 
   const mapZoom = useMemo(() => {
-      return route ? 12: 10;
-  }, [route]);
+      return routes ? 12: 10;
+  }, [routes]);
 
   return (
     <MapContainer
@@ -58,22 +59,28 @@ export default function OptimizerMap({ route }: OptimizerMapProps) {
       center={mapCenter}
       zoom={mapZoom}
       scrollWheelZoom={true}
-      className="h-full w-full z-0"
+      className="h-full w-full z-0 rounded-lg"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {waypoints.map((point, index) => (
-        <Marker
-          key={index}
-          position={[point.lat, point.lng]}
-          icon={createNumberedIcon(point.type === 'start' ? 'S' : point.type === 'end' ? 'E' : index, point.color)}
-        >
-          <Popup>{point.name}</Popup>
-        </Marker>
+      {routes?.routes.map((route, index) => (
+          <Polyline 
+            key={route.route_id} 
+            positions={route.path.map(p => [p.lat, p.lng])} 
+            color={routeColors[index % routeColors.length]}
+          >
+            <Popup>{route.routeName}</Popup>
+          </Polyline>
       ))}
-      {polyline.length > 0 && <Polyline positions={polyline} color="blue" />}
+      {allStops.map((stop, index) => (
+         <Marker
+            key={index}
+            position={[stop.lat, stop.lng]}
+            icon={createStopIcon()}
+        />
+      ))}
     </MapContainer>
   );
 }
