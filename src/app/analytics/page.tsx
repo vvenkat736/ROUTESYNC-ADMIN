@@ -13,7 +13,7 @@ import { FleetOverview } from "@/components/dashboard/FleetOverview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { collection, query, where, getCountFromServer } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function AnalyticsPage() {
@@ -26,9 +26,11 @@ export default function AnalyticsPage() {
       return;
     }
     const driversQuery = query(collection(db, "drivers"), where("city", "==", organization));
-    getCountFromServer(driversQuery).then((snapshot) => {
-        setDriverCount(snapshot.data().count);
+    const unsubscribe = onSnapshot(driversQuery, (snapshot) => {
+        setDriverCount(snapshot.size);
     });
+    
+    return () => unsubscribe();
   }, [organization]);
 
   return (

@@ -52,8 +52,8 @@ export function FleetOverview({
 
     // Fetch Drivers Count
     const driversQuery = query(collection(db, "drivers"), where("city", "==", organization));
-    getCountFromServer(driversQuery).then((snapshot) => {
-        setDriverCount(snapshot.data().count);
+    const unsubscribeDrivers = onSnapshot(driversQuery, (snapshot) => {
+        setDriverCount(snapshot.size);
     });
 
     const stopsQuery = query(collection(db, "stops"), where("city", "==", organization));
@@ -81,6 +81,7 @@ export function FleetOverview({
     });
 
     return () => {
+      unsubscribeDrivers();
       stopsUnsubscribe();
       routesUnsubscribe();
     };
