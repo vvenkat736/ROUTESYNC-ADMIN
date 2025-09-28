@@ -31,8 +31,9 @@ const AiStopSchema = z.object({
 // The main exported function that the UI will call
 export async function processAndStoreStops(input: ProcessStopsInput): Promise<{ count: number }> {
     const { output } = await processStopsFlow(input);
-    if (!output || !output.stops) {
-        throw new Error("AI failed to process the stop data. The model returned an empty response.");
+    // Add more robust check
+    if (!output || !output.stops || !Array.isArray(output.stops) || output.stops.length === 0) {
+        throw new Error("AI failed to process the stop data. The model returned an empty or invalid response. Please check the CSV file format and try again.");
     }
     
     const db = getFirestore(app);
@@ -58,18 +59,44 @@ const processStopsPrompt = ai.definePrompt({
   name: 'stopImporterPrompt',
   input: { schema: ProcessStopsInputSchema },
   output: { schema: z.object({ stops: z.array(AiStopSchema) }) },
-  prompt: `You are a data processing expert for a bus fleet in India. You will be given the content of a CSV file containing bus stop information.
-Your task is to parse this CSV content and structure the data into a JSON format.
+  prompt: `You are a highly accurate data processing expert for a public transit system in India.
+Your task is to parse CSV content containing bus stop information and convert it into a structured JSON object.
 
-The CSV file has the following columns: stop_id, stop_name, lat, lng, note.
-
-You must parse each row of the CSV into a structured JSON object. Ensure that 'lat' and 'lng' are converted to numbers.
+You must be resilient to common issues like extra whitespace, empty lines, or additional columns that are not part of the schema.
+The required columns are: stop_id, stop_name, lat, lng, note. You must parse each row into a JSON object matching the defined schema.
+Ensure that 'lat' and 'lng' are always converted to numbers. If a 'note' is not provided, it should be omitted or be an empty string.
 
 The 'city' for these stops is: {{{city}}}.
 
-The final output must be a JSON object containing a "stops" key, which is a list of stop objects.
+Example:
+Input CSV Content:
+"stop_id","stop_name","lat","lng","note"
+"S01","Central Bus Stand","10.79861","78.68041","Main hub"
+"S02","Chathiram","10.83178","78.69323",""
 
-CSV Content:
+Expected JSON Output:
+{
+  "stops": [
+    {
+      "stop_id": "S01",
+      "stop_name": "Central Bus Stand",
+      "lat": 10.79861,
+      "lng": 78.68041,
+      "note": "Main hub"
+    },
+    {
+      "stop_id": "S02",
+      "stop_name": "Chathiram",
+      "lat": 10.83178,
+      "lng": 78.69323,
+      "note": ""
+    }
+  ]
+}
+
+The final output MUST be a JSON object containing a "stops" key, which is a list of stop objects.
+
+Here is the CSV content to process:
 {{{csvContent}}}
 `,
 });
