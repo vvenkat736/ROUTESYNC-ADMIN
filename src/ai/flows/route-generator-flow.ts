@@ -87,23 +87,42 @@ function orderStops(stops: StopInfo[]): StopInfo[] {
     return orderedRoute;
 }
 
+export const getStopsTool = ai.defineTool(
+    {
+      name: 'getStops',
+      description: 'Get the list of all available bus stops and their locations for a specific city.',
+      inputSchema: z.object({ city: z.string() }),
+      outputSchema: z.array(z.object({
+          stop_id: z.string(),
+          stop_name: z.string(),
+          lat: z.number(),
+          lng: z.number(),
+      })),
+    },
+    async ({city}) => {
+        const db = getFirestore(app);
+        const q = query(collection(db, "stops"), where("city", "==", city));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                stop_id: doc.id,
+                ...data,
+                lat: parseFloat(data.lat),
+                lng: parseFloat(data.lng),
+            } as any;
+        });
+    }
+);
+
 
 async function getStopsForCity(city: string): Promise<StopInfo[]> {
-    const db = getFirestore(app);
-    const q = query(collection(db, "stops"), where("city", "==", city));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-        return [];
-    }
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            stop_id: doc.id,
-            stop_name: data.stop_name,
-            lat: parseFloat(data.lat),
-            lng: parseFloat(data.lng),
-        } as StopInfo;
-    });
+    const stops = await getStopsTool({city});
+    return stops.map(s => ({
+        ...s,
+        lat: Number(s.lat),
+        lng: Number(s.lng)
+    })) as StopInfo[];
 }
 
 
@@ -114,8 +133,12 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise
   
     // 1. Prepare data for k-means
     const vectors = stops.map(stop => [stop.lat, stop.lng]);
-    const numClusters = Math.min(7, stops.length); // Create up to 7 routes
+    const numClusters = Math.min(7, Math.floor(stops.length / 2)); 
   
+    if (numClusters < 1) {
+        throw new Error("Not enough stops to form even one route.");
+    }
+
     // 2. Run k-means clustering
     const kMeansResult = await new Promise<any[]>((resolve, reject) => {
       kmeans.clusterize(vectors, { k: numClusters }, (err, res) => {
@@ -161,7 +184,7 @@ async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise
 
     // 4. Create routes from clusters
     const generatedRoutes = Object.values(clusters).map((clusterStops, index) => {
-      if (clusterStops.length === 0) return null;
+      if (clusterStops.length < 2) return null;
       
       const orderedClusterStops = orderStops(clusterStops);
       const firstStop = orderedClusterStops[0];
