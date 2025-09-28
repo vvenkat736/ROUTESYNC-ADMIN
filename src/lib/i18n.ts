@@ -96,6 +96,13 @@ export const translations = {
     generating_routes_desc: 'AI is analyzing stops and generating optimal routes. This may take a moment...',
     no_stops_found: 'No Stops Found',
     no_stops_desc: 'Please import stops on the "Stop Management" page before generating routes.',
+    delete_dataset: 'Delete Dataset',
+    delete_dataset_confirm_title: 'Are you absolutely sure?',
+    delete_dataset_confirm_desc: 'This will permanently delete all stop data for your city. This action cannot be undone.',
+    delete_success: 'Dataset Deleted',
+    delete_success_desc: 'All stops for your city have been removed.',
+    delete_error: 'Deletion Failed',
+    delete_error_desc: 'Could not delete the stops. Please try again.',
   },
   ta: {
     app_name: 'ரூட்சின்க்',
@@ -191,7 +198,16 @@ export const translations = {
     generating_routes_desc: 'AI நிறுத்தங்களை பகுப்பாய்வு செய்து சிறந்த வழித்தடங்களை உருவாக்குகிறது. దీనికి కొంత సమయం పట్టవచ్చు...',
     no_stops_found: 'நிறுத்தங்கள் எதுவும் இல்லை',
     no_stops_desc: 'வழித்தடங்களை உருவாக்கும் முன், "நிறுத்த மேலாண்மை" பக்கத்தில் நிறுத்தங்களை இறக்குமதி செய்யவும்.',
+    delete_dataset: 'தரவுத்தொகுப்பை நீக்கு',
+    delete_dataset_confirm_title: 'நீங்கள் முற்றிலும் உறுதியாக இருக்கிறீர்களா?',
+    delete_dataset_confirm_desc: 'இது உங்கள் நகரத்திற்கான அனைத்து நிறுத்தத் தரவையும் நிரந்தரமாக நீக்கும். இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.',
+    delete_success: 'தரவுத்தொகுப்பு நீக்கப்பட்டது',
+    delete_success_desc: 'உங்கள் நகரத்திற்கான அனைத்து நிறுத்தங்களும் அகற்றப்பட்டன.',
+    delete_error: 'நீக்குதல் தோல்வியடைந்தது',
+    delete_error_desc: 'நிறுத்தங்களை நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
   },
 };
 
 export type TranslationKeys = keyof typeof translations.en;
+
+    

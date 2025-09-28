@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -6,7 +7,7 @@ import { SidebarProvider, Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { useLanguage } from "@/hooks/use-language";
-import { MapPin, UploadCloud, Pencil, Trash2, Loader2, Plus } from "lucide-react";
+import { MapPin, UploadCloud, Pencil, Trash2, Loader2, Plus, AlertTriangle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -32,6 +33,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db } from "@/lib/firebase";
@@ -82,8 +94,8 @@ export default function StopImportPage() {
       stopsData.push({ 
           stop_id: doc.id,
           ...data,
-          lat: parseFloat(data.lat),
-          lng: parseFloat(data.lng),
+          lat: parseFloat(data.lat as any),
+          lng: parseFloat(data.lng as any),
       } as Stop);
     });
     setStops(stopsData);
@@ -103,8 +115,8 @@ export default function StopImportPage() {
         stopsData.push({ 
             stop_id: doc.id,
             ...data,
-            lat: parseFloat(data.lat),
-            lng: parseFloat(data.lng),
+            lat: parseFloat(data.lat as any),
+            lng: parseFloat(data.lng as any),
         } as Stop);
       });
       setStops(stopsData);
@@ -206,6 +218,38 @@ export default function StopImportPage() {
     setEditDialogOpen(true);
   };
 
+  const handleDeleteDataset = async () => {
+    if (!organization) return;
+
+    try {
+        const q = query(collection(db, "stops"), where("city", "==", organization));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            toast({ title: "No stops to delete.", variant: "default" });
+            return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        toast({
+            title: t('delete_success'),
+            description: t('delete_success_desc'),
+        });
+    } catch (error) {
+        console.error("Error deleting dataset: ", error);
+        toast({
+            title: t('delete_error'),
+            description: t('delete_error_desc'),
+            variant: "destructive",
+        });
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen md:flex">
@@ -305,6 +349,41 @@ export default function StopImportPage() {
                     </Table>
                 </CardContent>
                 </Card>
+                <Card className="mt-6 border-destructive">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle />
+                            {t('delete_dataset')}
+                        </CardTitle>
+                        <CardDescription>
+                            {t('delete_dataset_confirm_desc')}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {t('delete_dataset')}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>{t('delete_dataset_confirm_title')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('delete_dataset_confirm_desc')}
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteDataset}>
+                                    Continue
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </CardContent>
+                </Card>
           </main>
         </div>
       </div>
@@ -322,3 +401,5 @@ export default function StopImportPage() {
     </SidebarProvider>
   );
 }
+
+    
