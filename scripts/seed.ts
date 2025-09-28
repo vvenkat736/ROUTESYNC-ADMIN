@@ -6,7 +6,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, writeBatch, Timestamp, doc } from 'firebase/firestore';
-import { buses, alerts as staticAlerts, stops } from '../src/lib/data';
+import { buses, alerts as staticAlerts, stops, routes } from '../src/lib/data';
 
 // IMPORTANT: Replace with your actual Firebase project configuration
 const firebaseConfig = {
@@ -27,10 +27,21 @@ async function seedDatabase() {
   console.log('Seeding stops...');
   stops.forEach(stop => {
       const { stop_id, ...stopData } = stop;
-      const docRef = doc(stopsCollection, stop_id);
-      batch.set(docRef, stopData);
+      if (stop_id) {
+        const docRef = doc(stopsCollection, stop_id);
+        batch.set(docRef, stopData);
+      }
   });
   console.log('Stops prepared.');
+
+  // Seed routes
+  const routesCollection = collection(db, 'routes');
+  console.log('Seeding routes...');
+  routes.forEach(route => {
+    const docRef = doc(routesCollection); // Auto-generate ID for each route segment
+    batch.set(docRef, route);
+  });
+  console.log('Routes prepared.');
 
   // Seed buses
   const busesCollection = collection(db, 'buses');
@@ -56,7 +67,7 @@ async function seedDatabase() {
 
   try {
     await batch.commit();
-    console.log('Database seeded successfully with stops, buses, and alerts!');
+    console.log('Database seeded successfully with stops, routes, buses, and alerts!');
   } catch (error) {
     console.error('Error seeding database:', error);
   } finally {
@@ -66,5 +77,3 @@ async function seedDatabase() {
 }
 
 seedDatabase();
-
-    
