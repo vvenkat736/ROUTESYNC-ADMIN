@@ -33,7 +33,7 @@ const BusLogo = () => (
 
 export function SidebarNav() {
   const { t } = useLanguage();
-  const { logout } = useAuth();
+  const { logout, organization } = useAuth();
   const pathname = usePathname();
 
   const menuItems = [
@@ -58,6 +58,8 @@ export function SidebarNav() {
     return pathname.startsWith(href);
   };
 
+  const orgName = organization ? organization.charAt(0).toUpperCase() + organization.slice(1) : t('admin_panel');
+
 
   return (
     <>
@@ -68,7 +70,7 @@ export function SidebarNav() {
             <h2 className="text-lg font-semibold font-headline tracking-tight text-primary">
               {t('app_name')}
             </h2>
-            <p className="text-xs text-muted-foreground">{t('admin_panel')}</p>
+            <p className="text-xs text-muted-foreground">{orgName} {t('org_admin_panel')}</p>
           </div>
         </div>
       </SidebarHeader>

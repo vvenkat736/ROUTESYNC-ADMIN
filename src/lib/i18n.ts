@@ -6,6 +6,7 @@ export const translations = {
     app_name: 'RouteSync',
     app_name_admin: 'RouteSync ADMIN',
     admin_panel: 'Admin Panel',
+    org_admin_panel: 'Admin Panel',
     dashboard: 'Dashboard',
     live_map: 'Live Map',
     analytics: 'Analytics',
@@ -100,6 +101,7 @@ export const translations = {
     app_name: 'ரூட்சின்க்',
     app_name_admin: 'ரூட்சின்க் நிர்வாகம்',
     admin_panel: 'நிர்வாகக் குழு',
+    org_admin_panel: 'நிர்வாகக் குழு',
     dashboard: 'டாஷ்போர்டு',
     live_map: 'நேரடி வரைபடம்',
     analytics: 'பகுப்பாய்வுகள்',
@@ -193,5 +195,3 @@ export const translations = {
 };
 
 export type TranslationKeys = keyof typeof translations.en;
-
-    

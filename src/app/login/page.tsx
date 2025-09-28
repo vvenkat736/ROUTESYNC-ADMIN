@@ -16,8 +16,8 @@ import { useLanguage } from "@/hooks/use-language";
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@trichy");
+  const [password, setPassword] = useState("trichyrs");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -51,7 +51,7 @@ export default function LoginPage() {
                 <Bus className="h-8 w-8 text-primary" />
                 <CardTitle className="text-3xl">{t('app_name')}</CardTitle>
             </div>
-          <CardDescription>Enter your credentials to access the admin dashboard.</CardDescription>
+          <CardDescription>Enter your admin credentials for your city.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -60,7 +60,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@trichy"
+                placeholder="admin@cityname"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
