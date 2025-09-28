@@ -58,6 +58,12 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
   const cityBuses = liveBuses ?? allCityBuses;
   const cityRoutes = displayRoutes ?? [];
 
+  const busIcons = useMemo(() => ({
+    Active: createBusIcon('Active'),
+    Delayed: createBusIcon('Delayed'),
+    Inactive: createBusIcon('Inactive'),
+  }), []);
+
   useEffect(() => {
     if (!organization) {
       setCityStops([]);
@@ -151,7 +157,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
                       <Marker
                         key={bus.id}
                         position={[bus.lat, bus.lng]}
-                        icon={createBusIcon(bus.status)}
+                        icon={busIcons[bus.status]}
                       >
                         <Popup>
                           <div className="w-56 p-1 font-sans">
