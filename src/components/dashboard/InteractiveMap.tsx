@@ -137,7 +137,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
         let initialLat = bus.lat;
         let initialLng = bus.lng;
 
-        if (routePath.length > 1 && routePath[currentSegment] && routePath[currentSegment + 1]) {
+        if (bus.status === 'Active' && routePath.length > 1 && routePath[currentSegment] && routePath[currentSegment + 1]) {
             const startPoint = routePath[currentSegment];
             const endPoint = routePath[currentSegment + 1];
             initialLat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
@@ -152,7 +152,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
             currentSegment: currentSegment,
             segmentProgress: segmentProgress,
         };
-    }).filter(b => b.routePath.length > 0);
+    });
 
     setAnimatedBuses(busesWithRoutes);
 
@@ -175,7 +175,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     const interval = setInterval(() => {
       setAnimatedBuses(currentBuses => 
         currentBuses.map(bus => {
-          if (bus.status !== 'Active' || bus.routePath.length < 2) {
+          if (bus.status !== 'Active' || !bus.routePath || bus.routePath.length < 2) {
               const dbBus = cityBuses.find(b => b.id === bus.id);
               if (dbBus) {
                   return { ...bus, lat: dbBus.lat, lng: dbBus.lng };
@@ -212,7 +212,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [cityBuses]);
+  }, [cityBuses]); // Depend on cityBuses to handle updates correctly
 
   return (
     <Card className="h-full overflow-hidden">
@@ -318,5 +318,7 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
       </CardContent>
     </Card>
   );
+
+    
 
     
