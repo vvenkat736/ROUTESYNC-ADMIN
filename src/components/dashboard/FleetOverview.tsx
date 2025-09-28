@@ -18,7 +18,23 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useBusData } from "@/hooks/use-bus-data";
 
-export function FleetOverview() {
+interface FleetOverviewProps {
+  searchText: string;
+  setSearchText: (text: string) => void;
+  selectedRoute: string;
+  setSelectedRoute: (route: string) => void;
+  selectedStatus: string;
+  setSelectedStatus: (status: string) => void;
+}
+
+export function FleetOverview({
+  searchText,
+  setSearchText,
+  selectedRoute,
+  setSelectedRoute,
+  selectedStatus,
+  setSelectedStatus,
+}: FleetOverviewProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
   const { buses: cityBuses } = useBusData();
@@ -67,6 +83,17 @@ export function FleetOverview() {
   const delayedBuses = cityBuses.filter(b => b.status === "Delayed").length;
   const inactiveBuses = cityBuses.filter(b => b.status === "Inactive").length;
 
+  // Get unique routes for the dropdown
+  const uniqueRoutes = useMemo(() => {
+      const routeMap = new Map<string, Route>();
+      cityRoutes.forEach(route => {
+          if(!routeMap.has(route.route_id)) {
+              routeMap.set(route.route_id, route);
+          }
+      });
+      return Array.from(routeMap.values());
+  }, [cityRoutes]);
+
   return (
     <div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -111,9 +138,14 @@ export function FleetOverview() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('filter_by_bus_or_driver')} className="pl-10" />
+          <Input 
+            placeholder={t('filter_by_bus_or_driver')} 
+            className="pl-10" 
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
         </div>
-        <Select>
+        <Select value={selectedRoute} onValueChange={setSelectedRoute}>
           <SelectTrigger>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -121,12 +153,13 @@ export function FleetOverview() {
             </div>
           </SelectTrigger>
           <SelectContent>
-            {cityRoutes.map(route => (
-              <SelectItem key={route.id} value={route.route_id!}>{route.routeName}</SelectItem>
+            <SelectItem value="all">All Routes</SelectItem>
+            {uniqueRoutes.map(route => (
+              <SelectItem key={route.route_id} value={route.route_id}>{route.routeName}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select>
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
           <SelectTrigger>
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -134,6 +167,7 @@ export function FleetOverview() {
             </div>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="active">{t('active')}</SelectItem>
             <SelectItem value="delayed">{t('delayed')}</SelectItem>
             <SelectItem value="inactive">{t('inactive')}</SelectItem>

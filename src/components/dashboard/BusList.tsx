@@ -21,11 +21,14 @@ import { Badge } from "@/components/ui/badge";
 import type { Bus } from "@/lib/data";
 import { useLanguage } from "@/hooks/use-language";
 import { ScrollArea } from "../ui/scroll-area";
-import { useBusData } from "@/hooks/use-bus-data";
 
-export function BusList() {
+
+interface BusListProps {
+    buses: Bus[];
+}
+
+export function BusList({ buses }: BusListProps) {
   const { t } = useLanguage();
-  const { buses } = useBusData();
 
   const getStatusVariant = (status: Bus['status']) => {
     if (status === 'Active') return 'bg-green-500 hover:bg-green-500/80';
@@ -54,18 +57,24 @@ export function BusList() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {buses.map((bus) => (
-                    <TableRow key={bus.id}>
-                        <TableCell className="font-medium">{bus.busNumber}</TableCell>
-                        <TableCell>{bus.driver}</TableCell>
-                        <TableCell>{bus.route}</TableCell>
-                        <TableCell className="text-right">
-                        <Badge className={getStatusVariant(bus.status)}>
-                            {t(bus.status.toLowerCase() as any)}
-                        </Badge>
-                        </TableCell>
-                    </TableRow>
-                    ))}
+                    {buses.length > 0 ? buses.map((bus) => (
+                        <TableRow key={bus.id}>
+                            <TableCell className="font-medium">{bus.busNumber}</TableCell>
+                            <TableCell>{bus.driver}</TableCell>
+                            <TableCell>{bus.route}</TableCell>
+                            <TableCell className="text-right">
+                            <Badge className={getStatusVariant(bus.status)}>
+                                {t(bus.status.toLowerCase() as any)}
+                            </Badge>
+                            </TableCell>
+                        </TableRow>
+                    )) : (
+                        <TableRow>
+                            <TableCell colSpan={4} className="h-24 text-center">
+                                No buses match the current filters.
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
         </ScrollArea>

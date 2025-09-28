@@ -66,14 +66,17 @@ interface AnimatedBus extends Bus {
 
 interface InteractiveMapProps {
     optimizedRoute?: OptimizeRouteOutput | null;
+    liveBuses?: Bus[];
 }
 
-export default function InteractiveMap({ optimizedRoute = null }: InteractiveMapProps) {
+export default function InteractiveMap({ optimizedRoute = null, liveBuses }: InteractiveMapProps) {
   const { t } = useLanguage();
   const { organization } = useAuth();
-  const { buses: cityBuses } = useBusData();
+  const { buses: allCityBuses } = useBusData();
   const [cityStops, setCityStops] = useState<Stop[]>([]);
   const [cityRoutes, setCityRoutes] = useState<RouteType[]>([]);
+  
+  const cityBuses = liveBuses ?? allCityBuses;
 
   // Fetch stops and routes in real-time
   useEffect(() => {
