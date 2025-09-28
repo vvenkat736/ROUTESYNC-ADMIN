@@ -18,7 +18,7 @@ const ProcessRoutesInputSchema = z.object({
   csvContent: z.string().describe('The full content of the CSV file.'),
   city: z.string().describe('The city these routes belong to.'),
 });
-export type ProcessRoutesInput = z.infer<typeof ProcessRoutesInputSchema>;
+type ProcessRoutesInput = z.infer<typeof ProcessRoutesInputSchema>;
 
 // Point schema for geographic coordinates
 const PointSchema = z.object({
