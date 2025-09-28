@@ -25,7 +25,16 @@ const GeocodeOutputSchema = z.object({
 export type GeocodeOutput = z.infer<typeof GeocodeOutputSchema>;
 
 export async function geocodeLocation(input: GeocodeInput): Promise<GeocodeOutput> {
-  return geocodeFlow(input);
+  try {
+    return await geocodeFlow(input);
+  } catch (error: any) {
+    // Check for specific API service errors (like 503)
+    if (error.message && error.message.includes('Service Unavailable')) {
+      throw new Error("The geocoding service is temporarily unavailable. Please try again in a few moments.");
+    }
+    // Re-throw other errors
+    throw error;
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -61,5 +70,3 @@ const geocodeFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
