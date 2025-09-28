@@ -32,13 +32,13 @@ export function BusList({ buses }: BusListProps) {
 
   const getStatusVariant = (status: Bus['status']) => {
     if (status === 'Active') return 'bg-green-500 hover:bg-green-500/80';
-    if (status === 'Delayed') return 'bg-orange-500 hover:bg-orange-500/80';
+    if (status === 'Delayed') return 'bg-red-500 hover:bg-red-500/80';
     if (status === 'Inactive') return 'bg-gray-500 hover:bg-gray-500/80';
     return 'bg-primary';
   }
 
   return (
-    <Card className="h-[600px] flex flex-col">
+    <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
       <CardHeader>
         <CardTitle>{t('active_buses')}</CardTitle>
         <CardDescription>

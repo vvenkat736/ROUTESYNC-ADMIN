@@ -8,16 +8,16 @@ import { Header } from "@/components/dashboard/Header";
 import { SidebarNav } from "@/components/dashboard/SidebarNav";
 import { FleetOverview } from "@/components/dashboard/FleetOverview";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BusList } from "@/components/dashboard/BusList";
 import { useBusData } from "@/hooks/use-bus-data";
 import type { Bus, Route } from "@/lib/data";
 import { useAuth } from "@/contexts/AuthContext";
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { BusListSidebar } from "@/components/dashboard/BusListSidebar";
 
 const InteractiveMap = dynamic(() => import('@/components/dashboard/InteractiveMap'), {
   ssr: false,
-  loading: () => <Skeleton className="h-[600px] lg:h-full w-full" />,
+  loading: () => <Skeleton className="h-full w-full" />,
 });
 
 export default function Home() {
@@ -54,26 +54,21 @@ export default function Home() {
   }, [organization]);
   
   React.useEffect(() => {
-    // Filter buses based on selections
     const newFilteredBuses = buses.filter(bus => {
         const searchMatch = searchText === "" ||
             bus.busNumber.toLowerCase().includes(searchText.toLowerCase()) ||
             bus.driver.toLowerCase().includes(searchText.toLowerCase());
         
         const routeMatch = selectedRoute === "all" || bus.route === selectedRoute;
-
         const statusMatch = selectedStatus === "all" || bus.status.toLowerCase() === selectedStatus;
 
         return searchMatch && routeMatch && statusMatch;
     });
     setFilteredBuses(newFilteredBuses);
 
-    // Now, filter the routes to display on the map
     if (selectedRoute === 'all') {
-        // If "All Routes" is selected, show all routes for the city.
         setFilteredRoutes(allRoutes);
     } else {
-        // Otherwise, show only the specific route selected.
         const newFilteredRoutes = allRoutes.filter(route => route.route_id === selectedRoute);
         setFilteredRoutes(newFilteredRoutes);
     }
@@ -88,23 +83,25 @@ export default function Home() {
         </Sidebar>
         <div className="flex-1">
           <Header />
-          <main className="p-4 lg:p-6 space-y-6 bg-background">
-            <FleetOverview 
-              searchText={searchText}
-              setSearchText={setSearchText}
-              selectedRoute={selectedRoute}
-              setSelectedRoute={setSelectedRoute}
-              selectedStatus={selectedStatus}
-              setSelectedStatus={setSelectedStatus}
-            />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="lg:col-span-1">
-                {isClient ? <InteractiveMap liveBuses={filteredBuses} displayRoutes={filteredRoutes} /> : <Skeleton className="h-[600px] lg:h-full w-full" />}
-              </div>
-              <div className="lg:col-span-1">
-                <BusList buses={filteredBuses} />
-              </div>
+          <main className="relative h-[calc(100vh-4rem)] overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-background/80 backdrop-blur-sm">
+                <FleetOverview 
+                searchText={searchText}
+                setSearchText={setSearchText}
+                selectedRoute={selectedRoute}
+                setSelectedRoute={setSelectedRoute}
+                selectedStatus={selectedStatus}
+                setSelectedStatus={setSelectedStatus}
+                />
             </div>
+            <div className="h-full pt-40">
+                {isClient ? (
+                    <InteractiveMap liveBuses={filteredBuses} displayRoutes={filteredRoutes} />
+                ) : (
+                    <Skeleton className="h-full w-full" />
+                )}
+            </div>
+            <BusListSidebar buses={filteredBuses} />
           </main>
         </div>
       </div>
