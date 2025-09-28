@@ -7,8 +7,10 @@ import { MapPin } from 'lucide-react';
 export default function LoadingScreen() {
     const [progress, setProgress] = useState(0);
     const [showText, setShowText] = useState(false);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
         const timer = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
@@ -26,6 +28,10 @@ export default function LoadingScreen() {
             clearTimeout(textTimer);
         };
     }, []);
+
+    if (!isClient) {
+        return null;
+    }
     
     return (
         <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">

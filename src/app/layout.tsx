@@ -18,40 +18,37 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   React.useEffect(() => {
-    // This timer is for the initial splash screen aesthetic
-    const timer = setTimeout(() => setInitialLoading(false), 4000); 
+    // This effect is for the aesthetic splash screen
+    const timer = setTimeout(() => {
+        setInitialLoading(false);
+    }, 4000); 
+
     return () => clearTimeout(timer);
   }, []);
 
   React.useEffect(() => {
-    // This effect handles redirection based on auth state
-    if (!isAuthLoading && !isAuthenticated && pathname !== '/login') {
-      router.push('/login');
+    // This effect handles redirection based on auth state once auth is resolved
+    if (!isAuthLoading) {
+      if (!isAuthenticated && pathname !== '/login') {
+        router.push('/login');
+      } else if (isAuthenticated && pathname === '/login') {
+        router.push('/');
+      }
     }
   }, [isAuthLoading, isAuthenticated, pathname, router]);
 
-  // Show a loading screen if auth is still loading, OR if it's the initial splash screen time,
-  // but do not show the splash screen for the login page itself.
-  if (isAuthLoading || (initialLoading && pathname !== '/login')) {
-      // If we are on the login path, and auth is done, we can show the login page.
-      // Otherwise, we might be in a redirect state or initial load.
-      if (pathname === '/login' && !isAuthLoading) {
-         return <div className="min-h-screen bg-background">{children}</div>;
-      }
-      return <LoadingScreen />;
+  const showLoadingScreen = isAuthLoading || (initialLoading && pathname !== '/login');
+
+  if (showLoadingScreen) {
+    return <LoadingScreen />;
   }
 
-  // After all loading, if we're not authenticated and not on the login page,
-  // we might still be in the process of redirecting. A blank screen is better than a flash of content.
   if (!isAuthenticated && pathname !== '/login') {
-      return null;
+    // While redirecting, it's better to show nothing than a flash of the login page
+    return null;
   }
 
-  return (
-    <div style={{ visibility: initialLoading && pathname !== '/login' ? 'hidden' : 'visible' }}>
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }
 
 export default function RootLayout({
