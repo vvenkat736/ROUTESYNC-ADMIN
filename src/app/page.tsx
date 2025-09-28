@@ -97,8 +97,8 @@ export default function Home() {
               selectedStatus={selectedStatus}
               setSelectedStatus={setSelectedStatus}
             />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="lg:col-span-1">
                 {isClient ? <InteractiveMap liveBuses={filteredBuses} displayRoutes={filteredRoutes} /> : <Skeleton className="h-[600px] lg:h-full w-full" />}
               </div>
               <div className="lg:col-span-1">
