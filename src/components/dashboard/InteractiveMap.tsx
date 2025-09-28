@@ -28,19 +28,27 @@ const occupancyColors: { [key: string]: string } = {
 const routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
 
 const createBusIcon = (status: Bus['status']) => {
-    const color = statusColors[status] || '#000';
-    const busEmoji = status === 'Active' ? '🟢' : status === 'Delayed' ? '🔴' : '⚫️';
+    const color = statusColors[status] || '#6B7280';
     return L.divIcon({
       html: `
-        <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: rotate(270deg);">
-          <div style="font-size: 28px; ">🚍</div>
-          <div style="position: absolute; top: 12px; left: 13px; font-size: 14px; transform: rotate(-270deg);">${busEmoji}</div>
+        <div style="
+          background-color: ${color};
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 2px solid white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        ">
+          <div style="font-size: 16px;">🚍</div>
         </div>
       `,
       className: 'bg-transparent border-0',
-      iconSize: [30, 40],
-      iconAnchor: [15, 40],
-      popupAnchor: [0, -40],
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
     });
 };
 
@@ -310,4 +318,5 @@ export default function InteractiveMap({ liveBuses, displayRoutes }: Interactive
       </CardContent>
     </Card>
   );
-}
+
+    
