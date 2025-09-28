@@ -40,6 +40,7 @@ import type { Stop } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { AddStopDialog } from "@/components/dashboard/AddStopDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { EditStopDialog } from "@/components/dashboard/EditStopDialog";
 
 
 // Simple CSV to JSON parser
@@ -66,6 +67,8 @@ export default function StopImportPage() {
   const [isImporting, setIsImporting] = React.useState(false);
   const [importDialogOpen, setImportDialogOpen] = React.useState(false);
   const [addDialogOpen, setAddDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [selectedStop, setSelectedStop] = React.useState<Stop | null>(null);
 
   const { toast } = useToast();
 
@@ -186,6 +189,11 @@ export default function StopImportPage() {
     }
   };
 
+  const handleEditClick = (stop: Stop) => {
+    setSelectedStop(stop);
+    setEditDialogOpen(true);
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen md:flex">
@@ -271,7 +279,7 @@ export default function StopImportPage() {
                             <TableCell>{stop.note}</TableCell>
                             <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(stop)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground" onClick={() => handleDeleteStop(stop.stop_id)}>
@@ -288,6 +296,17 @@ export default function StopImportPage() {
           </main>
         </div>
       </div>
+      {selectedStop && (
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <EditStopDialog 
+                stop={selectedStop}
+                onSuccess={() => {
+                    setEditDialogOpen(false);
+                    setSelectedStop(null);
+                }}
+            />
+        </Dialog>
+      )}
     </SidebarProvider>
   );
 }
