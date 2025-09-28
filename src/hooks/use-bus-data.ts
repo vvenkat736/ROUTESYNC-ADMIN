@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import type { Bus, Route } from '@/lib/data';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function useBusData(routes?: Route[]) {
+export function useBusData(routes: Route[]) {
   const { organization } = useAuth();
   const [buses, setBuses] = useState<Bus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
