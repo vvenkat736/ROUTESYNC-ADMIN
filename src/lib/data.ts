@@ -1,5 +1,4 @@
 
-
 export type Bus = {
   id: string; // Changed to string to match firestore doc id
   busNumber: string;
@@ -10,6 +9,9 @@ export type Bus = {
   lat: number;
   lng: number;
   city: string;
+  occupancy: 'Empty' | 'Half-Full' | 'Full' | 'Overcrowded';
+  nextStop: string;
+  nextStopETA: number; // in minutes
 };
 
 export type Route = {
@@ -84,26 +86,32 @@ export const stops: Stop[] = [
 
 export const buses: Omit<Bus, 'id'>[] = [
   // Trichy Buses
-  { busNumber: 'TN 45 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R-TR-1', status: 'Active', lat: 10.79861, lng: 78.68041, city: 'trichy' },
-  { busNumber: 'TN 45 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R-TR-2', status: 'Active', lat: 10.83178, lng: 78.69323, city: 'trichy' },
-  { busNumber: 'TN 45 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R-TR-3', status: 'Delayed', lat: 10.82577, lng: 78.68337, city: 'trichy' },
-  { busNumber: 'TN 45 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R-TR-1', status: 'Active', lat: 10.824, lng: 78.6815, city: 'trichy' },
-  { busNumber: 'TN 45 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R-TR-4', status: 'Inactive', lat: 10.80009, lng: 78.68786, city: 'trichy' },
+  { busNumber: 'TN 45 C 1234', driver: 'M. Kumar', driverAvatar: '1', route: 'R-TR-1', status: 'Active', lat: 10.79861, lng: 78.68041, city: 'trichy', occupancy: 'Half-Full', nextStop: 'Heber Road', nextStopETA: 5 },
+  { busNumber: 'TN 45 A 5678', driver: 'S. Priya', driverAvatar: '2', route: 'R-TR-2', status: 'Active', lat: 10.83178, lng: 78.69323, city: 'trichy', occupancy: 'Full', nextStop: 'Palpannai', nextStopETA: 3 },
+  { busNumber: 'TN 45 D 9012', driver: 'R. Suresh', driverAvatar: '3', route: 'R-TR-1', status: 'Delayed', lat: 10.82577, lng: 78.68337, city: 'trichy', occupancy: 'Overcrowded', nextStop: 'Chathiram', nextStopETA: 15 },
+  { busNumber: 'TN 45 B 3456', driver: 'K. Anitha', driverAvatar: '4', route: 'R-TR-1', status: 'Active', lat: 10.824, lng: 78.6815, city: 'trichy', occupancy: 'Empty', nextStop: 'Thillai Nagar', nextStopETA: 8 },
+  { busNumber: 'TN 45 E 7890', driver: 'V. Arun', driverAvatar: '5', route: 'R-TR-2', status: 'Inactive', lat: 10.80009, lng: 78.68786, city: 'trichy', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
 
   // Tanjavur Buses
-  { busNumber: 'TN 49 C 1111', driver: 'A. Ganesh', driverAvatar: '1', route: 'R-TA-1', status: 'Active', lat: 10.7900, lng: 79.1384, city: 'tanjavur' },
-  { busNumber: 'TN 49 A 2222', driver: 'B. Lakshmi', driverAvatar: '2', route: 'R-TA-1', status: 'Delayed', lat: 10.7828, lng: 79.1318, city: 'tanjavur' },
-  { busNumber: 'TN 49 B 3333', driver: 'C. David', driverAvatar: '3', route: 'R-TA-2', status: 'Active', lat: 10.7551, lng: 79.1170, city: 'tanjavur' },
-
+  { busNumber: 'TN 49 C 1111', driver: 'A. Ganesh', driverAvatar: '1', route: 'R-TA-1', status: 'Active', lat: 10.7900, lng: 79.1384, city: 'tanjavur', occupancy: 'Full', nextStop: 'Tanjavur Junction', nextStopETA: 7 },
+  { busNumber: 'TN 49 A 2222', driver: 'B. Lakshmi', driverAvatar: '2', route: 'R-TA-1', status: 'Delayed', lat: 10.7828, lng: 79.1318, city: 'tanjavur', occupancy: 'Half-Full', nextStop: 'Old Bus Stand', nextStopETA: 12 },
+  { busNumber: 'TN 49 B 3333', driver: 'C. David', driverAvatar: '3', route: 'R-TA-2', status: 'Active', lat: 10.7551, lng: 79.1170, city: 'tanjavur', occupancy: 'Empty', nextStop: 'Medical College', nextStopETA: 4 },
+  { busNumber: 'TN 49 D 4444', driver: 'D. Mary', driverAvatar: '4', route: 'R-TA-2', status: 'Inactive', lat: 10.76, lng: 79.12, city: 'tanjavur', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
+  { busNumber: 'TN 49 E 5555', driver: 'E. John', driverAvatar: '5', route: 'R-TA-1', status: 'Active', lat: 10.78, lng: 79.125, city: 'tanjavur', occupancy: 'Overcrowded', nextStop: 'Brihadeeswarar Temple', nextStopETA: 6 },
+  
   // Erode Buses
-  { busNumber: 'TN 33 D 1212', driver: 'F. Murugan', driverAvatar: '6', route: 'R-ER-1', status: 'Active', lat: 11.3360, lng: 77.7186, city: 'erode' },
-  { busNumber: 'TN 33 B 2323', driver: 'G. Saraswathi', driverAvatar: '7', route: 'R-ER-1', status: 'Inactive', lat: 11.3533, lng: 77.6975, city: 'erode' },
-  { busNumber: 'TN 33 A 3434', driver: 'H. Velu', driverAvatar: '8', route: 'R-ER-2', status: 'Delayed', lat: 11.3414, lng: 77.7077, city: 'erode' },
-
+  { busNumber: 'TN 33 D 1212', driver: 'F. Murugan', driverAvatar: '6', route: 'R-ER-1', status: 'Active', lat: 11.3360, lng: 77.7186, city: 'erode', occupancy: 'Half-Full', nextStop: 'Erode Junction', nextStopETA: 9 },
+  { busNumber: 'TN 33 B 2323', driver: 'G. Saraswathi', driverAvatar: '7', route: 'R-ER-1', status: 'Inactive', lat: 11.3533, lng: 77.6975, city: 'erode', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
+  { busNumber: 'TN 33 A 3434', driver: 'H. Velu', driverAvatar: '8', route: 'R-ER-2', status: 'Delayed', lat: 11.3414, lng: 77.7077, city: 'erode', occupancy: 'Full', nextStop: 'Collector Office', nextStopETA: 20 },
+  { busNumber: 'TN 33 C 4545', driver: 'I. Sheela', driverAvatar: '1', route: 'R-ER-2', status: 'Active', lat: 11.32, lng: 77.71, city: 'erode', occupancy: 'Empty', nextStop: 'GH', nextStopETA: 5 },
+  { busNumber: 'TN 33 E 5656', driver: 'J. Raja', driverAvatar: '2', route: 'R-ER-1', status: 'Active', lat: 11.28, lng: 77.6, city: 'erode', occupancy: 'Full', nextStop: 'Perundurai', nextStopETA: 10 },
+  
   // Salem Buses
-  { busNumber: 'TN 30 E 1001', driver: 'K. Ramesh', driverAvatar: '3', route: 'R-SA-1', status: 'Delayed', lat: 11.6643, lng: 78.1460, city: 'salem' },
-  { busNumber: 'TN 30 F 2002', driver: 'L. Vimala', driverAvatar: '4', route: 'R-SA-1', status: 'Active', lat: 11.6708, lng: 78.1255, city: 'salem' },
-  { busNumber: 'TN 30 A 3003', driver: 'M. Selvam', driverAvatar: '5', route: 'R-SA-2', status: 'Active', lat: 11.6534, lng: 78.1639, city: 'salem' },
+  { busNumber: 'TN 30 E 1001', driver: 'K. Ramesh', driverAvatar: '3', route: 'R-SA-1', status: 'Delayed', lat: 11.6643, lng: 78.1460, city: 'salem', occupancy: 'Overcrowded', nextStop: 'Hasthampatti', nextStopETA: 25 },
+  { busNumber: 'TN 30 F 2002', driver: 'L. Vimala', driverAvatar: '4', route: 'R-SA-1', status: 'Active', lat: 11.6708, lng: 78.1255, city: 'salem', occupancy: 'Half-Full', nextStop: 'Old Bus Stand', nextStopETA: 11 },
+  { busNumber: 'TN 30 A 3003', driver: 'M. Selvam', driverAvatar: '5', route: 'R-SA-2', status: 'Active', lat: 11.6534, lng: 78.1639, city: 'salem', occupancy: 'Full', nextStop: '5 Roads', nextStopETA: 4 },
+  { busNumber: 'TN 30 B 4004', driver: 'N. Devi', driverAvatar: '6', route: 'R-SA-2', status: 'Active', lat: 11.68, lng: 78.16, city: 'salem', occupancy: 'Empty', nextStop: 'New Bus Stand', nextStopETA: 9 },
+  { busNumber: 'TN 30 C 5005', driver: 'O. Babu', driverAvatar: '7', route: 'R-SA-1', status: 'Inactive', lat: 11.66, lng: 78.15, city: 'salem', occupancy: 'Empty', nextStop: 'N/A', nextStopETA: 0 },
 ];
 
 // This is now just for seeding and type reference.
@@ -189,3 +197,5 @@ export const carbonFootprintData = [
     { name: 'Apr', fleet: 278, cars: 3908 },
     { name: 'May', fleet: 189, cars: 4800 },
 ];
+
+    
