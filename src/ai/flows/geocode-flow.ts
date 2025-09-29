@@ -28,12 +28,18 @@ export async function geocodeLocation(input: GeocodeInput): Promise<GeocodeOutpu
   try {
     return await geocodeFlow(input);
   } catch (error: any) {
-    // Check for specific API service errors (like 503)
-    if (error.message && error.message.includes('Service Unavailable')) {
+    console.error("Geocoding flow failed:", error);
+    // Check for specific API service errors (like 503) or authentication issues (401, 403)
+    const errorMessage = error.message || '';
+    if (errorMessage.includes('Service Unavailable') || errorMessage.includes('503')) {
       throw new Error("The geocoding service is temporarily unavailable. Please try again in a few moments.");
     }
-    // Re-throw other errors
-    throw error;
+    if (errorMessage.includes('API key not valid') || errorMessage.includes('401') || errorMessage.includes('403')) {
+        throw new Error("Geocoding failed due to an authentication error. Please check your API key.");
+    }
+    
+    // Re-throw a more informative generic error
+    throw new Error(`The geocoding service failed. Please try again. Original error: ${errorMessage}`);
   }
 }
 
