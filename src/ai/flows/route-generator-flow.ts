@@ -1,22 +1,22 @@
 
 'use server';
 /**
- * @fileOverview An algorithmic flow for generating bus routes from a list of stops using k-means clustering.
+ * @fileOverview An AI flow for generating bus routes from a list of stops.
  *
- * - generateRoutes - A function that fetches all stops, clusters them, and creates routes.
+ * - generateRoutes - A function that fetches all stops and uses an AI to generate routes.
  */
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { generatePath } from './path-generator-flow';
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import kmeans from 'node-kmeans';
 
 type Point = {
   lat: number;
   lng: number;
 };
 
+// The final output structure remains the same
 export type GenerateRoutesOutput = {
   routes: {
     route_id: string;
@@ -36,57 +36,28 @@ type StopInfo = {
     lng: number;
 };
 
-// Calculates the haversine distance between two points in kilometers.
-function getDistance(p1: Point, p2: Point) {
-    const R = 6371; // Radius of the Earth in km
-    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-    const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
+// Input for the main AI prompt
+const GenerateRoutesPromptInputSchema = z.object({
+    city: z.string(),
+    stops: z.array(z.object({
+        stop_id: z.string(),
+        stop_name: z.string(),
+        lat: z.number(),
+        lng: z.number(),
+    })),
+    numRoutes: z.number().describe("The desired number of routes to generate."),
+});
+
+// The structure of a single route as defined by the AI
+const AiRouteSchema = z.object({
+    route_id: z.string().describe("A unique identifier for the route, e.g., R-TR-1."),
+    routeName: z.string().describe("A descriptive name for the route, e.g., 'Central Station to Srirangam'."),
+    busType: z.string().describe("The type of bus service, e.g., 'Express', 'Standard', 'Deluxe'."),
+    stops: z.array(z.string()).describe("An ordered list of stop_name for this route."),
+});
 
 
-// Uses a nearest-neighbor approach to create an ordered path from a set of stops.
-function orderStops(stops: StopInfo[]): StopInfo[] {
-    if (stops.length < 2) return stops;
-  
-    const remainingStops = [...stops];
-    const orderedRoute: StopInfo[] = [];
-    
-    // Find the northernmost stop to start with
-    let currentStop = remainingStops.reduce((prev, curr) => (prev.lat > curr.lat ? prev : curr));
-    orderedRoute.push(currentStop);
-    
-    let currentIdx = remainingStops.findIndex(s => s.stop_id === currentStop.stop_id);
-    remainingStops.splice(currentIdx, 1);
-  
-    while (remainingStops.length > 0) {
-      let nearestNeighbor: StopInfo | null = null;
-      let minDistance = Infinity;
-      let nearestIdx = -1;
-  
-      remainingStops.forEach((neighbor, index) => {
-        const distance = getDistance(currentStop, neighbor);
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearestNeighbor = neighbor;
-          nearestIdx = index;
-        }
-      });
-  
-      if (nearestNeighbor) {
-        currentStop = nearestNeighbor;
-        orderedRoute.push(currentStop);
-        remainingStops.splice(nearestIdx, 1);
-      }
-    }
-  
-    return orderedRoute;
-}
-
+// Tool for the AI to get available stops
 export const getStopsTool = ai.defineTool(
     {
       name: 'getStops',
@@ -103,6 +74,9 @@ export const getStopsTool = ai.defineTool(
         const db = getFirestore(app);
         const q = query(collection(db, "stops"), where("city", "==", city));
         const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            throw new Error(`No stops found for city: ${city}. Please import stops first.`);
+        }
         return snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -115,132 +89,91 @@ export const getStopsTool = ai.defineTool(
     }
 );
 
+// Define the main prompt for route generation
+const routeGeneratorPrompt = ai.definePrompt({
+    name: 'routeGeneratorPrompt',
+    input: { schema: GenerateRoutesPromptInputSchema },
+    output: { schema: z.object({ routes: z.array(AiRouteSchema) }) },
+    prompt: `You are a transit logistics expert for the city of {{{city}}}, India.
+Your task is to create a set of {{{numRoutes}}} logical and efficient bus routes using the provided list of bus stops.
 
-async function getStopsForCity(city: string): Promise<StopInfo[]> {
+- Each route must have a unique route_id (e.g., R-CITY-1, R-CITY-2).
+- Each route must have a descriptive routeName.
+- The stops in each route must be logically ordered to form a sensible path.
+- Try to use all available stops, but do not use the same stop in multiple routes unless it is a major hub.
+- The busType can be 'Express', 'Standard', or 'Deluxe'.
+
+Here are the available stops:
+{{#each stops}}
+- {{stop_name}} (ID: {{stop_id}})
+{{/each}}
+
+Please generate exactly {{{numRoutes}}} routes.
+`,
+});
+
+
+// The main exported function that the UI will call
+export async function generateRoutes(city: string): Promise<GenerateRoutesOutput> {
+  try {
     const stops = await getStopsTool({city});
-    return stops.map(s => ({
-        ...s,
-        lat: Number(s.lat),
-        lng: Number(s.lng)
-    })) as StopInfo[];
-}
-
-
-async function createAlgorithmicRoutes(stops: StopInfo[], city: string): Promise<GenerateRoutesOutput> {
-    if (stops.length < 2) {
+    if (!stops || stops.length < 2) {
       throw new Error("At least 2 stops must be present to generate routes. Please import more stops.");
     }
-  
-    // 1. Prepare data for k-means
-    const vectors = stops.map(stop => [stop.lat, stop.lng]);
-    const numClusters = Math.min(7, Math.floor(stops.length / 2)); 
-  
-    if (numClusters < 1) {
-        throw new Error("Not enough stops to form even one route.");
+    
+    // Determine how many routes to generate. A simple heuristic.
+    const numRoutes = Math.max(1, Math.min(7, Math.floor(stops.length / 5)));
+
+    // Get the AI to define the routes
+    const { output: aiRoutes } = await routeGeneratorPrompt({ city, stops, numRoutes });
+
+    if (!aiRoutes || !aiRoutes.routes || aiRoutes.routes.length === 0) {
+        throw new Error("The AI failed to generate any routes. Please try again.");
     }
 
-    // 2. Run k-means clustering
-    const kMeansResult = await new Promise<any[]>((resolve, reject) => {
-      kmeans.clusterize(vectors, { k: numClusters }, (err: any, res: any) => {
-        if (err) return reject(err);
-        resolve(res);
-      });
-    });
-    
-    let clusters: StopInfo[][] = kMeansResult.map(cluster => {
-        return cluster.cluster.map((vector: number[]) => 
-            stops.find(s => s.lat === vector[0] && s.lng === vector[1])!
-        ).filter(Boolean);
-    });
-    
-    // 3. Create routes from clusters
-    const generatedRoutes = clusters.map((clusterStops, index) => {
-      if (clusterStops.length < 2) return null;
-      
-      const orderedClusterStops = orderStops(clusterStops);
-      const firstStop = orderedClusterStops[0];
-      const lastStop = orderedClusterStops[orderedClusterStops.length - 1];
-      
-      let totalDistance = 0;
-      for (let i = 0; i < orderedClusterStops.length - 1; i++) {
-        totalDistance += getDistance(orderedClusterStops[i], orderedClusterStops[i + 1]);
-      }
+    const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
 
-      const totalTime = Math.round(totalDistance / (20 / 60)); // Avg speed 20km/h
-
-      const routeName = `${firstStop.stop_name} to ${lastStop.stop_name}`;
-
-      return {
-        route_id: `R-${city.substring(0,2).toUpperCase()}-${index + 1}`,
-        routeName: routeName,
-        busType: ['Express', 'Deluxe', 'Standard'][index % 3],
-        stops: orderedClusterStops.map(s => s.stop_name),
-        stopCoordinates: orderedClusterStops.map(s => ({ lat: s.lat, lng: s.lng })),
-        totalDistance: totalDistance,
-        totalTime: totalTime,
-      };
-    }).filter((r): r is NonNullable<typeof r> => r !== null);
-  
-    // 4. Create Hub Connector Route
-    if (kMeansResult.length > 1) {
-        const centroidsAsStops: StopInfo[] = kMeansResult.map((cluster, index) => ({
-            stop_id: `centroid_${index}`,
-            stop_name: `Hub ${index + 1}`,
-            lat: cluster.centroid[0],
-            lng: cluster.centroid[1]
-        }));
-        
-        const orderedHubs = orderStops(centroidsAsStops);
-
-        let hubDistance = 0;
-        for (let i = 0; i < orderedHubs.length - 1; i++) {
-            hubDistance += getDistance(orderedHubs[i], orderedHubs[i + 1]);
-        }
-        const hubTime = Math.round(hubDistance / (30/60)); // Higher avg speed for hub connectors
-
-        generatedRoutes.push({
-            route_id: `R-${city.substring(0,2).toUpperCase()}-HUB`,
-            routeName: "Hub Connector",
-            busType: "Connector",
-            stops: orderedHubs.map(s => s.stop_name),
-            stopCoordinates: orderedHubs.map(s => ({ lat: s.lat, lng: s.lng })),
-            totalDistance: hubDistance,
-            totalTime: hubTime,
-        });
-    }
-
-    // 5. Generate road-accurate paths for each route
+    // For each AI-defined route, generate the full path and calculate metrics
     const finalRoutes = await Promise.all(
-      generatedRoutes.map(async (route) => {
-        let pathResult: { path: Point[] } = { path: [] };
-        if (route.stopCoordinates.length > 1) {
+      aiRoutes.routes.map(async (route) => {
+        const stopCoordinates = route.stops
+          .map(stopName => {
+            const stop = stopsMap.get(stopName);
+            return stop ? { lat: stop.lat, lng: stop.lng } : null;
+          })
+          .filter((s): s is Point => s !== null);
+
+        let path: Point[] = [];
+        if (stopCoordinates.length > 1) {
           try {
-            pathResult = await generatePath({ stops: route.stopCoordinates });
+            const pathResult = await generatePath({ stops: stopCoordinates });
+            path = pathResult.path;
           } catch (error) {
              console.error(`Failed to generate path for route ${route.routeName}. Falling back to straight lines.`, error);
-             pathResult = { path: route.stopCoordinates };
+             path = stopCoordinates;
           }
         } else {
-            pathResult = { path: route.stopCoordinates };
+            path = stopCoordinates;
         }
-  
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { stopCoordinates, ...finalRoute } = route;
+
+        // Simple distance and time calculation
+        let totalDistance = 0;
+        for (let i = 0; i < path.length - 1; i++) {
+            totalDistance += getHaversineDistance(path[i], path[i+1]);
+        }
+        const totalTime = Math.round(totalDistance / (20 / 60)); // Avg speed 20km/h
+
         return {
-          ...finalRoute,
-          path: pathResult.path,
+          ...route,
+          path: path,
+          totalDistance,
+          totalTime,
         };
       })
     );
   
     return { routes: finalRoutes };
-}
 
-// The main exported function that the UI will call
-export async function generateRoutes(city: string): Promise<GenerateRoutesOutput> {
-  try {
-    const stops = await getStopsForCity(city);
-    return await createAlgorithmicRoutes(stops, city);
   } catch (error: any) {
     if (error.message && error.message.includes('Service Unavailable')) {
       throw new Error("The route generation service is temporarily unavailable. Please try again in a few moments.");
@@ -249,7 +182,20 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
   }
 }
 
-// Define the flow for Genkit inspection if needed, but the logic is now algorithmic.
+// Helper function to calculate distance between two points
+function getHaversineDistance(p1: Point, p2: Point) {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+    const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+
+// Define the flow for Genkit inspection
 const generateRoutesFlow = ai.defineFlow(
     {
         name: 'generateRoutesFlow',
@@ -257,7 +203,6 @@ const generateRoutesFlow = ai.defineFlow(
         outputSchema: z.custom<GenerateRoutesOutput>(),
     },
     async ({ city }) => {
-        const stops = await getStopsForCity(city);
-        return await createAlgorithmicRoutes(stops, city);
+        return generateRoutes(city);
     }
 );
