@@ -7,7 +7,6 @@
  */
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
-import { generatePath } from './path-generator-flow';
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
@@ -35,27 +34,6 @@ type StopInfo = {
     lat: number;
     lng: number;
 };
-
-// Input for the main AI prompt
-const GenerateRoutesPromptInputSchema = z.object({
-    city: z.string(),
-    stops: z.array(z.object({
-        stop_id: z.string(),
-        stop_name: z.string(),
-        lat: z.number(),
-        lng: z.number(),
-    })),
-    numRoutes: z.number().describe("The desired number of routes to generate."),
-});
-
-// The structure of a single route as defined by the AI
-const AiRouteSchema = z.object({
-    route_id: z.string().describe("A unique identifier for the route, e.g., R-TR-1."),
-    routeName: z.string().describe("A descriptive name for the route, e.g., 'Central Station to Srirangam'."),
-    busType: z.string().describe("The type of bus service, e.g., 'Express', 'Standard', 'Deluxe'."),
-    stops: z.array(z.string()).describe("An ordered list of stop_name for this route."),
-});
-
 
 // Tool for the AI to get available stops
 export const getStopsTool = ai.defineTool(
@@ -89,30 +67,6 @@ export const getStopsTool = ai.defineTool(
     }
 );
 
-// Define the main prompt for route generation
-const routeGeneratorPrompt = ai.definePrompt({
-    name: 'routeGeneratorPrompt',
-    input: { schema: GenerateRoutesPromptInputSchema },
-    output: { schema: z.object({ routes: z.array(AiRouteSchema) }) },
-    prompt: `You are a transit logistics expert for the city of {{{city}}}, India.
-Your task is to create a set of {{{numRoutes}}} logical and efficient bus routes using the provided list of bus stops.
-
-- Each route must have a unique route_id (e.g., R-CITY-1, R-CITY-2).
-- Each route must have a descriptive routeName.
-- The stops in each route must be logically ordered to form a sensible path.
-- Try to use all available stops, but do not use the same stop in multiple routes unless it is a major hub.
-- The busType can be 'Express', 'Standard', or 'Deluxe'.
-
-Here are the available stops:
-{{#each stops}}
-- {{stop_name}} (ID: {{stop_id}})
-{{/each}}
-
-Please generate exactly {{{numRoutes}}} routes.
-`,
-});
-
-
 // The main exported function that the UI will call
 export async function generateRoutes(city: string): Promise<GenerateRoutesOutput> {
   try {
@@ -121,58 +75,26 @@ export async function generateRoutes(city: string): Promise<GenerateRoutesOutput
       throw new Error("At least 2 stops must be present to generate routes. Please import more stops.");
     }
     
-    // Determine how many routes to generate. A simple heuristic.
-    const numRoutes = Math.max(1, Math.min(7, Math.floor(stops.length / 5)));
+    const path = stops.map(s => ({ lat: s.lat, lng: s.lng }));
 
-    // Get the AI to define the routes
-    const { output: aiRoutes } = await routeGeneratorPrompt({ city, stops, numRoutes });
-
-    if (!aiRoutes || !aiRoutes.routes || aiRoutes.routes.length === 0) {
-        throw new Error("The AI failed to generate any routes. Please try again.");
+    // Simple distance and time calculation
+    let totalDistance = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+        totalDistance += getHaversineDistance(path[i], path[i+1]);
     }
+    const totalTime = Math.round(totalDistance / (20 / 60)); // Avg speed 20km/h
 
-    const stopsMap = new Map(stops.map(s => [s.stop_name, s]));
-
-    // For each AI-defined route, generate the full path and calculate metrics
-    const finalRoutes = await Promise.all(
-      aiRoutes.routes.map(async (route) => {
-        const stopCoordinates = route.stops
-          .map(stopName => {
-            const stop = stopsMap.get(stopName);
-            return stop ? { lat: stop.lat, lng: stop.lng } : null;
-          })
-          .filter((s): s is Point => s !== null);
-
-        let path: Point[] = [];
-        if (stopCoordinates.length > 1) {
-          try {
-            const pathResult = await generatePath({ stops: stopCoordinates });
-            path = pathResult.path;
-          } catch (error) {
-             console.error(`Failed to generate path for route ${route.routeName}. Falling back to straight lines.`, error);
-             path = stopCoordinates;
-          }
-        } else {
-            path = stopCoordinates;
-        }
-
-        // Simple distance and time calculation
-        let totalDistance = 0;
-        for (let i = 0; i < path.length - 1; i++) {
-            totalDistance += getHaversineDistance(path[i], path[i+1]);
-        }
-        const totalTime = Math.round(totalDistance / (20 / 60)); // Avg speed 20km/h
-
-        return {
-          ...route,
-          path: path,
-          totalDistance,
-          totalTime,
-        };
-      })
-    );
+    const finalRoute = {
+      route_id: `R-${city.substring(0,3).toUpperCase()}-FULL`,
+      routeName: `Full City Route for ${city}`,
+      busType: 'Standard',
+      stops: stops.map(s => s.stop_name),
+      path: path,
+      totalDistance,
+      totalTime,
+    };
   
-    return { routes: finalRoutes };
+    return { routes: [finalRoute] };
 
   } catch (error: any) {
     if (error.message && error.message.includes('Service Unavailable')) {
